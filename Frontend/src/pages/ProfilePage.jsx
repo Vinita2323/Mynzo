@@ -173,7 +173,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="flex-grow flex flex-col bg-white min-h-screen relative overflow-hidden pb-12">
+    <div className="flex-grow flex flex-col bg-white relative pb-12">
       
       {/* 1. Dual Wavy SVG Background at Top */}
       <div className="absolute top-0 left-0 right-0 h-[290px] overflow-hidden z-0 pointer-events-none">
