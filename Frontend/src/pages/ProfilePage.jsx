@@ -177,9 +177,9 @@ export default function ProfilePage() {
     <div className="bg-slate-50 relative pb-24 w-full min-h-full font-sans overflow-x-hidden selection:bg-[#FF6E54]/20 animate-fade-in">
       
       {/* 1. Hero Animated Gradient Background */}
-      <div className="absolute top-0 left-0 right-0 h-[380px] z-0 pointer-events-none overflow-hidden rounded-b-[48px] shadow-sm">
+      <div className="absolute top-0 left-0 right-0 h-[290px] z-0 pointer-events-none overflow-hidden rounded-b-[40px] shadow-sm">
         {/* Animated mesh gradient / vibrant colors */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FF6E54] via-orange-400 to-[#02006c] opacity-90"></div>
+        <div className="absolute inset-0 bg-gradient-to-br from-[#FF6E54] via-[#FF8B75] to-amber-400 opacity-95"></div>
         {/* Soft glowing orbs for a glassmorphic effect */}
         <div className="absolute -top-20 -left-20 w-72 h-72 bg-white/20 blur-3xl rounded-full"></div>
         <div className="absolute top-40 -right-20 w-80 h-80 bg-amber-300/30 blur-3xl rounded-full"></div>
@@ -193,7 +193,7 @@ export default function ProfilePage() {
       </div>
 
       {/* 2. Page Content Overlaid */}
-      <div className="relative z-10 pt-5 px-5 space-y-6">
+      <div className="relative z-10 pt-4 px-5 space-y-4">
         
         {/* Navigation Bar */}
         <div className="flex items-center justify-between">
@@ -219,23 +219,23 @@ export default function ProfilePage() {
             {/* Animated Pulse Ring */}
             <div className="absolute -inset-1.5 rounded-full bg-white/30 animate-ping opacity-60 blur-sm"></div>
             
-            <div className="relative p-1.5 bg-white/20 backdrop-blur-md rounded-full shadow-2xl border border-white/40 transition-transform duration-300 group-hover:scale-105">
-              <div className="w-24 h-24 rounded-full border-[3px] border-white overflow-hidden bg-slate-50 flex items-center justify-center relative">
+            <div className="relative p-1 bg-white/20 backdrop-blur-md rounded-full shadow-xl border border-white/40 transition-transform duration-300 group-hover:scale-105">
+              <div className="w-20 h-20 rounded-full border-[2.5px] border-white overflow-hidden bg-slate-50 flex items-center justify-center relative">
                 <DynamicAvatar config={avatarConfig} size="w-full h-full object-cover" />
               </div>
               
               {/* Floating Camera Button (Glassmorphic) */}
-              <div className="absolute -bottom-1 -right-1 p-2.5 bg-white/90 backdrop-blur-md border border-white/80 rounded-full shadow-lg text-[#FF6E54] group-hover:text-orange-600 transition-colors">
-                <Camera className="w-4 h-4 fill-current drop-shadow-sm" />
+              <div className="absolute -bottom-1 -right-1 p-2 bg-white/90 backdrop-blur-md border border-white/80 rounded-full shadow-md text-[#FF6E54] group-hover:text-orange-600 transition-colors">
+                <Camera className="w-3.5 h-3.5 fill-current drop-shadow-sm" />
               </div>
             </div>
           </div>
 
           {/* User Names */}
-          <h3 className="text-2xl font-black text-white mt-5 font-syne tracking-wide drop-shadow-md">
+          <h3 className="text-xl font-black text-white mt-3 font-syne tracking-wide drop-shadow-md">
             {mockUser.name}
           </h3>
-          <div className="flex items-center gap-1.5 mt-2 bg-white/20 backdrop-blur-md border border-white/30 px-3.5 py-1 rounded-full shadow-sm">
+          <div className="flex items-center gap-1.5 mt-1.5 bg-white/20 backdrop-blur-md border border-white/30 px-3 py-1 rounded-full shadow-sm">
             <Sparkles className="w-3 h-3 text-amber-200 fill-amber-200" />
             <span className="text-[10px] text-white font-bold tracking-widest uppercase text-shadow-sm">
               {mockUser.tier || 'Gold Tier Gifter'}
@@ -244,29 +244,29 @@ export default function ProfilePage() {
         </div>
 
         {/* Horizontal Rewards Stats Grid (Glassmorphism) */}
-        <div className="grid grid-cols-3 gap-3 px-1 pt-4">
-          <div className="bg-white/80 backdrop-blur-lg rounded-[24px] p-4 text-center shadow-sm border border-white hover:-translate-y-1 transition-transform duration-300 cursor-pointer group">
-            <div className="w-10 h-10 mx-auto bg-amber-50 rounded-full flex items-center justify-center mb-2 group-hover:bg-amber-100 transition-colors">
-              <Coins className="w-5 h-5 text-amber-500 animate-bounce" />
+        <div className="grid grid-cols-3 gap-3 px-1 pt-2">
+          <div className="bg-white/90 backdrop-blur-lg rounded-[20px] p-3 text-center shadow-sm border border-white hover:-translate-y-1 transition-transform duration-300 cursor-pointer group">
+            <div className="w-8 h-8 mx-auto bg-amber-50 rounded-full flex items-center justify-center mb-1.5 group-hover:bg-amber-100 transition-colors">
+              <Coins className="w-4 h-4 text-amber-500 animate-bounce" />
             </div>
-            <span className="text-[13px] font-black text-[#02006c] block leading-none">{coins || 560}</span>
-            <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest block mt-1.5">Mynzo Coins</span>
+            <span className="text-[12px] font-black text-[#02006c] block leading-none">{coins || 560}</span>
+            <span className="text-[7.5px] text-slate-500 font-extrabold uppercase tracking-widest block mt-1">Mynzo Coins</span>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-lg rounded-[24px] p-4 text-center shadow-sm border border-white hover:-translate-y-1 transition-transform duration-300 cursor-pointer group">
-            <div className="w-10 h-10 mx-auto bg-orange-50 rounded-full flex items-center justify-center mb-2 group-hover:bg-orange-100 transition-colors">
-              <Gift className="w-5 h-5 text-[#FF6E54]" />
+          <div className="bg-white/90 backdrop-blur-lg rounded-[20px] p-3 text-center shadow-sm border border-white hover:-translate-y-1 transition-transform duration-300 cursor-pointer group">
+            <div className="w-8 h-8 mx-auto bg-orange-50 rounded-full flex items-center justify-center mb-1.5 group-hover:bg-orange-100 transition-colors">
+              <Gift className="w-4 h-4 text-[#FF6E54]" />
             </div>
-            <span className="text-[13px] font-black text-[#02006c] block leading-none">3 Active</span>
-            <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest block mt-1.5">Vouchers</span>
+            <span className="text-[12px] font-black text-[#02006c] block leading-none">3 Active</span>
+            <span className="text-[7.5px] text-slate-500 font-extrabold uppercase tracking-widest block mt-1">Vouchers</span>
           </div>
 
-          <div className="bg-white/80 backdrop-blur-lg rounded-[24px] p-4 text-center shadow-sm border border-white hover:-translate-y-1 transition-transform duration-300 cursor-pointer group">
-            <div className="w-10 h-10 mx-auto bg-emerald-50 rounded-full flex items-center justify-center mb-2 group-hover:bg-emerald-100 transition-colors">
-              <ShoppingBag className="w-5 h-5 text-emerald-500" />
+          <div className="bg-white/90 backdrop-blur-lg rounded-[20px] p-3 text-center shadow-sm border border-white hover:-translate-y-1 transition-transform duration-300 cursor-pointer group">
+            <div className="w-8 h-8 mx-auto bg-emerald-50 rounded-full flex items-center justify-center mb-1.5 group-hover:bg-emerald-100 transition-colors">
+              <ShoppingBag className="w-4 h-4 text-emerald-500" />
             </div>
-            <span className="text-[13px] font-black text-[#02006c] block leading-none">2 Orders</span>
-            <span className="text-[8px] text-slate-500 font-bold uppercase tracking-widest block mt-1.5">In Transit</span>
+            <span className="text-[12px] font-black text-[#02006c] block leading-none">2 Orders</span>
+            <span className="text-[7.5px] text-slate-500 font-extrabold uppercase tracking-widest block mt-1">In Transit</span>
           </div>
         </div>
 
