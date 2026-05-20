@@ -31,7 +31,7 @@ export default function MobileNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 px-2 py-1 shadow-2xl flex items-center justify-around max-w-md mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 px-3 py-1 shadow-2xl flex items-center justify-between max-w-md mx-auto">
       {navItems.map((item) => {
         const Icon = item.icon;
         const isActive = activeTab === item.id;
@@ -46,7 +46,7 @@ export default function MobileNav() {
                 navigate(item.path);
               }
             }}
-            className="relative flex flex-col items-center justify-center py-1.5 px-3 min-w-[64px] transition-all duration-300 active:scale-90"
+            className="relative flex flex-col items-center justify-center py-1.5 px-1 min-w-[50px] transition-all duration-300 active:scale-90"
           >
             {/* Active Highlight Underlay */}
             {isActive && (
@@ -71,7 +71,7 @@ export default function MobileNav() {
 
             {/* Red Badge for Cart */}
             {item.badge && totalCartItems > 0 && (
-              <span className="absolute top-1.5 right-3 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-extrabold text-white ring-1 ring-white animate-bounce">
+              <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-extrabold text-white ring-1 ring-white animate-bounce">
                 {totalCartItems}
               </span>
             )}
