@@ -54,9 +54,9 @@ function AppContent() {
 
   if (showSplash) {
     return (
-      <div className="min-h-screen bg-slate-100 flex justify-center items-start text-slate-800 antialiased font-sans select-none pointer-events-none">
+      <div className="h-[100dvh] bg-slate-100 flex justify-center items-start text-slate-800 antialiased font-sans select-none pointer-events-none overflow-hidden">
         {/* Centered Mobile Phone Frame */}
-        <div className="w-full max-w-md h-screen bg-black relative flex items-center justify-center overflow-hidden shadow-2xl border-x border-slate-100">
+        <div className="w-full max-w-md h-full bg-black relative flex items-center justify-center overflow-hidden shadow-2xl border-x border-slate-100">
           <video
             src="/SplashScreen.mp4"
             autoPlay
