@@ -130,19 +130,29 @@ export default function LoginPage() {
         className="h-full w-full flex-shrink-0 snap-start snap-always flex flex-col justify-between overflow-hidden relative bg-[#F8F9FD]"
       >
         {/* Peach Gradient Background Header */}
-        <div className="relative h-[68%] bg-gradient-to-br from-orange-300 via-orange-400 to-[#FF8E4D] flex flex-col justify-center items-center">
+        <div className="relative h-[68%] bg-gradient-to-br from-orange-300 via-orange-400 to-[#FF8E4D] flex flex-col justify-center items-center gap-3">
           {renderLeafOverlay()}
 
-          {/* Frosted Brand Circle */}
-          <div className="w-20 h-20 bg-white/20 backdrop-blur-md rounded-full p-2.5 border border-white/30 flex items-center justify-center shadow-lg relative z-10 animate-fade-in">
-            <img 
-              src="/Logo.jpg" 
-              alt="Mynzo Logo" 
-              className="w-full h-full object-cover rounded-full"
-              onError={(e) => {
-                e.target.src = "https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=100&auto=format&fit=crop&q=80";
-              }}
-            />
+          {/* Logo Container */}
+          <div className="relative z-10 flex flex-col items-center gap-2 animate-fade-in">
+            {/* Logo Circle with frosted glass ring */}
+            <div className="w-28 h-28 bg-white/25 backdrop-blur-md rounded-full p-2 border-2 border-white/50 flex items-center justify-center shadow-2xl shadow-orange-900/20">
+              <img 
+                src="/Logo.jpg" 
+                alt="Mynzo Logo" 
+                className="w-full h-full object-cover rounded-full"
+              />
+            </div>
+
+            {/* Brand Name */}
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-2xl font-black text-white tracking-[0.15em] uppercase drop-shadow-md" style={{ fontFamily: 'Syne, sans-serif' }}>
+                Mynzo
+              </span>
+              <span className="text-[9px] font-extrabold text-white/75 tracking-[0.3em] uppercase">
+                Gift · Discover · Reward
+              </span>
+            </div>
           </div>
 
           {/* Organic Wave Slant (With translate subpixel patch) */}
