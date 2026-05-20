@@ -32,7 +32,7 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-40 bg-orange-50 border-b border-orange-100/40 shadow-2xs transition-all duration-300">
+      <header className="bg-orange-50 transition-all duration-300">
         {/* Compact Main top header */}
         <div className="flex items-center justify-between px-2.5 py-1 bg-transparent">
           <div className="flex items-center gap-2 cursor-pointer animate-fade-in" onClick={() => navigate('/')}>
@@ -92,33 +92,34 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Search bar row with INCREASED WIDTH (px-2) and COMPACTED padding */}
-        <div className="px-2 py-1.5 bg-transparent">
-          <div className="flex items-center gap-2">
-            {/* Search Input Bar (Symmetrical rounded-lg and increased height with py-2) */}
-            <div className="flex-1 relative flex items-center bg-white/95 rounded-lg px-3.5 py-2 border border-slate-200/50 focus-within:border-[#FF6E54] focus-within:bg-white focus-within:ring-2 focus-within:ring-orange-100 transition-all duration-300">
-              <Search className="w-4 h-4 text-slate-400 mr-2.5" />
-              <input
-                type="text"
-                placeholder="Search products..."
-                className="w-full bg-transparent text-xs text-[#02006c] outline-none placeholder-slate-400 font-semibold"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-              {/* Voice search Mic option added next to Camera inside input capsule */}
-              <div className="flex items-center gap-1.5 ml-2.5">
-                <Camera className="w-4 h-4 text-slate-400 cursor-pointer hover:text-[#FF6E54] transition-colors" />
-                <Mic className="w-4 h-4 text-slate-400 cursor-pointer hover:text-[#FF6E54] transition-colors" />
-              </div>
-            </div>
-
-            {/* Barcode/QR Scanner button (Symmetrical rounded-lg and balanced w-9 h-9) */}
-            <button className="bg-white/95 border border-slate-200/50 hover:bg-white active:scale-95 text-[#FF6E54] rounded-lg shadow-xs transition-all duration-300 w-9 h-9 flex items-center justify-center flex-shrink-0">
-              <Scan className="w-4.5 h-4.5 stroke-[2.2]" />
-            </button>
-          </div>
-        </div>
       </header>
+
+      {/* Search bar row - Now Sticky at the top! */}
+      <div className="sticky top-0 z-40 px-2 py-2 bg-orange-50 border-b border-orange-100/40 shadow-sm transition-all duration-300">
+        <div className="flex items-center gap-2">
+          {/* Search Input Bar (Symmetrical rounded-lg and increased height with py-2) */}
+          <div className="flex-1 relative flex items-center bg-white/95 rounded-lg px-3.5 py-2 border border-slate-200/50 focus-within:border-[#FF6E54] focus-within:bg-white focus-within:ring-2 focus-within:ring-orange-100 transition-all duration-300 shadow-3xs">
+            <Search className="w-4 h-4 text-slate-400 mr-2.5" />
+            <input
+              type="text"
+              placeholder="Search products..."
+              className="w-full bg-transparent text-xs text-[#02006c] outline-none placeholder-slate-400 font-semibold"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {/* Voice search Mic option added next to Camera inside input capsule */}
+            <div className="flex items-center gap-1.5 ml-2.5">
+              <Camera className="w-4 h-4 text-slate-400 cursor-pointer hover:text-[#FF6E54] transition-colors" />
+              <Mic className="w-4 h-4 text-slate-400 cursor-pointer hover:text-[#FF6E54] transition-colors" />
+            </div>
+          </div>
+
+          {/* Barcode/QR Scanner button (Symmetrical rounded-lg and balanced w-9 h-9) */}
+          <button className="bg-white/95 border border-slate-200/50 hover:bg-white active:scale-95 text-[#FF6E54] rounded-lg shadow-3xs transition-all duration-300 w-9 h-9 flex items-center justify-center flex-shrink-0">
+            <Scan className="w-4.5 h-4.5 stroke-[2.2]" />
+          </button>
+        </div>
+      </div>
 
       {/* Delivery Address Modal */}
       {isLocationModalOpen && (
