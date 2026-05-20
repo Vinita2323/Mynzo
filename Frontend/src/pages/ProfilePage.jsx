@@ -174,22 +174,13 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="bg-slate-50 relative pb-24 w-full min-h-full font-sans overflow-x-hidden selection:bg-[#FF6E54]/20 animate-fade-in">
+    <div className="bg-white relative pb-24 w-full min-h-full font-sans overflow-x-hidden selection:bg-orange-100 animate-fade-in">
       
-      {/* 1. Hero Animated Gradient Background */}
-      <div className="absolute top-0 left-0 right-0 h-[290px] z-0 pointer-events-none overflow-hidden rounded-b-[40px] shadow-sm">
-        {/* Animated mesh gradient / vibrant colors */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#FF6E54] via-[#FF8B75] to-amber-400 opacity-95"></div>
-        {/* Soft glowing orbs for a glassmorphic effect */}
-        <div className="absolute -top-20 -left-20 w-72 h-72 bg-white/20 blur-3xl rounded-full"></div>
-        <div className="absolute top-40 -right-20 w-80 h-80 bg-amber-300/30 blur-3xl rounded-full"></div>
-        
-        {/* Wavy bottom divider (white overlay) */}
-        <div className="absolute bottom-0 left-0 right-0">
-          <svg viewBox="0 0 1440 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-auto drop-shadow-sm transform translate-y-1">
-            <path d="M0 100 V60 C320 20 520 80 720 80 C920 80 1120 20 1440 60 V100 Z" fill="#f8fafc" />
-          </svg>
-        </div>
+      {/* 1. Soft Pastel Background */}
+      <div className="absolute top-0 left-0 right-0 h-[240px] z-0 pointer-events-none overflow-hidden rounded-b-[48px] bg-gradient-to-b from-orange-50/80 to-white">
+        {/* Cute soft blobs */}
+        <div className="absolute -top-10 -left-10 w-48 h-48 bg-orange-100 rounded-full mix-blend-multiply filter blur-3xl opacity-60"></div>
+        <div className="absolute top-10 -right-10 w-48 h-48 bg-pink-100 rounded-full mix-blend-multiply filter blur-3xl opacity-60"></div>
       </div>
 
       {/* 2. Page Content Overlaid */}
@@ -199,104 +190,103 @@ export default function ProfilePage() {
         <div className="flex items-center justify-between">
           <button 
             onClick={() => navigate('/')}
-            className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer shadow-sm"
+            className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-slate-100 text-slate-600 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer shadow-sm"
           >
-            <ChevronLeft className="w-5 h-5 text-white" />
+            <ChevronLeft className="w-5 h-5" />
           </button>
           
-          <button className="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 text-white hover:bg-white/20 active:scale-95 transition-all cursor-pointer shadow-sm">
+          <button className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-slate-100 text-slate-600 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer shadow-sm">
              <Settings className="w-5 h-5" />
           </button>
         </div>
 
-        {/* User Card: Avatar and Names (Redesigned) */}
+        {/* User Card: Avatar and Names (Cute & Simple) */}
         <div className="flex flex-col items-center text-center pt-2 relative">
-          {/* Avatar Container with Glowing Pulse */}
+          {/* Avatar Container with Soft Ring */}
           <div 
             onClick={handleOpenCreator}
             className="relative group cursor-pointer"
           >
-            {/* Animated Pulse Ring */}
-            <div className="absolute -inset-1.5 rounded-full bg-white/30 animate-ping opacity-60 blur-sm"></div>
+            {/* Soft Pulse Ring */}
+            <div className="absolute -inset-1.5 rounded-full bg-orange-200/40 animate-ping opacity-50 blur-sm"></div>
             
-            <div className="relative p-1 bg-white/20 backdrop-blur-md rounded-full shadow-xl border border-white/40 transition-transform duration-300 group-hover:scale-105">
-              <div className="w-20 h-20 rounded-full border-[2.5px] border-white overflow-hidden bg-slate-50 flex items-center justify-center relative">
+            <div className="relative p-1.5 bg-white rounded-full shadow-md border border-orange-100 transition-transform duration-300 group-hover:scale-105">
+              <div className="w-20 h-20 rounded-full border-2 border-orange-50 overflow-hidden bg-slate-50 flex items-center justify-center relative">
                 <DynamicAvatar config={avatarConfig} size="w-full h-full object-cover" />
               </div>
               
-              {/* Floating Camera Button (Glassmorphic) */}
-              <div className="absolute -bottom-1 -right-1 p-2 bg-white/90 backdrop-blur-md border border-white/80 rounded-full shadow-md text-[#FF6E54] group-hover:text-orange-600 transition-colors">
-                <Camera className="w-3.5 h-3.5 fill-current drop-shadow-sm" />
+              {/* Floating Camera Button */}
+              <div className="absolute -bottom-1 -right-1 p-2 bg-white border border-slate-100 rounded-full shadow-sm text-orange-400 group-hover:text-orange-500 transition-colors">
+                <Camera className="w-3.5 h-3.5 fill-current" />
               </div>
             </div>
           </div>
 
           {/* User Names */}
-          <h3 className="text-xl font-black text-white mt-3 font-syne tracking-wide drop-shadow-md">
+          <h3 className="text-xl font-black text-slate-800 mt-3 font-syne tracking-wide">
             {mockUser.name}
           </h3>
-          <div className="flex items-center gap-1.5 mt-1.5 bg-white/20 backdrop-blur-md border border-white/30 px-3 py-1 rounded-full shadow-sm">
-            <Sparkles className="w-3 h-3 text-amber-200 fill-amber-200" />
-            <span className="text-[10px] text-white font-bold tracking-widest uppercase text-shadow-sm">
+          <div className="flex items-center gap-1 mt-1.5 bg-orange-50 border border-orange-100 px-3 py-1 rounded-full shadow-sm">
+            <Sparkles className="w-3 h-3 text-orange-400 fill-orange-400" />
+            <span className="text-[9px] text-orange-600 font-extrabold tracking-widest uppercase">
               {mockUser.tier || 'Gold Tier Gifter'}
             </span>
           </div>
         </div>
 
-        {/* Horizontal Rewards Stats Grid (Glassmorphism) */}
-        <div className="grid grid-cols-3 gap-3 px-1 pt-2">
-          <div className="bg-white/90 backdrop-blur-lg rounded-[20px] p-3 text-center shadow-sm border border-white hover:-translate-y-1 transition-transform duration-300 cursor-pointer group">
+        {/* Horizontal Rewards Stats Grid (Flat Cute) */}
+        <div className="grid grid-cols-3 gap-2 px-1 pt-2">
+          <div className="bg-white rounded-[20px] p-3 text-center shadow-sm border border-slate-100 hover:-translate-y-1 transition-transform duration-300 cursor-pointer group">
             <div className="w-8 h-8 mx-auto bg-amber-50 rounded-full flex items-center justify-center mb-1.5 group-hover:bg-amber-100 transition-colors">
-              <Coins className="w-4 h-4 text-amber-500 animate-bounce" />
+              <Coins className="w-4 h-4 text-amber-500 group-hover:animate-bounce" />
             </div>
-            <span className="text-[12px] font-black text-[#02006c] block leading-none">{coins || 560}</span>
-            <span className="text-[7.5px] text-slate-500 font-extrabold uppercase tracking-widest block mt-1">Mynzo Coins</span>
+            <span className="text-[12px] font-black text-slate-800 block leading-none">{coins || 560}</span>
+            <span className="text-[7.5px] text-slate-400 font-extrabold uppercase tracking-widest block mt-1">Mynzo Coins</span>
           </div>
 
-          <div className="bg-white/90 backdrop-blur-lg rounded-[20px] p-3 text-center shadow-sm border border-white hover:-translate-y-1 transition-transform duration-300 cursor-pointer group">
+          <div className="bg-white rounded-[20px] p-3 text-center shadow-sm border border-slate-100 hover:-translate-y-1 transition-transform duration-300 cursor-pointer group">
             <div className="w-8 h-8 mx-auto bg-orange-50 rounded-full flex items-center justify-center mb-1.5 group-hover:bg-orange-100 transition-colors">
-              <Gift className="w-4 h-4 text-[#FF6E54]" />
+              <Gift className="w-4 h-4 text-orange-400" />
             </div>
-            <span className="text-[12px] font-black text-[#02006c] block leading-none">3 Active</span>
-            <span className="text-[7.5px] text-slate-500 font-extrabold uppercase tracking-widest block mt-1">Vouchers</span>
+            <span className="text-[12px] font-black text-slate-800 block leading-none">3 Active</span>
+            <span className="text-[7.5px] text-slate-400 font-extrabold uppercase tracking-widest block mt-1">Vouchers</span>
           </div>
 
-          <div className="bg-white/90 backdrop-blur-lg rounded-[20px] p-3 text-center shadow-sm border border-white hover:-translate-y-1 transition-transform duration-300 cursor-pointer group">
+          <div className="bg-white rounded-[20px] p-3 text-center shadow-sm border border-slate-100 hover:-translate-y-1 transition-transform duration-300 cursor-pointer group">
             <div className="w-8 h-8 mx-auto bg-emerald-50 rounded-full flex items-center justify-center mb-1.5 group-hover:bg-emerald-100 transition-colors">
-              <ShoppingBag className="w-4 h-4 text-emerald-500" />
+              <ShoppingBag className="w-4 h-4 text-emerald-400" />
             </div>
-            <span className="text-[12px] font-black text-[#02006c] block leading-none">2 Orders</span>
-            <span className="text-[7.5px] text-slate-500 font-extrabold uppercase tracking-widest block mt-1">In Transit</span>
+            <span className="text-[12px] font-black text-slate-800 block leading-none">2 Orders</span>
+            <span className="text-[7.5px] text-slate-400 font-extrabold uppercase tracking-widest block mt-1">In Transit</span>
           </div>
         </div>
 
-        {/* Snapchat-Style Avatar Creator Prompt Banner */}
+        {/* Soft Pastel Avatar Creator Prompt Banner */}
         <div 
           onClick={handleOpenCreator}
-          className="relative overflow-hidden rounded-[24px] p-5 shadow-[0_8px_30px_rgb(255,110,84,0.2)] bg-gradient-to-r from-[#FF6E54] via-orange-500 to-amber-500 cursor-pointer group hover:scale-[1.02] transition-transform duration-300"
+          className="relative overflow-hidden rounded-[24px] p-4 bg-orange-50 border border-orange-100 cursor-pointer group hover:bg-orange-100/50 transition-colors duration-300 shadow-sm"
         >
-          {/* Decorative shapes */}
-          <div className="absolute -right-8 -top-8 w-32 h-32 bg-white/20 rounded-full blur-2xl"></div>
-          <div className="absolute right-12 bottom-0 w-24 h-24 bg-amber-300/40 rounded-full blur-xl"></div>
+          {/* Subtle Decorative blobs */}
+          <div className="absolute -right-4 -top-4 w-24 h-24 bg-orange-200/30 rounded-full blur-xl"></div>
           
           <div className="relative z-10 flex items-center justify-between">
             <div className="space-y-1">
-              <h4 className="text-sm font-black uppercase tracking-wider font-syne text-white flex items-center gap-1.5 drop-shadow-sm">
+              <h4 className="text-sm font-black uppercase tracking-wider font-syne text-orange-500 flex items-center gap-1.5">
                 Create My Avatar
-                <Sparkles className="w-4 h-4 text-amber-200 fill-amber-200" />
+                <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
               </h4>
-              <p className="text-[9px] font-extrabold text-white/90 uppercase tracking-widest leading-none">
+              <p className="text-[9px] font-extrabold text-orange-400/80 uppercase tracking-widest leading-none">
                 Design & dress your character
               </p>
             </div>
-            <div className="w-10 h-10 bg-white/20 backdrop-blur-md rounded-full flex items-center justify-center text-white border border-white/40 group-hover:bg-white/30 transition-colors shadow-sm">
-              <ChevronRight className="w-5 h-5 stroke-[2.5] group-hover:translate-x-0.5 transition-transform" />
+            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-orange-400 border border-orange-100 shadow-sm group-hover:bg-orange-50 transition-colors">
+              <ChevronRight className="w-4 h-4 stroke-[2.5] group-hover:translate-x-0.5 transition-transform" />
             </div>
           </div>
         </div>
 
-        {/* Menu Options Stack (Sleek List) */}
-        <div className="bg-white rounded-[28px] p-2.5 shadow-[0_8px_30px_rgb(0,0,0,0.03)] border border-slate-100/60">
+        {/* Menu Options Stack (Cute List) */}
+        <div className="bg-white rounded-[28px] p-2 shadow-sm border border-slate-100">
           <div className="space-y-1">
             {menuOptions.map((opt, idx) => {
               const Icon = opt.icon;
