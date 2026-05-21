@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Sparkles, Heart, MessageCircle, Share2, ShoppingBag, Eye, Star } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CRAZY_DEALS } from '../data/mockData';
 
 export default function StudioPage() {
-  const { addToCart } = useApp();
+  const { addToCart, user } = useApp();
+  const navigate = useNavigate();
   
   const [posts, setPosts] = useState([
     {
@@ -40,6 +42,10 @@ export default function StudioPage() {
   };
 
   const handleAddToCart = (product) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     addToCart(product);
   };
 

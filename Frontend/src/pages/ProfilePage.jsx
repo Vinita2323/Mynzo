@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import avtarImage from '../assets/Avtar.jpg';
+import avtarImage from '../assets/AvatarProfile-removebg-preview.png';
 import { 
   ChevronLeft, User, Lock, Settings, Phone, LogOut, Camera, 
   ChevronRight, Coins, Gift, ShoppingBag, Sparkles, X 
@@ -10,78 +10,116 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // Dynamic SVG Avatar Component
 function DynamicAvatar({ config, size = "w-20 h-20" }) {
+  if (!config) return null;
   const { skinTone, hairStyle, hairColor, outfitColor, accessory } = config;
 
   return (
-    <svg viewBox="0 0 100 100" className={`${size} rounded-full shadow-inner bg-slate-50`}>
-      {/* Background fill */}
+    <svg viewBox="0 0 100 100" className={`${size} rounded-full shadow-inner bg-slate-50`} xmlns="http://www.w3.org/2000/svg">
       <circle cx="50" cy="50" r="50" fill="#F8FAFC" />
 
-      {/* Outfit / Collar */}
-      <path d="M 20 92 Q 50 68 80 92 Z" fill={outfitColor} />
-      <path d="M 40 76 Q 50 84 60 76 Z" fill={skinTone} />
-
-      {/* Face Base */}
-      <circle cx="50" cy="48" r="28" fill={skinTone} />
-
-      {/* Eyes */}
-      <circle cx="41" cy="45" r="3" fill="#1E293B" />
-      <circle cx="59" cy="45" r="3" fill="#1E293B" />
-      <circle cx="42" cy="44" r="0.8" fill="#FFFFFF" />
-      <circle cx="60" cy="44" r="0.8" fill="#FFFFFF" />
-
-      {/* Cheek blush */}
-      <circle cx="35" cy="52" r="3" fill="#FF6E54" opacity="0.35" />
-      <circle cx="65" cy="52" r="3" fill="#FF6E54" opacity="0.35" />
-
-      {/* Mouth (cute smile) */}
-      <path d="M 44 56 Q 50 64 56 56" stroke="#1E293B" strokeWidth="2" strokeLinecap="round" fill="none" />
-
-      {/* Hair Styles */}
+      {/* Back Hair */}
       {hairStyle === 'crop' && (
-        <path d="M 22 36 Q 50 12 78 36 C 73 26 27 26 22 36 Z" fill={hairColor} />
+        <circle cx="50" cy="18" r="15" fill={hairColor} />
+      )}
+      {hairStyle === 'long' && (
+        <path d="M 25 40 L 25 80 C 25 90 40 95 50 95 C 60 95 75 90 75 80 L 75 40 Z" fill={hairColor} />
       )}
       {hairStyle === 'curly' && (
+        <path d="M 20 40 Q 15 60 25 70 Q 50 80 75 70 Q 85 60 80 40 Z" fill={hairColor} />
+      )}
+
+      {/* Neck */}
+      <path d="M 42 65 L 42 85 L 58 85 L 58 65 Z" fill={skinTone} />
+      
+      {/* Outfit */}
+      <path d="M 20 100 C 20 80 35 75 50 75 C 65 75 80 80 80 100 Z" fill={outfitColor} />
+      <path d="M 38 75 C 45 82 55 82 62 75" fill="none" stroke="#E2E8F0" strokeWidth="2" />
+
+      {/* Face Base */}
+      <ellipse cx="50" cy="48" rx="22" ry="25" fill={skinTone} />
+      
+      {/* Ears */}
+      <ellipse cx="27" cy="48" rx="3.5" ry="5.5" fill={skinTone} />
+      <ellipse cx="73" cy="48" rx="3.5" ry="5.5" fill={skinTone} />
+
+      {/* Eyes */}
+      <circle cx="39" cy="45" r="5" fill="#FFFFFF" />
+      <circle cx="39" cy="45" r="3.5" fill="#4A2F1D" />
+      <circle cx="39" cy="45" r="1.5" fill="#000000" />
+      <circle cx="37.5" cy="43.5" r="1.2" fill="#FFFFFF" />
+
+      <circle cx="61" cy="45" r="5" fill="#FFFFFF" />
+      <circle cx="61" cy="45" r="3.5" fill="#4A2F1D" />
+      <circle cx="61" cy="45" r="1.5" fill="#000000" />
+      <circle cx="62.5" cy="43.5" r="1.2" fill="#FFFFFF" />
+
+      {/* Eyelashes / Eyebrows */}
+      <path d="M 33 42 Q 39 37 45 42" fill="none" stroke="#2B1A10" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M 55 42 Q 61 37 67 42" fill="none" stroke="#2B1A10" strokeWidth="1.2" strokeLinecap="round" />
+      <path d="M 34 38 Q 39 36 44 38" fill="none" stroke={hairColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+      <path d="M 56 38 Q 61 36 66 38" fill="none" stroke={hairColor} strokeWidth="1.5" strokeLinecap="round" opacity="0.8" />
+
+      {/* Cheek blush */}
+      <ellipse cx="34" cy="52" rx="4" ry="2.5" fill="#FF8A8A" opacity="0.4" />
+      <ellipse cx="66" cy="52" rx="4" ry="2.5" fill="#FF8A8A" opacity="0.4" />
+
+      {/* Nose */}
+      <path d="M 49 53 Q 50 55 51 53" fill="none" stroke="rgba(0,0,0,0.15)" strokeWidth="1.5" strokeLinecap="round" />
+
+      {/* Mouth */}
+      <path d="M 43 59 Q 50 64 57 59 Q 50 62 43 59 Z" fill="#FFFFFF" stroke="#D67575" strokeWidth="0.8" />
+
+      {/* Front Hair */}
+      {hairStyle === 'crop' && (
         <g fill={hairColor}>
-          <circle cx="30" cy="26" r="9" />
-          <circle cx="50" cy="18" r="11" />
-          <circle cx="70" cy="26" r="9" />
-          <circle cx="40" cy="20" r="10" />
-          <circle cx="60" cy="20" r="10" />
-          <circle cx="24" cy="35" r="7" />
-          <circle cx="76" cy="35" r="7" />
+          <path d="M 27 45 C 25 30 35 15 50 15 C 65 15 75 30 73 45 C 73 35 65 22 50 22 C 35 22 27 35 27 45 Z" />
+          <path d="M 27 40 C 35 25 45 25 55 32 C 45 28 35 32 27 40 Z" />
+          <path d="M 73 40 C 65 25 55 25 45 32 C 55 28 65 32 73 40 Z" />
+          <path d="M 27 40 Q 22 55 25 65 Q 26 55 29 45 Z" />
+          <path d="M 73 40 Q 78 55 75 65 Q 74 55 71 45 Z" />
         </g>
       )}
       {hairStyle === 'long' && (
         <g fill={hairColor}>
-          <path d="M 22 36 Q 50 10 78 36 Q 81 60 77 75 Q 71 75 71 65 Q 71 36 29 36 Q 29 65 29 75 Q 23 75 22 36 Z" />
+          <path d="M 27 45 C 25 30 35 15 50 15 C 65 15 75 30 73 45 C 73 35 65 22 50 22 C 35 22 27 35 27 45 Z" />
+          <path d="M 27 40 Q 30 20 50 30 Q 40 25 27 40 Z" />
+          <path d="M 73 40 Q 70 20 50 30 Q 60 25 73 40 Z" />
+        </g>
+      )}
+      {hairStyle === 'curly' && (
+        <g fill={hairColor}>
+          <circle cx="35" cy="22" r="10" />
+          <circle cx="50" cy="16" r="12" />
+          <circle cx="65" cy="22" r="10" />
+          <circle cx="27" cy="32" r="9" />
+          <circle cx="73" cy="32" r="9" />
         </g>
       )}
       {hairStyle === 'spiky' && (
-        <path d="M 22 35 L 30 18 L 40 24 L 50 12 L 60 24 L 70 18 L 78 35 Q 50 22 22 35 Z" fill={hairColor} />
+        <g fill={hairColor}>
+          <path d="M 26 40 L 32 20 L 40 28 L 50 12 L 60 28 L 68 20 L 74 40 C 65 30 35 30 26 40 Z" />
+        </g>
       )}
 
       {/* Accessories */}
       {accessory === 'glasses' && (
-        <g stroke="#1E293B" strokeWidth="2" fill="none">
-          <circle cx="41" cy="45" r="8" />
-          <circle cx="59" cy="45" r="8" />
-          <line x1="49" y1="45" x2="51" y2="45" />
-          <line x1="33" y1="45" x2="26" y2="42" />
-          <line x1="67" y1="45" x2="74" y2="42" />
+        <g stroke="#1E293B" strokeWidth="2.5" fill="none">
+          <circle cx="39" cy="45" r="9" />
+          <circle cx="61" cy="45" r="9" />
+          <line x1="48" y1="45" x2="52" y2="45" />
+          <line x1="30" y1="43" x2="25" y2="40" />
+          <line x1="70" y1="43" x2="75" y2="40" />
         </g>
       )}
       {accessory === 'headphones' && (
         <g>
-          {/* Headband */}
-          <path d="M 24 45 A 28 28 0 0 1 76 45" stroke="#02006c" strokeWidth="4" fill="none" />
-          {/* Earpads */}
-          <rect x="18" y="38" width="7" height="16" rx="3.5" fill="#02006c" />
-          <rect x="75" y="38" width="7" height="16" rx="3.5" fill="#02006c" />
+          <path d="M 24 45 A 28 28 0 0 1 76 45" stroke="#02006c" strokeWidth="4.5" fill="none" />
+          <rect x="16" y="38" width="8" height="18" rx="4" fill="#02006c" />
+          <rect x="76" y="38" width="8" height="18" rx="4" fill="#02006c" />
         </g>
       )}
       {accessory === 'crown' && (
-        <path d="M 33 26 L 38 10 L 50 19 L 62 10 L 67 26 Z" fill="#FBBF24" stroke="#D97706" strokeWidth="1" />
+        <path d="M 33 22 L 38 6 L 50 15 L 62 6 L 67 22 Z" fill="#FBBF24" stroke="#D97706" strokeWidth="1" />
       )}
     </svg>
   );
@@ -97,33 +135,69 @@ export default function ProfilePage() {
     return saved ? JSON.parse(saved) : {
       skinTone: "#FFDBB5",
       hairStyle: "crop",
-      hairColor: "#1A1A1A",
-      outfitColor: "#FF6E54",
+      hairColor: "#3E2723",
+      outfitColor: "#F8FAFC",
       accessory: "none"
     };
   });
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showWalletBalance, setShowWalletBalance] = useState(false);
   const [tempConfig, setTempConfig] = useState({ ...avatarConfig });
   const [modalStep, setModalStep] = useState(0); // 0 = Welcome onboarding, 1 = Creator editor
 
-  React.useEffect(() => {
-    if (!user) {
-      navigate('/login');
-    }
-  }, [user, navigate]);
+  // Custom Image Upload State
+  const [uploadedImage, setUploadedImage] = useState(() => {
+    return sessionStorage.getItem('userUploadedImage') || null;
+  });
+  const fileInputRef = useRef(null);
 
-  const mockUser = user || {
-    name: "Vini",
-    email: "vini@mynzoworld.com",
-    tier: "Gold Tier Gifter",
-    joined: "Member since May 2026"
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result;
+        setUploadedImage(base64String);
+        sessionStorage.setItem('userUploadedImage', base64String);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
+  if (!user) {
+    return (
+      <div className="bg-slate-50 flex flex-col items-center justify-center min-h-[100dvh] p-6 font-sans text-center animate-fade-in relative overflow-hidden">
+        {/* Soft Decorative Blobs */}
+        <div className="absolute top-0 right-0 w-64 h-64 bg-orange-100 rounded-full mix-blend-multiply filter blur-3xl opacity-60 translate-x-1/2 -translate-y-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-64 h-64 bg-pink-100 rounded-full mix-blend-multiply filter blur-3xl opacity-60 -translate-x-1/2 translate-y-1/2"></div>
+
+        <div className="relative z-10 flex flex-col items-center w-full max-w-sm">
+          <div className="w-24 h-24 bg-white shadow-xl shadow-orange-500/10 text-[#FF6E54] rounded-full flex items-center justify-center mb-6 border border-orange-100/50">
+            <Lock className="w-10 h-10" />
+          </div>
+          <h2 className="text-2xl font-black text-[#02006c] mb-3 font-syne tracking-wide">Profile Locked</h2>
+          <p className="text-slate-500 text-xs font-bold leading-relaxed mb-8 max-w-[250px]">
+            Log in to view your profile, manage orders, and customize your Mynzo Avatar.
+          </p>
+          <button 
+            onClick={() => navigate('/login')}
+            className="w-full py-4 bg-gradient-to-r from-[#FF6E54] to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white text-[12px] font-black rounded-[20px] transition-all shadow-xl shadow-[#FF6E54]/25 uppercase tracking-widest flex items-center justify-center gap-2 active:scale-[0.98]"
+          >
+            Login to Continue <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  const mockUser = user;
+
   const menuOptions = [
+    { id: 'wallet', label: "My Wallet", desc: "View your current Mynzo coin balance", icon: Coins, color: "bg-indigo-100/60 text-[#02006c]" },
     { label: "Account Information", desc: "Manage your email, phone, and profile settings", icon: User, color: "bg-orange-100/60 text-[#FF6E54]" },
     { label: "Security & Password", desc: "Change password and secure credentials", icon: Lock, color: "bg-amber-100/60 text-amber-600" },
-    { label: "System Settings", desc: "Configure app defaults and notifications", icon: Settings, color: "bg-indigo-100/60 text-[#02006c]" },
+    { label: "System Settings", desc: "Configure app defaults and notifications", icon: Settings, color: "bg-slate-100 text-slate-600" },
     { label: "Help & Support", desc: "Access 24/7 client care and FAQs", icon: Phone, color: "bg-emerald-100/60 text-emerald-600" }
   ];
 
@@ -142,7 +216,7 @@ export default function ProfilePage() {
       { id: "spiky", label: "Spiky" }
     ],
     hairColors: [
-      { name: "Dark", value: "#1A1A1A" },
+      { name: "Dark", value: "#3E2723" },
       { name: "Blonde", value: "#E6C15C" },
       { name: "Coral", value: "#FF6E54" },
       { name: "Teal", value: "#2DD4BF" }
@@ -162,7 +236,14 @@ export default function ProfilePage() {
   };
 
   const handleOpenCreator = () => {
-    setTempConfig({ ...avatarConfig });
+    const defaultConfig = {
+      skinTone: "#FFDBB5",
+      hairStyle: "crop",
+      hairColor: "#3E2723",
+      outfitColor: "#F8FAFC",
+      accessory: "none"
+    };
+    setTempConfig(avatarConfig || defaultConfig);
     setModalStep(0);
     setIsModalOpen(true);
   };
@@ -212,13 +293,33 @@ export default function ProfilePage() {
             
             <div className="relative p-1.5 bg-white rounded-full shadow-md border border-orange-100 transition-transform duration-300 group-hover:scale-105">
               <div className="w-20 h-20 rounded-full border-2 border-orange-50 overflow-hidden bg-slate-50 flex items-center justify-center relative">
-                <DynamicAvatar config={avatarConfig} size="w-full h-full object-cover" />
+                {uploadedImage ? (
+                  <img src={uploadedImage} alt="Uploaded Profile" className="w-full h-full object-cover" />
+                ) : avatarConfig ? (
+                  <DynamicAvatar config={avatarConfig} size="w-full h-full object-cover" />
+                ) : (
+                  <img src={avtarImage} alt="Profile Avatar" className="w-full h-full object-cover" />
+                )}
               </div>
               
               {/* Floating Camera Button */}
-              <div className="absolute -bottom-1 -right-1 p-2 bg-white border border-slate-100 rounded-full shadow-sm text-orange-400 group-hover:text-orange-500 transition-colors">
+              <div 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  fileInputRef.current.click();
+                }}
+                className="absolute -bottom-1 -right-1 p-2 bg-white border border-slate-100 rounded-full shadow-sm text-orange-400 group-hover:text-orange-500 transition-colors"
+              >
                 <Camera className="w-3.5 h-3.5 fill-current" />
               </div>
+              <input 
+                type="file" 
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                onClick={(e) => e.stopPropagation()}
+                accept="image/*"
+                className="hidden"
+              />
             </div>
           </div>
 
@@ -233,6 +334,8 @@ export default function ProfilePage() {
             </span>
           </div>
         </div>
+
+
 
         {/* Horizontal Rewards Stats Grid (Flat Cute) */}
         <div className="grid grid-cols-3 gap-2 px-1 pt-2">
@@ -290,12 +393,14 @@ export default function ProfilePage() {
           <div className="space-y-1">
             {menuOptions.map((opt, idx) => {
               const Icon = opt.icon;
+              const isWallet = opt.id === 'wallet';
               return (
                 <button
                   key={idx}
+                  onClick={() => isWallet && setShowWalletBalance(!showWalletBalance)}
                   className="w-full flex items-center justify-between p-3.5 rounded-[20px] hover:bg-slate-50 active:scale-[0.98] transition-all duration-300 text-left cursor-pointer group"
                 >
-                  <div className="flex items-center gap-4 min-w-0">
+                  <div className="flex items-center gap-4 min-w-0 flex-1">
                     <div className={`w-11 h-11 ${opt.color} rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-105 shadow-inner`}>
                       <Icon className="w-5 h-5" />
                     </div>
@@ -304,7 +409,14 @@ export default function ProfilePage() {
                       <span className="text-[9px] text-slate-400 font-bold block truncate mt-1 leading-none tracking-wide">{opt.desc}</span>
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#FF6E54] group-hover:translate-x-1 transition-all" />
+                  {isWallet && showWalletBalance ? (
+                    <div className="flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-100">
+                      <span className="text-amber-500 font-black text-sm">{coins}</span>
+                      <span className="text-amber-400 font-bold text-[8px] uppercase">Coins</span>
+                    </div>
+                  ) : (
+                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#FF6E54] group-hover:translate-x-1 transition-all" />
+                  )}
                 </button>
               );
             })}

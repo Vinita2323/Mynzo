@@ -1,21 +1,21 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { ArrowLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Edit2 } from 'lucide-react';
 import dollImage from '../assets/DollMynzo-removebg-preview.png';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { setUser } = useApp();
 
-  // Page container references for smooth horizontal scrolling
-  const welcomeRef = useRef(null);
-  const signInRef = useRef(null);
-
   // Phone + OTP states
   const [phoneNumber, setPhoneNumber] = useState("");
   const [otpSent, setOtpSent] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
+  
+  // 4-digit OTP state
+  const [otp, setOtp] = useState(["", "", "", ""]);
+  const otpRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
+  
   const [signInError, setSignInError] = useState("");
   const [signInSuccess, setSignInSuccess] = useState("");
 
@@ -31,13 +31,36 @@ export default function LoginPage() {
     setSignInSuccess("OTP Sent successfully! Enter '1234' to verify.");
   };
 
+  const handleOtpChange = (index, value) => {
+    if (isNaN(value)) return;
+    
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    setSignInError("");
+
+    // Move to next input if value is entered
+    if (value !== "" && index < 3) {
+      otpRefs[index + 1].current.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index, e) => {
+    // Move to previous input on backspace if current is empty
+    if (e.key === "Backspace" && otp[index] === "" && index > 0) {
+      otpRefs[index - 1].current.focus();
+    }
+  };
+
   const handleVerifyOtpAndLogin = (e) => {
     e.preventDefault();
-    if (!otpCode.trim()) {
-      setSignInError("Please enter the 4-digit OTP");
+    const fullOtp = otp.join("");
+    
+    if (fullOtp.length < 4) {
+      setSignInError("Please enter the complete 4-digit OTP");
       return;
     }
-    if (otpCode !== "1234") {
+    if (fullOtp !== "1234") {
       setSignInError("Invalid OTP. For mock login, enter '1234'.");
       return;
     }
@@ -56,12 +79,6 @@ export default function LoginPage() {
     navigate('/');
   };
 
-  const scrollToSection = (elementRef) => {
-    if (elementRef.current) {
-      elementRef.current.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
-    }
-  };
-
   // SVG Leaf Overlay background to repeat across slides
   const renderLeafOverlay = () => (
     <div className="absolute inset-0 opacity-15 pointer-events-none select-none z-0">
@@ -74,10 +91,9 @@ export default function LoginPage() {
     </div>
   );
 
-  // Floating doll component — reused on both screens
+  // Floating doll component
   const FloatingDoll = () => (
     <>
-      {/* CSS Keyframe animation injected once */}
       <style>{`
         @keyframes floatDoll {
           0%   { transform: translateY(0px) scale(1); }
@@ -90,7 +106,6 @@ export default function LoginPage() {
         }
       `}</style>
 
-      {/* Soft ambient glow behind the doll */}
       <div
         className="absolute bottom-10 right-2 z-10 pointer-events-none"
         style={{
@@ -103,7 +118,6 @@ export default function LoginPage() {
         }}
       />
 
-      {/* Doll Image */}
       <img
         src={dollImage}
         alt="Mynzo Mascot"
@@ -120,187 +134,177 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="h-screen w-full overflow-x-auto scrollbar-none snap-x snap-mandatory scroll-smooth bg-[#F8F9FD] flex flex-row">
+    <div className="h-[100dvh] w-full flex flex-col justify-between overflow-hidden relative bg-[#F8F9FD]">
       
-      {/* ======================================= */}
-      {/* PAGE 1: WELCOME SCREEN                  */}
-      {/* ======================================= */}
-      <section 
-        ref={welcomeRef}
-        className="h-full w-full flex-shrink-0 snap-start snap-always flex flex-col justify-start overflow-hidden relative bg-[#F8F9FD]"
-      >
-        {/* Peach Gradient Background Header */}
-        <div className="relative h-[52%] bg-gradient-to-br from-orange-300 via-orange-400 to-[#FF8E4D] flex flex-col justify-center items-center gap-3">
-          {renderLeafOverlay()}
+      {/* Curved Orange top banner */}
+      <div className="relative h-[28%] bg-gradient-to-br from-orange-300 via-orange-400 to-[#FF8E4D] flex flex-col items-center justify-center pt-4">
+        {renderLeafOverlay()}
+        
+        {/* Back to Home or Back to Phone Input */}
+        <button 
+          onClick={() => {
+            if (otpSent) {
+              setOtpSent(false);
+              setOtp(["", "", "", ""]);
+              setSignInError("");
+              setSignInSuccess("");
+            } else {
+              navigate('/');
+            }
+          }}
+          className="absolute top-6 left-4 w-9 h-9 bg-white/20 backdrop-blur-sm border border-white/10 rounded-full flex items-center justify-center text-white active:scale-90 transition-all z-20 cursor-pointer shadow-sm"
+        >
+          <ArrowLeft className="w-4 h-4" />
+        </button>
 
-          {/* Logo Container */}
-          <div className="relative z-10 flex flex-col items-center gap-2 animate-fade-in">
-            {/* Logo Circle with frosted glass ring */}
-            <div className="w-28 h-28 bg-white/25 backdrop-blur-md rounded-full p-2 border-2 border-white/50 flex items-center justify-center shadow-2xl shadow-orange-900/20">
-              <img 
-                src="/Logo.jpg" 
-                alt="Mynzo Logo" 
-                className="w-full h-full object-cover rounded-full"
-              />
+        {/* Logo Container */}
+        <div className="relative z-10 w-24 h-24 bg-white/30 backdrop-blur-md rounded-full p-1.5 border-2 border-white/50 flex items-center justify-center shadow-xl shadow-orange-900/10 mb-2 animate-fade-in">
+          <img 
+            src="/Logo.jpg" 
+            alt="Mynzo Logo" 
+            className="w-full h-full object-cover rounded-full"
+            onError={(e) => { e.target.style.display = 'none'; }}
+          />
+        </div>
+
+        {/* Curved wave transition */}
+        <svg className="absolute bottom-0 left-0 right-0 w-full h-12 fill-[#F8F9FD] pointer-events-none translate-y-[1px]" viewBox="0 0 1440 320" preserveAspectRatio="none">
+          <path d="M0,192L80,181.3C160,171,320,149,480,165.3C640,181,800,235,960,240C1120,245,1280,203,1360,181.3L1440,160L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z"></path>
+        </svg>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="bg-[#F8F9FD] px-8 pb-16 pt-4 flex-grow flex flex-col justify-start z-10 space-y-6">
+        
+        {!otpSent ? (
+          /* ================================ */
+          /* PHONE NUMBER INPUT SCREEN        */
+          /* ================================ */
+          <div className="space-y-6 animate-fade-in">
+            {/* Form Header */}
+            <div className="space-y-1">
+              <h2 className="text-2xl font-extrabold text-[#02006c]">Sign In</h2>
+              <p className="text-[10px] text-slate-400 font-bold">Sign in to your Registered Account.</p>
+              <div className="w-6 h-0.75 bg-[#FF6E54] rounded-full mt-1.5"></div>
             </div>
 
-            {/* Brand Name */}
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-2xl font-black text-white tracking-[0.15em] uppercase drop-shadow-md" style={{ fontFamily: 'Syne, sans-serif' }}>
-                Mynzo
-              </span>
-              <span className="text-[9px] font-extrabold text-white/75 tracking-[0.3em] uppercase">
-                Gift · Discover · Reward
-              </span>
-            </div>
+            <form onSubmit={handleSendOtp} className="space-y-4 pt-2">
+              <div className="space-y-1 text-left">
+                <label className="text-sm font-syne font-black text-slate-500 uppercase tracking-widest">Phone Number</label>
+                <div className="flex gap-2 border-b-2 border-slate-200 focus-within:border-[#FF6E54] transition-colors py-2">
+                  <span className="text-lg text-[#02006c] font-black pr-2 border-r-2 border-slate-100 flex items-center select-none">+91</span>
+                  <input 
+                    type="tel" 
+                    placeholder="Enter 10-digit number"
+                    value={phoneNumber}
+                    onChange={(e) => {
+                      setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10));
+                      setSignInError("");
+                    }}
+                    className="w-full text-lg text-[#02006c] font-bold outline-none placeholder-slate-300 bg-transparent"
+                  />
+                </div>
+              </div>
+
+              {signInError && (
+                <p className="text-[9px] text-rose-500 font-extrabold px-1 pt-1">{signInError}</p>
+              )}
+
+              <div className="pt-4">
+                <button 
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-orange-400 to-[#FF8E4D] hover:scale-[1.01] active:scale-95 text-white text-[10px] font-black py-3.5 rounded-full tracking-wider shadow-md shadow-orange-500/10 transition-all cursor-pointer text-center uppercase"
+                >
+                  Send OTP
+                </button>
+              </div>
+            </form>
           </div>
-
-          {/* Organic Wave Slant (With translate subpixel patch) */}
-          <svg className="absolute bottom-0 left-0 right-0 w-full h-16 fill-[#F8F9FD] pointer-events-none translate-y-[1px]" viewBox="0 0 1440 320" preserveAspectRatio="none">
-            <path d="M0,192L80,181.3C160,171,320,149,480,165.3C640,181,800,235,960,240C1120,245,1280,203,1360,181.3L1440,160L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z"></path>
-          </svg>
-        </div>
-
-        {/* Welcome Text Section */}
-        <div className="bg-[#F8F9FD] px-6 pr-40 pb-6 pt-1 flex flex-col justify-start text-left relative z-10 space-y-1.5">
-          <h2 className="text-2xl font-extrabold text-[#02006c] tracking-tight leading-tight">Welcome</h2>
-          <p className="text-[10px] text-slate-400 font-semibold leading-snug">
-            Discover collections, surprises &amp; rewards made for you.
-          </p>
-          <div className="w-6 h-0.5 bg-[#FF6E54] rounded-full"></div>
-
-          {/* Swipe right to continue indicator */}
-          <div 
-            onClick={() => scrollToSection(signInRef)}
-            className="flex items-center gap-1 text-[8px] font-black text-slate-400 uppercase tracking-widest pt-4 cursor-pointer transition-colors hover:text-[#FF6E54] whitespace-nowrap"
-          >
-            <span>Swipe Right to Begin</span>
-            <ChevronRight className="w-3 h-3 animate-pulse flex-shrink-0" />
-          </div>
-        </div>
-
-        {/* Floating Doll Mascot — Welcome Screen */}
-        <FloatingDoll />
-      </section>
-
-      {/* ======================================= */}
-      {/* PAGE 2: SIGN IN SCREEN (Phone + OTP)    */}
-      {/* ======================================= */}
-      <section 
-        ref={signInRef}
-        className="h-full w-full flex-shrink-0 snap-start snap-always flex flex-col justify-between overflow-hidden relative bg-[#F8F9FD]"
-      >
-        {/* Curved Orange top banner */}
-        <div className="relative h-[28%] bg-gradient-to-br from-orange-300 via-orange-400 to-[#FF8E4D]">
-          {renderLeafOverlay()}
-          
-          {/* Back to welcome */}
-          <button 
-            onClick={() => scrollToSection(welcomeRef)}
-            className="absolute top-6 left-4 w-9 h-9 bg-white/20 backdrop-blur-sm border border-white/10 rounded-full flex items-center justify-center text-white active:scale-90 transition-all z-20 cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-
-          {/* Curved wave transition (With translate subpixel patch) */}
-          <svg className="absolute bottom-0 left-0 right-0 w-full h-12 fill-[#F8F9FD] pointer-events-none translate-y-[1px]" viewBox="0 0 1440 320" preserveAspectRatio="none">
-            <path d="M0,192L80,181.3C160,171,320,149,480,165.3C640,181,800,235,960,240C1120,245,1280,203,1360,181.3L1440,160L1440,320L1360,320C1280,320,1120,320,960,320C800,320,640,320,480,320C320,320,160,320,80,320L0,320Z"></path>
-          </svg>
-        </div>
-
-        {/* Sign In Form layout */}
-        <div className="bg-[#F8F9FD] px-8 pb-16 pt-2 flex-grow flex flex-col justify-start z-10 space-y-6">
-          
-          {/* Form Header */}
-          <div className="space-y-1">
-            <h2 className="text-2xl font-extrabold text-[#02006c]">Sign In</h2>
-            <p className="text-[10px] text-slate-400 font-bold">Sign in to your Registered Account.</p>
-            <div className="w-6 h-0.75 bg-[#FF6E54] rounded-full mt-1.5"></div>
-          </div>
-
-          <form onSubmit={otpSent ? handleVerifyOtpAndLogin : handleSendOtp} className="space-y-4 pt-2">
-            
-            {/* Phone Number Input */}
-            <div className="space-y-0.5 text-left">
-              <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Phone Number</label>
-              <div className="flex gap-2 border-b border-slate-200 focus-within:border-[#FF6E54] transition-colors py-1.5">
-                <span className="text-xs text-[#02006c] font-black pr-1.5 border-r border-slate-100 flex items-center select-none">+91</span>
-                <input 
-                  type="tel" 
-                  disabled={otpSent}
-                  placeholder="Enter 10-digit number"
-                  value={phoneNumber}
-                  onChange={(e) => {
-                    setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10));
+        ) : (
+          /* ================================ */
+          /* OTP VERIFICATION SCREEN          */
+          /* ================================ */
+          <div className="space-y-6 animate-fade-in">
+            {/* Form Header */}
+            <div className="space-y-1">
+              <h2 className="text-2xl font-extrabold text-[#02006c]">Verify OTP</h2>
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] text-slate-400 font-bold">Code sent to +91 {phoneNumber}</p>
+                <button 
+                  onClick={() => {
+                    setOtpSent(false);
+                    setOtp(["", "", "", ""]);
                     setSignInError("");
                   }}
-                  className={`w-full text-xs text-[#02006c] font-bold outline-none placeholder-slate-300 bg-transparent ${otpSent ? 'opacity-60' : ''}`}
-                />
+                  className="p-1 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors text-slate-500"
+                >
+                  <Edit2 className="w-3 h-3" />
+                </button>
               </div>
+              <div className="w-6 h-0.75 bg-[#FF6E54] rounded-full mt-1.5"></div>
             </div>
 
-            {/* OTP Input (Rendered once OTP is simulated sent) */}
-            {otpSent && (
-              <div className="space-y-0.5 text-left animate-fade-in pt-1">
-                <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Enter 4-Digit OTP</label>
-                <input 
-                  type="text" 
-                  maxLength={4}
-                  placeholder="••••"
-                  value={otpCode}
-                  onChange={(e) => {
-                    setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 4));
-                    setSignInError("");
-                  }}
-                  className="w-full border-b border-slate-200 py-1.5 text-xs text-[#02006c] font-black outline-none focus:border-[#FF6E54] placeholder-slate-300 bg-transparent tracking-widest"
-                />
+            <form onSubmit={handleVerifyOtpAndLogin} className="flex flex-col gap-2 pt-4">
+              <div className="space-y-3 text-left">
+                <label className="text-sm font-syne font-black text-slate-500 uppercase tracking-widest text-center block">
+                  Enter 4-Digit OTP
+                </label>
+                
+                {/* 4 Box OTP Input */}
+                <div className="flex justify-center gap-3">
+                  {otp.map((digit, index) => (
+                    <input
+                      key={index}
+                      ref={otpRefs[index]}
+                      type="text"
+                      maxLength={1}
+                      value={digit}
+                      onChange={(e) => handleOtpChange(index, e.target.value)}
+                      onKeyDown={(e) => handleOtpKeyDown(index, e)}
+                      className="w-12 h-14 rounded-xl border-2 border-slate-200 bg-white text-center text-xl font-black text-[#02006c] focus:border-[#FF6E54] focus:ring-2 focus:ring-orange-100 outline-none transition-all shadow-sm"
+                    />
+                  ))}
+                </div>
               </div>
-            )}
 
-            {/* Notifications and Alerts */}
-            {signInError && (
-              <p className="text-[9px] text-rose-500 font-extrabold px-1 pt-1">{signInError}</p>
-            )}
+              {signInError && (
+                <p className="text-[9px] text-rose-500 font-extrabold text-center px-1 pt-2">{signInError}</p>
+              )}
 
-            {signInSuccess && !signInError && (
-              <p className="text-[9px] text-emerald-600 font-extrabold px-1 pt-1">{signInSuccess}</p>
-            )}
+              {signInSuccess && !signInError && (
+                <p className="text-[9px] text-emerald-600 font-extrabold text-center px-1 pt-2">{signInSuccess}</p>
+              )}
 
-            {/* Centered Filled Action Button */}
-            <div className="pt-4">
-              <button 
-                type="submit"
-                className="w-full bg-gradient-to-r from-orange-400 to-[#FF8E4D] hover:scale-[1.01] active:scale-95 text-white text-[10px] font-black py-3.5 rounded-full tracking-wider shadow-md shadow-orange-500/10 transition-all cursor-pointer text-center"
-              >
-                {otpSent ? 'VERIFY & SIGN IN' : 'SEND OTP'}
-              </button>
-            </div>
+              <div className="mt-1">
+                <button 
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-orange-400 to-[#FF8E4D] hover:scale-[1.01] active:scale-95 text-white text-[10px] font-black py-3.5 rounded-full tracking-wider shadow-md shadow-orange-500/10 transition-all cursor-pointer text-center uppercase"
+                >
+                  Verify & Sign In
+                </button>
+              </div>
 
-            {/* Resend Helper */}
-            {otpSent && (
-              <div className="text-center pt-2">
+              <div className="text-center mt-1">
                 <button 
                   type="button"
                   onClick={() => {
-                    setOtpCode("");
+                    setOtp(["", "", "", ""]);
                     setSignInError("");
                     setSignInSuccess("New OTP sent successfully!");
+                    otpRefs[0].current.focus();
                   }}
-                  className="text-[9px] font-extrabold text-[#FF8E4D] hover:underline cursor-pointer"
+                  className="text-[10px] font-extrabold text-[#FF8E4D] hover:underline cursor-pointer tracking-wide"
                 >
                   Resend Verification Code?
                 </button>
               </div>
-            )}
+            </form>
+          </div>
+        )}
+      </div>
 
-          </form>
-        </div>
-
-        {/* Floating Doll Mascot — Sign In Screen */}
-        <FloatingDoll />
-      </section>
-
+      {/* Floating Doll Mascot */}
+      <FloatingDoll />
     </div>
   );
 }
-

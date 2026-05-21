@@ -21,14 +21,10 @@ function AppContent() {
   const location = useLocation();
 
   // Show splash screen video on initial app load/open
-  const [showSplash, setShowSplash] = useState(() => {
-    const hasSeenSplash = sessionStorage.getItem('hasSeenSplash');
-    return !hasSeenSplash;
-  });
+  const [showSplash, setShowSplash] = useState(true);
 
   const handleSplashEnd = () => {
     setShowSplash(false);
-    sessionStorage.setItem('hasSeenSplash', 'true');
   };
 
   useEffect(() => {
@@ -44,7 +40,10 @@ function AppContent() {
   useEffect(() => {
     // Once splash screen video completes, run hierarchical route matching
     if (!showSplash) {
-      if (!user && location.pathname !== '/login') {
+      const protectedRoutes = ['/wishlist'];
+      const isProtectedRoute = protectedRoutes.some(route => location.pathname.startsWith(route));
+
+      if (!user && isProtectedRoute) {
         navigate('/login');
       } else if (user && location.pathname === '/login') {
         navigate('/');

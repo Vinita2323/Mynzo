@@ -24,7 +24,7 @@ export default function MobileNav() {
   const navItems = [
     { id: 'home', label: 'Home', icon: Home, path: '/' },
     { id: 'categories', label: 'Categories', icon: LayoutGrid, path: '/categories' },
-    { id: 'games', label: 'Toys', icon: Gamepad2, path: '/games' },
+    { id: 'games', label: 'Fun', icon: Gamepad2, path: '/games' },
     { id: 'studio', label: 'Studio', icon: Camera, path: '/studio' },
     { id: 'cart', label: 'Cart', icon: ShoppingCart, path: '/cart', badge: true },
     { id: 'profile', label: 'Profile', icon: User, path: '/profile' }
@@ -40,11 +40,7 @@ export default function MobileNav() {
           <button
             key={item.id}
             onClick={() => {
-              if (item.id === 'profile' && !user) {
-                navigate('/login');
-              } else {
-                navigate(item.path);
-              }
+              navigate(item.path);
             }}
             className="relative flex flex-col items-center justify-center py-1.5 px-1 min-w-[50px] transition-all duration-300 active:scale-90"
           >

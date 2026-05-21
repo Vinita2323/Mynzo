@@ -10,7 +10,8 @@ export default function Layout({ children }) {
                      location.pathname.toLowerCase().startsWith('/profile') || 
                      location.pathname.toLowerCase().startsWith('/categories') || 
                      location.pathname.toLowerCase().startsWith('/wishlist') ||
-                     location.pathname.toLowerCase().startsWith('/cart');
+                     location.pathname.toLowerCase().startsWith('/cart') ||
+                     location.pathname.toLowerCase().startsWith('/games');
 
   const hideMobileNav = isLoginPage || location.pathname.toLowerCase().startsWith('/profile');
 

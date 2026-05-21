@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Star, ShoppingCart, Check, Heart } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 export default function ProductCard({ product }) {
-  const { addToCart, toggleWishlist, isInWishlist } = useApp();
+  const { addToCart, toggleWishlist, isInWishlist, user } = useApp();
+  const navigate = useNavigate();
   const [added, setAdded] = useState(false);
 
   const handleAdd = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     addToCart(product);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);

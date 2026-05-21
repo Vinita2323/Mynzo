@@ -1,9 +1,12 @@
 import React, { useState } from 'react';
-import { Compass, HelpCircle, Layers, MapPin, Trophy, X, Coins, Gift, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Compass, HelpCircle, Layers, MapPin, Trophy, X, Coins, Gift, Sparkles, CheckCircle2, AlertCircle, ChevronLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { PLAY_AND_WIN } from '../data/mockData';
+import SnakeGame from '../components/games/SnakeGame';
 
 export default function GamesPage() {
+  const navigate = useNavigate();
   const { coins, addCoins } = useApp();
   const [activeGame, setActiveGame] = useState(null); // 'spin' | 'quiz' | 'scratch' | 'treasure' | null
   const [gameFeedback, setGameFeedback] = useState(null);
@@ -45,6 +48,7 @@ export default function GamesPage() {
     else if (gameId === 'game-2') setActiveGame('quiz');
     else if (gameId === 'game-3') setActiveGame('scratch');
     else if (gameId === 'game-4') setActiveGame('treasure');
+    else setActiveGame(gameId);
   };
 
   // Spin & Win logic
@@ -153,6 +157,18 @@ export default function GamesPage() {
   return (
     <div className="flex-grow p-4 space-y-6 pb-6 animate-fade-in">
       
+      {/* Custom Gaming Header */}
+      <div className="flex items-center justify-between pb-3 pt-4 px-4 -mx-4 -mt-4 bg-orange-100/90 border-b border-orange-200/60 backdrop-blur-md sticky top-0 z-20 mb-6">
+        <button 
+          onClick={() => navigate('/')}
+          className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-orange-200 text-[#FF6E54] hover:bg-orange-50 active:scale-95 transition-all cursor-pointer shadow-sm shadow-[#FF6E54]/10"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        <h1 className="text-xl font-black text-[#02006c] uppercase tracking-widest font-syne drop-shadow-sm">Playground</h1>
+        <div className="w-10 h-10"></div> {/* Spacer for centering */}
+      </div>
+
       {/* Upper balance board */}
       <div className="bg-gradient-to-br from-[#0F172A] to-slate-800 rounded-3xl p-5 text-white shadow-xl flex items-center justify-between border border-slate-700/50">
         <div className="space-y-1">
@@ -181,22 +197,24 @@ export default function GamesPage() {
           <p className="text-[10px] text-slate-400 font-semibold italic">Fun khelo, rewards lelo! 🥳</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          {PLAY_AND_WIN.map((game) => (
-            <button
-              key={game.id}
-              onClick={() => handleOpenGame(game.id)}
-              className={`border p-4 rounded-3xl flex flex-col items-center justify-center text-center gap-3 transition-all duration-300 active:scale-95 ${game.color} ${game.hoverColor}`}
-            >
-              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-md shadow-slate-200">
-                {renderGameIcon(game.id, "w-6 h-6")}
+        <div className="w-full">
+          <button
+            onClick={() => handleOpenGame('snake')}
+            className="w-full border border-orange-200 p-5 rounded-3xl flex items-center justify-between gap-4 transition-all duration-300 active:scale-95 bg-gradient-to-r from-orange-50 to-amber-50 hover:from-orange-100 hover:to-amber-100 shadow-sm"
+          >
+            <div className="flex items-center gap-4 text-left">
+              <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center shadow-md shadow-orange-200 text-2xl">
+                🐍
               </div>
               <div>
-                <h4 className="text-xs font-black text-[#0F172A]">{game.name}</h4>
-                <p className="text-[9px] text-slate-500 font-bold mt-0.5">{game.desc}</p>
+                <h4 className="text-sm font-black text-[#02006c]">Snake & Chase</h4>
+                <p className="text-[10px] text-slate-500 font-bold mt-1">Play the classic game & earn coins!</p>
               </div>
-            </button>
-          ))}
+            </div>
+            <div className="bg-[#FF6E54] text-white text-[10px] font-black px-3 py-1.5 rounded-full shadow-sm shadow-[#FF6E54]/30">
+              PLAY
+            </div>
+          </button>
         </div>
       </div>
 
@@ -438,6 +456,11 @@ export default function GamesPage() {
             )}
           </div>
         </div>
+      )}
+
+      {/* Snake & Chase Game Overlay */}
+      {activeGame === 'snake' && (
+        <SnakeGame onClose={() => setActiveGame(null)} addCoins={addCoins} />
       )}
 
     </div>
