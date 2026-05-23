@@ -7,7 +7,7 @@ import { CRAZY_DEALS } from '../data/mockData';
 export default function ProductDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { totalCartItems, addToCart, cart, toggleWishlist, isInWishlist } = useApp();
+  const { totalCartItems, addToCart, cart, toggleWishlist, isInWishlist, user } = useApp();
   
   const [product, setProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState('M');
@@ -53,10 +53,18 @@ export default function ProductDetailsPage() {
   }
 
   const handleAddToCart = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     addToCart(product);
   };
 
   const handleBuyNow = () => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
     const itemInCart = cart.find(item => item.id === product.id);
     if (!itemInCart) {
       addToCart(product);
@@ -126,7 +134,13 @@ export default function ProductDetailsPage() {
           {/* Right Action Overlays */}
           <div className="absolute top-4 right-4 flex flex-col gap-3 z-10">
             <button 
-              onClick={() => toggleWishlist(product)}
+              onClick={() => {
+                if (!user) {
+                  navigate('/login');
+                  return;
+                }
+                toggleWishlist(product);
+              }}
               className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform"
             >
               <Heart className={`w-5 h-5 ${isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-slate-600'}`} />

@@ -152,6 +152,10 @@ export default function ProductCard({ product }) {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
+              if (!user) {
+                navigate('/login');
+                return;
+              }
               toggleWishlist(product);
             }}
             className="absolute top-1 right-1 p-1 bg-white/80 hover:bg-white backdrop-blur-xs rounded-full shadow-3xs hover:scale-105 active:scale-95 transition-all duration-300 z-10 cursor-pointer"

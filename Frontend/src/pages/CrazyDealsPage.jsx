@@ -6,7 +6,7 @@ import { useApp } from '../context/AppContext';
 
 export default function CrazyDealsPage() {
   const navigate = useNavigate();
-  const { toggleWishlist, isInWishlist } = useApp();
+  const { toggleWishlist, isInWishlist, user } = useApp();
   const [toastMessage, setToastMessage] = useState('');
 
   return (
@@ -45,6 +45,10 @@ export default function CrazyDealsPage() {
               <button 
                 onClick={(e) => {
                   e.stopPropagation();
+                  if (!user) {
+                    navigate('/login');
+                    return;
+                  }
                   toggleWishlist(deal);
                   if (!isWished) {
                     setToastMessage('Added to your picks');

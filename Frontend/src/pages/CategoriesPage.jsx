@@ -76,28 +76,28 @@ export default function CategoriesPage() {
         filtered = items;
         break;
       case 'beauty':
-        filtered = items.filter((p) => p.type === 'tint');
+        filtered = items.filter((p) => ['tint', 'makeup', 'skincare', 'haircare'].includes(p.type));
         break;
       case 'gifting':
-        filtered = items.filter((p) => ['tee', 'necklace', 'watch', 'tint'].includes(p.type));
+        filtered = items.filter((p) => ['tee', 'necklace', 'watch', 'mug', 'tumbler', 'keychain', 'hamper', 'bouquet'].includes(p.type));
         break;
       case 'electronics':
-        filtered = items.filter((p) => p.type === 'watch');
+        filtered = items.filter((p) => ['earbuds', 'powerbank', 'fan', 'headphones', 'smartwatch'].includes(p.type));
         break;
       case 'jewellery':
-        filtered = items.filter((p) => ['necklace', 'watch'].includes(p.type));
+        filtered = items.filter((p) => ['necklace', 'bracelet', 'watch'].includes(p.type));
         break;
       case 'toys':
-        filtered = items.filter((p) => p.type === 'none');
+        filtered = items.filter((p) => ['plush', 'toy', 'nightlight'].includes(p.type));
         break;
       case 'stationery':
-        filtered = items.filter((p) => p.type === 'none');
+        filtered = items.filter((p) => ['notebook', 'pen', 'stapler'].includes(p.type));
         break;
       case 'fashion':
-        filtered = items.filter((p) => ['tee', 'necklace', 'watch'].includes(p.type));
+        filtered = items.filter((p) => ['tee', 'necklace', 'watch', 'pants', 'blouse', 'outfit'].includes(p.type));
         break;
       case 'electrical':
-        filtered = items.filter((p) => p.type === 'none');
+        filtered = items.filter((p) => ['bulb', 'wire', 'fan', 'iron'].includes(p.type));
         break;
       default:
         filtered = items;
