@@ -299,6 +299,32 @@ export default function Home() {
     }
   };
 
+  const BEAUTY_SUB_CATEGORIES = [
+    { id: 'skin', name: 'Skincare', icon: 'https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?w=100&q=80' },
+    { id: 'hair', name: 'Hair care', icon: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=100&q=80' },
+    { id: 'makeup', name: 'Makeup', icon: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=100&q=80' },
+    { id: 'fragrance', name: 'Fragrances', icon: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=100&q=80' },
+    { id: 'personal', name: 'Personal care', icon: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=100&q=80' },
+    { id: 'derma', name: 'Derma', icon: 'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?w=100&q=80' },
+    { id: 'grooming', name: 'Grooming', icon: 'https://images.unsplash.com/photo-1621607512214-68297480165e?w=100&q=80' }
+  ];
+
+  const TOP_10_BUYS = [
+    { id: 3, name: "Maybelline foundation", discount: "Min. 45% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 3 },
+    { id: 4, name: "Pond's moisturiser", discount: "Flat 59% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 4 },
+    { id: 5, name: "Bellavita perfume", discount: "Min. 75% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 5 },
+    { id: 6, name: "Garnier", discount: "Min. 40% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 6 },
+  ];
+
+  const TRENDING_BRANDS = [
+    { id: 1, brand: "Cetaphil", discount: "Up to 35% Off", badgeColor: "text-blue-600" },
+    { id: 2, brand: "derma co", discount: "Up to 50% Off", badgeColor: "text-slate-800" },
+    { id: 3, brand: "Clean Clear", discount: "Up to 60% Off", badgeColor: "text-blue-800" },
+    { id: 4, brand: "SWISS BEAUTY", discount: "Up to 50% Off", badgeColor: "text-slate-800" },
+    { id: 5, brand: "PERSONAL TOUCH", discount: "Up to 70% Off", badgeColor: "text-slate-800" },
+    { id: 6, brand: "sotrue", discount: "From ₹99", badgeColor: "text-slate-800" }
+  ];
+
   return (
     <div className="flex-grow space-y-3.5 pb-6 animate-fade-in">
       
@@ -421,8 +447,11 @@ export default function Home() {
         </div>
       </div>
 
-      {/* 3. Mynzo Trust Stamps (Value Props) - Styled as 4 beautiful separate square cards with orange borders and blue icons */}
-      <div className="px-4 -mt-2">
+      {/* CONDITIONAL RENDER: "For You" vs Other Categories */}
+      {selectedCategory === 'for-you' ? (
+        <>
+          {/* 3. Mynzo Trust Stamps (Value Props) */}
+          <div className="px-4 -mt-2">
         <div className="grid grid-cols-4 gap-2">
           {VALUE_PROPS.map((prop) => (
             <div 
@@ -689,8 +718,108 @@ export default function Home() {
           )}
         </div>
       </div>
+      </>
+      ) : selectedCategory === 'beauty' ? (
+        <div className="px-4 py-2 animate-fade-in space-y-8 pb-10">
+          
+          {/* 1. Sub-categories */}
+          <div className="flex gap-4 overflow-x-auto scrollbar-none pb-2 -mx-4 px-4 mt-2">
+            {BEAUTY_SUB_CATEGORIES.map(sub => (
+              <div key={sub.id} className="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer">
+                <div className="w-14 h-14 rounded-xl overflow-hidden border border-orange-100 shadow-sm hover:shadow-md transition-shadow">
+                  <img src={sub.icon} alt={sub.name} className="w-full h-full object-cover" />
+                </div>
+                <span className="text-[10px] font-bold text-slate-700">{sub.name}</span>
+              </div>
+            ))}
+          </div>
 
+          {/* 2. Top 10 beauty buys */}
+          <div>
+            <h3 className="text-[15px] font-black text-slate-800 mb-3 tracking-tight">Top 10 beauty buys</h3>
+            <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2 -mx-4 px-4">
+              {TOP_10_BUYS.map(buy => (
+                <div key={buy.id} className={`flex-shrink-0 w-32 h-44 rounded-xl p-2.5 flex flex-col justify-between ${buy.bg} text-white relative shadow-sm cursor-pointer hover:-translate-y-1 transition-transform`}>
+                  <div className="absolute top-1 left-2.5 text-[42px] font-black opacity-90 leading-none" style={{ fontFamily: 'sans-serif' }}>
+                    {buy.rank}.
+                  </div>
+                  
+                  <div className="mt-8 flex-grow flex items-center justify-center relative z-10">
+                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-inner">
+                      {/* Placeholder for product */}
+                      <Sparkles className="w-8 h-8 text-white/80" />
+                    </div>
+                  </div>
 
+                  <div className="z-10 mt-2">
+                    <h4 className="text-[10px] font-medium leading-tight truncate">{buy.name}</h4>
+                    <p className="text-[11px] font-black">{buy.discount}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* 3. Trending brands */}
+          <div>
+            <h3 className="text-[15px] font-black text-slate-800 mb-3 tracking-tight">Trending brands</h3>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-4">
+              {TRENDING_BRANDS.map(brand => (
+                <div key={brand.id} className="flex flex-col cursor-pointer group">
+                  <div className="w-full aspect-[4/3] rounded-xl bg-gradient-to-br from-pink-300 to-pink-400 p-2 relative shadow-sm hover:shadow-md transition-shadow flex items-center justify-center overflow-hidden">
+                    {/* Brand Badge */}
+                    <div className="absolute top-0 left-2 bg-white/95 backdrop-blur-md px-2 py-1 rounded-b-lg shadow-sm z-10">
+                      <span className={`text-[10px] font-black ${brand.badgeColor}`}>{brand.brand}</span>
+                    </div>
+
+                    {/* Placeholder for products */}
+                    <div className="flex items-end gap-1 mt-4 group-hover:scale-105 transition-transform">
+                      <div className="w-8 h-12 bg-white rounded flex items-center justify-center shadow-sm rotate-[-5deg]">
+                         <span className="text-[8px] text-slate-300 font-bold">Item</span>
+                      </div>
+                      <div className="w-10 h-14 bg-white/90 rounded flex items-center justify-center shadow-sm z-10">
+                         <span className="text-[8px] text-slate-400 font-bold">Item</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="mt-1.5 text-center">
+                    <p className="text-[11px] font-black text-slate-800">{brand.discount}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+        </div>
+      ) : (
+        <div className="px-4 py-2 animate-fade-in">
+          {/* Category UI: Filtered Product Grid */}
+          <div className="flex items-center justify-between mb-4 mt-2">
+            <h3 className="text-[17px] font-bold text-[#02006c] capitalize">
+              {selectedCategory.replace('-', ' ')}
+            </h3>
+            <span className="text-[10px] text-[#FF6E54] font-bold bg-orange-50 border border-orange-100 px-2.5 py-1 rounded-lg">
+              {filteredDeals.length} Items
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3 pb-8">
+            {filteredDeals.length > 0 ? (
+              filteredDeals.map((deal) => (
+                <ProductCard key={deal.id} product={deal} />
+              ))
+            ) : (
+              <div className="col-span-2 py-12 flex flex-col items-center justify-center text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
+                <LayoutGrid className="w-8 h-8 text-slate-300 mb-3" />
+                <h4 className="text-xs font-bold text-slate-800 mb-1">Nothing here yet</h4>
+                <p className="text-[10px] text-slate-400 max-w-[200px]">
+                  We are updating our catalog for this category. Check back soon!
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -148,6 +148,7 @@ export default function ProfilePage() {
   const [showWalletBalance, setShowWalletBalance] = useState(false);
   const [tempConfig, setTempConfig] = useState({ ...avatarConfig });
   const [modalStep, setModalStep] = useState(0); // 0 = Welcome onboarding, 1 = Creator editor
+  const [infoModalType, setInfoModalType] = useState(null); // 'terms', 'faq', or null
 
   // Custom Image Upload State
   const [uploadedImage, setUploadedImage] = useState(() => {
@@ -173,12 +174,18 @@ export default function ProfilePage() {
       <div className="bg-slate-100 min-h-[100dvh] pb-24 font-sans animate-fade-in flex flex-col">
         
         {/* Sticky App Header */}
-        <div className="bg-[#FFE4D6] px-4 py-4 shadow-sm z-10 sticky top-0">
+        <div className="bg-[#FFE4D6] px-4 py-4 shadow-sm z-10 sticky top-0 flex items-center gap-3">
+          <button 
+            onClick={() => navigate(-1)}
+            className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center text-[#02006c] hover:bg-white active:scale-95 transition-all cursor-pointer shadow-sm flex-shrink-0"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
           <h1 className="text-[#02006c] text-[20px] font-black tracking-tight">Profile</h1>
         </div>
 
         {/* Login Section Card */}
-        <div className="bg-[#FFE4D6] px-4 py-4 mb-2 shadow-sm mt-2">
+        <div className="bg-white px-4 py-4 mb-2 shadow-sm mt-2">
           <div className="flex items-center justify-between">
             <span className="text-[14px] text-[#02006c] font-medium">Log in to get exclusive offers</span>
             <button 
@@ -214,10 +221,21 @@ export default function ProfilePage() {
           <h3 className="text-[15px] font-bold text-slate-800 p-4 pb-2">Feedback & Information</h3>
           <div className="flex flex-col">
             {[
-              { icon: FileText, label: 'Terms, Policies and Licenses' },
-              { icon: HelpCircle, label: 'Browse FAQs' }
+              { icon: FileText, label: 'Terms, Policies and Licenses', id: 'terms' },
+              { icon: HelpCircle, label: 'Browse FAQs', id: 'faq' },
+              { icon: Phone, label: 'Help & Support', path: '/help' }
             ].map((item, idx) => (
-              <div key={idx} className="flex items-center gap-4 p-4 border-b border-slate-50 last:border-0 cursor-pointer hover:bg-slate-50 group transition-colors">
+              <div 
+                key={idx} 
+                onClick={() => {
+                  if (item.path) {
+                    navigate(item.path);
+                  } else {
+                    setInfoModalType(item.id);
+                  }
+                }}
+                className="flex items-center gap-4 p-4 border-b border-slate-50 last:border-0 cursor-pointer hover:bg-slate-50 group transition-colors"
+              >
                 <item.icon className="w-5 h-5 text-[#02006c] group-hover:scale-110 transition-transform" />
                 <span className="text-[13px] font-medium text-slate-700 flex-1 group-hover:text-[#02006c] transition-colors">{item.label}</span>
                 <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#FF6E54] group-hover:translate-x-1 transition-all" />
@@ -225,6 +243,89 @@ export default function ProfilePage() {
             ))}
           </div>
         </div>
+
+        {/* Info Modals */}
+        <AnimatePresence>
+          {infoModalType === 'terms' && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-[#0a0927]/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4"
+            >
+              <motion.div 
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="bg-white rounded-t-[32px] sm:rounded-[32px] w-full max-w-md overflow-hidden flex flex-col h-[85vh] shadow-2xl border-t border-slate-100"
+              >
+                <div className="w-full flex justify-center pt-4 pb-2 bg-white relative z-20">
+                  <div className="w-12 h-1.5 bg-slate-200 rounded-full"></div>
+                </div>
+                <div className="px-6 pb-4 pt-1 flex items-center justify-between border-b border-slate-100">
+                  <h3 className="text-lg font-black text-[#02006c]">Terms & Policies</h3>
+                  <button onClick={() => setInfoModalType(null)} className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors"><X className="w-4.5 h-4.5 text-slate-500" /></button>
+                </div>
+                <div className="p-6 overflow-y-auto space-y-4 text-sm text-slate-600">
+                  <h4 className="font-bold text-slate-800">1. Acceptance of Terms</h4>
+                  <p>By using Mynzo, you agree to these conditions. Please read them carefully.</p>
+                  <h4 className="font-bold text-slate-800">2. Privacy Policy</h4>
+                  <p>Your privacy is important to us. We only collect information necessary to provide you with our services.</p>
+                  <h4 className="font-bold text-slate-800">3. Return & Refund</h4>
+                  <p>Items can be returned within 14 days of delivery. Custom avatars and digital goods are non-refundable.</p>
+                  <h4 className="font-bold text-slate-800">4. Intellectual Property</h4>
+                  <p>All content included in or made available through Mynzo, such as text, graphics, logos, and avatars is the property of Mynzo.</p>
+                  <h4 className="font-bold text-slate-800">5. User Conduct</h4>
+                  <p>Users must not engage in any activity that disrupts or interferes with Mynzo services.</p>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+
+          {infoModalType === 'faq' && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-50 bg-[#0a0927]/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4"
+            >
+              <motion.div 
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="bg-white rounded-t-[32px] sm:rounded-[32px] w-full max-w-md overflow-hidden flex flex-col h-[85vh] shadow-2xl border-t border-slate-100"
+              >
+                <div className="w-full flex justify-center pt-4 pb-2 bg-white relative z-20">
+                  <div className="w-12 h-1.5 bg-slate-200 rounded-full"></div>
+                </div>
+                <div className="px-6 pb-4 pt-1 flex items-center justify-between border-b border-slate-100">
+                  <h3 className="text-lg font-black text-[#02006c]">Frequently Asked Questions</h3>
+                  <button onClick={() => setInfoModalType(null)} className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors"><X className="w-4.5 h-4.5 text-slate-500" /></button>
+                </div>
+                <div className="p-6 overflow-y-auto space-y-6">
+                  <div>
+                    <h4 className="font-bold text-slate-800 mb-1">How do I track my order?</h4>
+                    <p className="text-sm text-slate-600">You can track your order status in the "My Orders" section if you are logged in, or using the tracking link in your email.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 mb-1">What are Mynzo Coins?</h4>
+                    <p className="text-sm text-slate-600">Mynzo Coins are our loyalty currency. You earn them on every purchase and can use them for discounts on future orders.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 mb-1">Can I change my avatar later?</h4>
+                    <p className="text-sm text-slate-600">Yes! You can edit your avatar at any time by clicking on it in your profile page.</p>
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-slate-800 mb-1">Do you ship internationally?</h4>
+                    <p className="text-sm text-slate-600">Currently, we only ship within select regions. Please check our delivery coverage during checkout.</p>
+                  </div>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </div>
     );
@@ -239,7 +340,7 @@ export default function ProfilePage() {
     { label: "Account Information", desc: "Manage your email, phone, and profile settings", icon: User, color: "bg-orange-100/60 text-[#FF6E54]" },
     { label: "Security & Password", desc: "Change password and secure credentials", icon: Lock, color: "bg-amber-100/60 text-amber-600" },
     { label: "System Settings", desc: "Configure app defaults and notifications", icon: Settings, color: "bg-slate-100 text-slate-600" },
-    { label: "Help & Support", desc: "Access 24/7 client care and FAQs", icon: Phone, color: "bg-emerald-100/60 text-emerald-600" }
+    { label: "Help & Support", desc: "Access 24/7 client care and FAQs", icon: Phone, color: "bg-emerald-100/60 text-emerald-600", path: "/help" }
   ];
 
   // Options configuration pools

@@ -17,7 +17,8 @@ export default function Layout({ children }) {
                      location.pathname.toLowerCase().startsWith('/checkout') ||
                      location.pathname.toLowerCase().startsWith('/product') ||
                      location.pathname.toLowerCase().startsWith('/similar-products') ||
-                     location.pathname.toLowerCase().startsWith('/top-selection');
+                     location.pathname.toLowerCase().startsWith('/top-selection') ||
+                     location.pathname.toLowerCase().startsWith('/help');
 
   const hideMobileNav = isLoginPage || location.pathname.toLowerCase().startsWith('/profile') || location.pathname.toLowerCase().startsWith('/checkout') || location.pathname.toLowerCase().startsWith('/product');
 

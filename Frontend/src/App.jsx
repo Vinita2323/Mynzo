@@ -18,6 +18,7 @@ import CheckoutPage from './pages/CheckoutPage';
 import ProductDetailsPage from './pages/ProductDetailsPage';
 import TopSelectionPage from './pages/TopSelectionPage';
 import SimilarProductsPage from './pages/SimilarProductsPage';
+import HelpSupportPage from './pages/HelpSupportPage';
 
 import './App.css';
 
@@ -97,6 +98,7 @@ function AppContent() {
         <Route path="/top-selection" element={<TopSelectionPage />} />
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/help" element={<HelpSupportPage />} />
       </Routes>
     </Layout>
   );

@@ -72,6 +72,26 @@ export default function ProductDetailsPage() {
     navigate('/checkout');
   };
 
+  const handleShare = async () => {
+    const shareData = {
+      title: product?.name || 'Check out this product',
+      text: product?.desc || 'Great product on Mynzo',
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert('Link copied to clipboard!');
+      }
+    } catch (error) {
+      console.error('Error sharing:', error);
+    }
+  };
+
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-100 font-sans relative pb-[80px] animate-fade-in">
       
@@ -145,7 +165,10 @@ export default function ProductDetailsPage() {
             >
               <Heart className={`w-5 h-5 ${isInWishlist(product.id) ? 'fill-red-500 text-red-500' : 'text-slate-600'}`} />
             </button>
-            <button className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform">
+            <button 
+              onClick={handleShare}
+              className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform"
+            >
               <Send className="w-5 h-5 text-slate-600 ml-[-2px]" />
             </button>
           </div>

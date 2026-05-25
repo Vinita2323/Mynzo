@@ -35,7 +35,7 @@ export default function CrazyDealsPage() {
               key={deal.id} 
               className="bg-white rounded-lg shadow-sm border border-slate-100 relative cursor-pointer hover:shadow-md transition-shadow group overflow-hidden flex flex-col"
               onClick={() => navigate(`/product/${deal.id}`)} 
-            >
+            >  
               {/* Discount Badge */}
               <span className="absolute top-2 left-2 bg-[#FF6E54] text-white text-[9px] font-black px-1.5 py-0.5 rounded-lg shadow-sm z-10">
                 {deal.discount}

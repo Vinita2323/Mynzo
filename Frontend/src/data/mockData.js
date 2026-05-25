@@ -602,3 +602,31 @@ export const PLAY_AND_WIN = [
     hoverColor: 'hover:bg-sky-100 hover:border-sky-200'
   }
 ];
+
+export const NOTIFICATIONS = [
+  {
+    id: 1,
+    title: "Order Delivered!",
+    message: "Your order for Oversized Tee has been delivered successfully.",
+    time: "2 hours ago",
+    read: false,
+    type: "order"
+  },
+  {
+    id: 2,
+    title: "Crazy Deal Alert 🔥",
+    message: "Up to 50% off on premium items! Grab them before they're gone.",
+    time: "5 hours ago",
+    read: false,
+    type: "promo"
+  },
+  {
+    id: 3,
+    title: "Price Drop on your Wishlist",
+    message: "Pink Lip Gloss is now available at 20% off. Shop now!",
+    time: "1 day ago",
+    read: true,
+    type: "wishlist"
+  }
+];
+
