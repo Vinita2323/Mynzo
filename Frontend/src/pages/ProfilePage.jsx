@@ -6,7 +6,7 @@ import {
   ChevronLeft, User, Lock, Settings, Phone, LogOut, Camera, 
   ChevronRight, Coins, Gift, ShoppingBag, Sparkles, X,
   CreditCard, Globe, Bell, Headphones, Store, FileText, HelpCircle,
-  Heart, Package
+  Heart, Package, Edit2, MapPin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CRAZY_DEALS } from '../data/mockData';
@@ -199,20 +199,6 @@ export default function ProfilePage() {
 
 
 
-        {/* Recently Viewed Stores */}
-        <div className="bg-white p-4 mb-2 shadow-sm">
-          <h3 className="text-[15px] font-bold text-slate-800 mb-3">Recently Viewed Stores</h3>
-          <div className="flex overflow-x-auto gap-3 pb-1 scrollbar-none">
-            {CRAZY_DEALS.slice(0, 3).map((deal) => (
-              <div key={deal.id} className="w-24 flex-shrink-0 flex flex-col items-center border border-slate-100 rounded-lg p-1.5 cursor-pointer hover:border-orange-200 hover:shadow-sm transition-all group">
-                <div className="w-full aspect-[4/5] overflow-hidden rounded mb-2 bg-[#F8F9FD]">
-                  <img src={deal.image} alt={deal.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                </div>
-                <span className="text-[10px] font-bold text-slate-600 text-center truncate w-full px-1 group-hover:text-[#02006c] transition-colors">{deal.name}</span>
-              </div>
-            ))}
-          </div>
-        </div>
 
 
 
@@ -334,13 +320,11 @@ export default function ProfilePage() {
   const mockUser = user;
 
   const menuOptions = [
-    { id: 'wallet', label: "My Wallet", desc: "View your current Mynzo coin balance", icon: Coins, color: "bg-indigo-100/60 text-[#02006c]" },
-    { label: "My Picks", desc: "Check your wishlist", icon: Heart, color: "bg-rose-100/60 text-rose-500", path: "/wishlist" },
-    { label: "My Orders", desc: "Watch what orders are placed", icon: Package, color: "bg-sky-100/60 text-sky-600", path: "/orders" },
-    { label: "Account Information", desc: "Manage your email, phone, and profile settings", icon: User, color: "bg-orange-100/60 text-[#FF6E54]" },
-    { label: "Security & Password", desc: "Change password and secure credentials", icon: Lock, color: "bg-amber-100/60 text-amber-600" },
-    { label: "System Settings", desc: "Configure app defaults and notifications", icon: Settings, color: "bg-slate-100 text-slate-600" },
-    { label: "Help & Support", desc: "Access 24/7 client care and FAQs", icon: Phone, color: "bg-emerald-100/60 text-emerald-600", path: "/help" }
+    { id: 'wallet', label: "My Wallet", desc: "View your current Mynzo coin balance", icon: Coins, color: "bg-indigo-100/60 text-[#02006c]", path: "/wallet" },
+    { label: "Account Information", desc: "Manage your email, phone, and profile settings", icon: User, color: "bg-orange-100/60 text-[#FF6E54]", path: "/account" },
+    { label: "Saved Addresses", desc: "Manage your delivery addresses", icon: MapPin, color: "bg-rose-100/60 text-rose-500", path: "/saved-addresses" },
+    { label: "Security & Password", desc: "Change password and secure credentials", icon: Lock, color: "bg-amber-100/60 text-amber-600", path: "/security" },
+    { label: "Refer & Earn", desc: "Invite friends and earn Mynzo Coins", icon: Gift, color: "bg-emerald-100/60 text-emerald-600", path: "/refer" }
   ];
 
   // Options configuration pools
@@ -393,6 +377,9 @@ export default function ProfilePage() {
   const handleSaveAvatar = () => {
     setAvatarConfig(tempConfig);
     sessionStorage.setItem('userAvatar', JSON.stringify(tempConfig));
+    // Clear uploaded image so the created avatar is visible
+    setUploadedImage(null);
+    sessionStorage.removeItem('userUploadedImage');
     setIsModalOpen(false);
   };
 
@@ -418,13 +405,16 @@ export default function ProfilePage() {
             <ChevronLeft className="w-5 h-5" />
           </button>
           
-          <button className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-slate-100 text-slate-600 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer shadow-sm">
-             <Settings className="w-5 h-5" />
+          <button 
+            onClick={() => navigate('/account')}
+            className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-slate-100 text-slate-600 hover:bg-slate-50 active:scale-95 transition-all cursor-pointer shadow-sm"
+          >
+             <Edit2 className="w-5 h-5" />
           </button>
         </div>
 
         {/* User Card: Avatar and Names (Cute & Simple) */}
-        <div className="flex flex-col items-center text-center pt-2 relative">
+        <div className="flex flex-col items-center text-center !-mt-4 relative">
           {/* Avatar Container with Soft Ring */}
           <div 
             onClick={handleOpenCreator}
@@ -479,37 +469,45 @@ export default function ProfilePage() {
 
 
 
-        {/* Horizontal Rewards Stats Grid (Flat Cute) */}
-        <div className="grid grid-cols-3 gap-2 px-1 pt-2">
-          <div className="bg-white rounded-[20px] p-3 text-center shadow-sm border border-slate-100 hover:-translate-y-1 transition-transform duration-300 cursor-pointer group">
-            <div className="w-8 h-8 mx-auto bg-amber-50 rounded-full flex items-center justify-center mb-1.5 group-hover:bg-amber-100 transition-colors">
-              <Coins className="w-4 h-4 text-amber-500 group-hover:animate-bounce" />
-            </div>
-            <span className="text-[12px] font-black text-slate-800 block leading-none">{coins || 560}</span>
-            <span className="text-[7.5px] text-slate-400 font-extrabold uppercase tracking-widest block mt-1">Mynzo Coins</span>
+        {/* Action Grid (Orders, Wishlist, Coupons, Help Center) */}
+        <div className="grid grid-cols-2 gap-3 px-1 pt-4">
+          <div 
+            onClick={() => navigate('/orders')}
+            className="bg-white rounded h-[52px] px-3.5 flex items-center gap-3 shadow-sm border border-slate-100 hover:border-orange-200 hover:shadow-md transition-all cursor-pointer group"
+          >
+            <Package className="w-5 h-5 text-[#FF6E54] group-hover:scale-110 transition-transform" />
+            <span className="text-[13px] font-bold text-slate-800 whitespace-nowrap">Orders</span>
           </div>
 
-          <div className="bg-white rounded-[20px] p-3 text-center shadow-sm border border-slate-100 hover:-translate-y-1 transition-transform duration-300 cursor-pointer group">
-            <div className="w-8 h-8 mx-auto bg-orange-50 rounded-full flex items-center justify-center mb-1.5 group-hover:bg-orange-100 transition-colors">
-              <Gift className="w-4 h-4 text-orange-400" />
-            </div>
-            <span className="text-[12px] font-black text-slate-800 block leading-none">3 Active</span>
-            <span className="text-[7.5px] text-slate-400 font-extrabold uppercase tracking-widest block mt-1">Vouchers</span>
+          <div 
+            onClick={() => navigate('/wishlist')}
+            className="bg-white rounded h-[52px] px-3.5 flex items-center gap-3 shadow-sm border border-slate-100 hover:border-orange-200 hover:shadow-md transition-all cursor-pointer group"
+          >
+            <Heart className="w-5 h-5 text-[#FF6E54] group-hover:scale-110 transition-transform" />
+            <span className="text-[13px] font-bold text-slate-800 whitespace-nowrap">My Picks</span>
           </div>
 
-          <div className="bg-white rounded-[20px] p-3 text-center shadow-sm border border-slate-100 hover:-translate-y-1 transition-transform duration-300 cursor-pointer group">
-            <div className="w-8 h-8 mx-auto bg-emerald-50 rounded-full flex items-center justify-center mb-1.5 group-hover:bg-emerald-100 transition-colors">
-              <ShoppingBag className="w-4 h-4 text-emerald-400" />
-            </div>
-            <span className="text-[12px] font-black text-slate-800 block leading-none">2 Orders</span>
-            <span className="text-[7.5px] text-slate-400 font-extrabold uppercase tracking-widest block mt-1">In Transit</span>
+          <div 
+            onClick={() => navigate('/coupons')}
+            className="bg-white rounded h-[52px] px-3.5 flex items-center gap-3 shadow-sm border border-slate-100 hover:border-orange-200 hover:shadow-md transition-all cursor-pointer group"
+          >
+            <Gift className="w-5 h-5 text-[#FF6E54] group-hover:scale-110 transition-transform" />
+            <span className="text-[13px] font-bold text-slate-800 whitespace-nowrap">Coupons</span>
+          </div>
+
+          <div 
+            onClick={() => navigate('/help')}
+            className="bg-white rounded h-[52px] px-3.5 flex items-center gap-3 shadow-sm border border-slate-100 hover:border-orange-200 hover:shadow-md transition-all cursor-pointer group"
+          >
+            <Headphones className="w-5 h-5 text-[#FF6E54] group-hover:scale-110 transition-transform" />
+            <span className="text-[13px] font-bold text-slate-800 whitespace-nowrap">Help Center</span>
           </div>
         </div>
 
         {/* Soft Pastel Avatar Creator Prompt Banner */}
         <div 
           onClick={handleOpenCreator}
-          className="relative overflow-hidden rounded-[24px] p-4 bg-orange-50 border border-orange-100 cursor-pointer group hover:bg-orange-100/50 transition-colors duration-300 shadow-sm"
+          className="relative overflow-hidden rounded p-4 bg-orange-50 border border-orange-100 cursor-pointer group hover:bg-orange-100/50 transition-colors duration-300 shadow-sm"
         >
           {/* Subtle Decorative blobs */}
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-orange-200/30 rounded-full blur-xl"></div>
@@ -531,7 +529,9 @@ export default function ProfilePage() {
         </div>
 
         {/* Menu Options Stack (Cute List) */}
-        <div className="bg-white rounded-[28px] p-2 shadow-sm border border-slate-100">
+        <div className="pt-2">
+          <h3 className="text-[15px] font-bold text-slate-800 px-1 mb-3">Account Settings</h3>
+          <div className="bg-white rounded p-2 shadow-sm border border-slate-100">
           <div className="space-y-1">
             {menuOptions.map((opt, idx) => {
               const Icon = opt.icon;
@@ -540,13 +540,12 @@ export default function ProfilePage() {
                 <button
                   key={idx}
                   onClick={() => {
-                    if (isWallet) setShowWalletBalance(!showWalletBalance);
-                    else if (opt.path) navigate(opt.path);
+                    if (opt.path) navigate(opt.path);
                   }}
-                  className="w-full flex items-center justify-between p-3.5 rounded-[20px] hover:bg-slate-50 active:scale-[0.98] transition-all duration-300 text-left cursor-pointer group"
+                  className="w-full flex items-center justify-between p-3.5 rounded hover:bg-slate-50 active:scale-[0.98] transition-all duration-300 text-left cursor-pointer group"
                 >
                   <div className="flex items-center gap-4 min-w-0 flex-1">
-                    <div className={`w-11 h-11 ${opt.color} rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-105 shadow-inner`}>
+                    <div className={`w-11 h-11 ${opt.color} rounded flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-105 shadow-inner`}>
                       <Icon className="w-5 h-5" />
                     </div>
                     <div className="min-w-0">
@@ -554,14 +553,7 @@ export default function ProfilePage() {
                       <span className="text-[9px] text-slate-400 font-bold block truncate mt-1 leading-none tracking-wide">{opt.desc}</span>
                     </div>
                   </div>
-                  {isWallet && showWalletBalance ? (
-                    <div className="flex items-center gap-1.5 bg-amber-50 px-3 py-1.5 rounded-full border border-amber-100">
-                      <span className="text-amber-500 font-black text-sm">{coins}</span>
-                      <span className="text-amber-400 font-bold text-[8px] uppercase">Coins</span>
-                    </div>
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#FF6E54] group-hover:translate-x-1 transition-all" />
-                  )}
+                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#FF6E54] group-hover:translate-x-1 transition-all" />
                 </button>
               );
             })}
@@ -575,10 +567,10 @@ export default function ProfilePage() {
               setUser(null);
               navigate('/login');
             }}
-            className="w-full flex items-center justify-between p-3.5 rounded-[20px] hover:bg-rose-50/60 active:scale-[0.98] transition-all duration-300 text-left cursor-pointer group"
+            className="w-full flex items-center justify-between p-3.5 rounded hover:bg-rose-50/60 active:scale-[0.98] transition-all duration-300 text-left cursor-pointer group"
           >
             <div className="flex items-center gap-4">
-              <div className="w-11 h-11 bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105 shadow-inner">
+              <div className="w-11 h-11 bg-rose-50 text-rose-500 rounded flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105 shadow-inner">
                 <LogOut className="w-5 h-5" />
               </div>
               <div>
@@ -588,6 +580,7 @@ export default function ProfilePage() {
             </div>
             <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-rose-400 transition-colors" />
           </button>
+        </div>
         </div>
       </div>
 

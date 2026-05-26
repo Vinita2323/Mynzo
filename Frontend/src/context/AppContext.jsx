@@ -18,6 +18,12 @@ export const AppProvider = ({ children }) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("home");
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [globalToast, setGlobalToast] = useState('');
+  const [userReels, setUserReels] = useState(() => {
+    const savedReels = sessionStorage.getItem('userReels');
+    return savedReels ? JSON.parse(savedReels) : [];
+  });
+  const [orderReviews, setOrderReviews] = useState({});
   const [user, setUser] = useState(() => {
     const loggedIn = sessionStorage.getItem('isLoggedIn');
     if (loggedIn === 'true') {
@@ -82,6 +88,8 @@ export const AppProvider = ({ children }) => {
       if (exists) {
         return prev.filter((item) => item.id !== product.id);
       }
+      setGlobalToast('your items is added on wishlist');
+      setTimeout(() => setGlobalToast(''), 2500);
       return [...prev, product];
     });
   };
@@ -92,6 +100,25 @@ export const AppProvider = ({ children }) => {
 
   const addOrder = (order) => {
     setOrders((prev) => [order, ...prev]);
+  };
+
+  const addStudioPost = (post) => {
+    setUserReels((prev) => {
+      const updated = [post, ...prev];
+      sessionStorage.setItem('userReels', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const addOrderReview = (orderId, review) => {
+    setOrderReviews((prev) => ({
+      ...prev,
+      [orderId]: review
+    }));
+  };
+
+  const getOrderReview = (orderId) => {
+    return orderReviews[orderId] || null;
   };
 
   return (
@@ -121,6 +148,13 @@ export const AppProvider = ({ children }) => {
         setIsLocationModalOpen,
         activeGame,
         setActiveGame,
+        globalToast,
+        setGlobalToast,
+        userReels,
+        addStudioPost,
+        orderReviews,
+        addOrderReview,
+        getOrderReview,
         user,
         setUser,
       }}

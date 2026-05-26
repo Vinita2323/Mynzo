@@ -1,9 +1,33 @@
-import React from 'react';
-import { ChevronLeft, PhoneCall, Mail, MessageSquare, Clock } from 'lucide-react';
+import React, { useState } from 'react';
+import { ChevronLeft, PhoneCall, Mail, MessageSquare, Clock, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export default function HelpSupportPage() {
   const navigate = useNavigate();
+  const [openFaqIndex, setOpenFaqIndex] = useState(null);
+
+  const faqs = [
+    {
+      question: "How do I track my order?",
+      answer: "You can track your order by going to the 'Orders' section in your profile and clicking on the 'Track Order' button next to your recent purchase."
+    },
+    {
+      question: "What is your return policy?",
+      answer: "We offer a 30-day hassle-free return policy. If you're not satisfied with your purchase, you can return it within 30 days of delivery for a full refund."
+    },
+    {
+      question: "How do I use Mynzo Coins?",
+      answer: "Mynzo Coins can be applied at checkout. 100 Mynzo Coins equals $1. You can select the option to 'Use Mynzo Coins' during the payment process."
+    },
+    {
+      question: "Can I change my shipping address?",
+      answer: "You can update your shipping address in the 'Saved Addresses' section of your Account Information. For active orders, please contact support immediately."
+    }
+  ];
+
+  const toggleFaq = (index) => {
+    setOpenFaqIndex(openFaqIndex === index ? null : index);
+  };
 
   return (
     <div className="bg-slate-50 min-h-[100dvh] font-sans animate-fade-in flex flex-col">
@@ -58,6 +82,47 @@ export default function HelpSupportPage() {
               <Clock className="w-3 h-3" /> Fast
             </div>
           </a>
+        </div>
+
+        {/* FAQs Section */}
+        <div className="space-y-4 pt-4">
+          <h3 className="text-sm font-black text-slate-800 uppercase tracking-wider">Frequently Asked Questions</h3>
+          
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+            {faqs.map((faq, index) => (
+              <div 
+                key={index}
+                className={`border-b border-slate-100 last:border-0 ${
+                  openFaqIndex === index ? 'bg-orange-50/30' : 'hover:bg-slate-50'
+                } transition-colors`}
+              >
+                <button
+                  onClick={() => toggleFaq(index)}
+                  className="w-full text-left px-5 py-4 flex items-center justify-between gap-4 cursor-pointer"
+                >
+                  <span className={`text-[13px] font-bold ${openFaqIndex === index ? 'text-[#FF6E54]' : 'text-[#02006c]'}`}>
+                    {faq.question}
+                  </span>
+                  <ChevronDown 
+                    className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform duration-300 ${
+                      openFaqIndex === index ? 'rotate-180 text-[#FF6E54]' : ''
+                    }`}
+                  />
+                </button>
+                
+                {/* Expandable Answer */}
+                <div 
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    openFaqIndex === index ? 'max-h-40 opacity-100' : 'max-h-0 opacity-0'
+                  }`}
+                >
+                  <p className="px-5 pb-4 text-[13px] text-slate-600 font-medium leading-relaxed">
+                    {faq.answer}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
       </div>

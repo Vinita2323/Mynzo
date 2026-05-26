@@ -7,7 +7,6 @@ import { useApp } from '../context/AppContext';
 export default function CrazyDealsPage() {
   const navigate = useNavigate();
   const { toggleWishlist, isInWishlist, user } = useApp();
-  const [toastMessage, setToastMessage] = useState('');
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col pb-20 animate-fade-in">
@@ -44,16 +43,13 @@ export default function CrazyDealsPage() {
               {/* Wishlist Button */}
               <button 
                 onClick={(e) => {
+                  e.preventDefault();
                   e.stopPropagation();
                   if (!user) {
                     navigate('/login');
                     return;
                   }
                   toggleWishlist(deal);
-                  if (!isWished) {
-                    setToastMessage('Added to your picks');
-                    setTimeout(() => setToastMessage(''), 2000);
-                  }
                 }}
                 className={`absolute top-2 right-2 w-7 h-7 bg-white/80 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm z-10 transition-colors ${
                   isWished ? 'text-red-500' : 'text-slate-300 hover:text-red-500'
@@ -81,13 +77,6 @@ export default function CrazyDealsPage() {
           );
         })}
       </div>
-
-      {/* Toast Notification */}
-      {toastMessage && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg z-50 animate-fade-in">
-          {toastMessage}
-        </div>
-      )}
     </div>
   );
 }

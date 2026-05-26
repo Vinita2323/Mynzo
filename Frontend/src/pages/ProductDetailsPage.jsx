@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, ShoppingCart, Heart, Send, Star, ChevronRight, Home, Truck, Store, RotateCcw, Banknote, ShieldCheck, ArrowRight, ChevronDown } from 'lucide-react';
+import { ArrowLeft, Search, ShoppingCart, Heart, Send, Star, ChevronRight, Home, Truck, Store, RotateCcw, Banknote, ShieldCheck, ArrowRight, ChevronDown, CheckCircle2, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CRAZY_DEALS } from '../data/mockData';
 
@@ -13,6 +13,8 @@ export default function ProductDetailsPage() {
   const [selectedSize, setSelectedSize] = useState('M');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
 
   useEffect(() => {
     setIsLoading(true);
@@ -58,6 +60,8 @@ export default function ProductDetailsPage() {
       return;
     }
     addToCart(product);
+    setToastMessage('Item added to cart!');
+    setTimeout(() => setToastMessage(''), 3000);
   };
 
   const handleBuyNow = () => {
@@ -69,7 +73,7 @@ export default function ProductDetailsPage() {
     if (!itemInCart) {
       addToCart(product);
     }
-    navigate('/checkout');
+    navigate('/review-order');
   };
 
   const handleShare = async () => {
@@ -222,10 +226,16 @@ export default function ProductDetailsPage() {
       </div>
 
       {/* Size Selector */}
-      <div className="bg-white p-3 pt-2">
+      {['tee', 'pants', 'blouse', 'outfit'].includes(product.type) && (
+        <div className="bg-white p-3 pt-2">
         <div className="flex items-center justify-between mb-3">
           <span className="font-bold text-sm text-[#02006c]">Select Size</span>
-          <span className="text-[#FF6E54] font-bold text-[11px]">Size Chart</span>
+          <button 
+            onClick={() => setIsSizeChartOpen(true)}
+            className="text-[#FF6E54] font-bold text-[11px]"
+          >
+            Size Chart
+          </button>
         </div>
         
         <div className="flex gap-3">
@@ -252,6 +262,7 @@ export default function ProductDetailsPage() {
           })}
         </div>
       </div>
+      )}
 
       {/* Product Details Description */}
       <div className="bg-white p-3 mt-2">
@@ -395,6 +406,108 @@ export default function ProductDetailsPage() {
           </button>
         </div>
       </div>
+
+      {/* Size Chart Modal */}
+      {['tee', 'pants', 'blouse', 'outfit'].includes(product.type) && isSizeChartOpen && (
+        <div className="fixed inset-0 z-[100] bg-white flex flex-col animate-fade-in font-sans">
+          {/* Header */}
+          <div className="flex items-center gap-3 p-4 border-b border-slate-200 sticky top-0 bg-white">
+            <button onClick={() => setIsSizeChartOpen(false)} className="p-1 hover:bg-slate-100 rounded-full">
+              <X className="w-6 h-6 text-slate-500" />
+            </button>
+            <h2 className="text-[17px] text-slate-800">Size Chart</h2>
+          </div>
+
+          <div className="overflow-y-auto flex-1 bg-slate-100">
+            {/* Title */}
+            <div className="bg-slate-200 px-4 py-4 text-center">
+              <h3 className="font-bold text-slate-900 text-sm">{product.name}</h3>
+            </div>
+
+            {/* Table */}
+            <div className="bg-white overflow-x-auto">
+              <table className="w-full text-center text-xs border-collapse">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="p-3 font-bold text-slate-800">Size</th>
+                    <th className="p-3 font-bold text-slate-800">Chest</th>
+                    <th className="p-3 font-bold text-slate-800">Brand Size</th>
+                    <th className="p-3 font-bold text-slate-800">Shoulder</th>
+                    <th className="p-3 font-bold text-slate-800">Length</th>
+                    <th className="p-3 font-bold text-slate-800">Sleeve Length</th>
+                    <th className="p-3 font-bold text-slate-800">Waist</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-700">
+                  <tr>
+                    <td className="p-3 font-black text-black">M</td>
+                    <td className="p-3 whitespace-nowrap">35.5 - 37</td>
+                    <td className="p-3">M</td>
+                    <td className="p-3">14</td>
+                    <td className="p-3">23</td>
+                    <td className="p-3">6</td>
+                    <td className="p-3">34</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-black text-black">L</td>
+                    <td className="p-3 whitespace-nowrap">37.5 - 39</td>
+                    <td className="p-3">L</td>
+                    <td className="p-3">15</td>
+                    <td className="p-3">23.5</td>
+                    <td className="p-3">6.5</td>
+                    <td className="p-3">36</td>
+                  </tr>
+                  <tr>
+                    <td className="p-3 font-black text-black">XL</td>
+                    <td className="p-3 whitespace-nowrap">39.5 - 41</td>
+                    <td className="p-3">XL</td>
+                    <td className="p-3">16</td>
+                    <td className="p-3">24</td>
+                    <td className="p-3">7</td>
+                    <td className="p-3">38</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            {/* Measurement Guidelines */}
+            <div className="bg-slate-200 p-4 pb-12 mt-1 h-full">
+              <h4 className="font-bold text-slate-900 text-sm mb-3">Measurement Guidelines:</h4>
+              <p className="text-sm text-slate-800 mb-2 leading-snug">
+                <span className="font-bold">Measuring T Shirt Size</span> Not sure about your t shirt size? Follow these simple steps to figure it out:
+              </p>
+              <ul className="text-sm text-slate-800 space-y-2 leading-snug">
+                <li><span className="font-bold">Shoulder</span> - Measure the shoulder at the back, from edge to edge with arms relaxed on both sides</li>
+                <li><span className="font-bold">Chest</span> - Measure around the body under the arms at the fullest part of the chest with your arms relaxed at both sides.</li>
+                <li><span className="font-bold">Sleeve</span> - Measure from the shoulder seam through the outer arm to the cuff/hem</li>
+                <li><span className="font-bold">Neck</span> - Measured horizontally across the neck Length - Measure from the highest point of the shoulder seam to the bottom hem of the garment's</li>
+              </ul>
+              
+              <div className="mt-6 flex justify-center bg-white rounded-lg p-3 max-w-[280px] mx-auto border border-slate-300">
+                <svg viewBox="0 0 200 150" className="w-full h-auto text-slate-800" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M60,40 Q100,20 140,40 L180,90 L160,110 L140,90 L140,150 L60,150 L60,90 L40,110 L20,90 Z" />
+                  <path strokeDasharray="4 4" d="M100,30 L100,150" stroke="#FF6E54" />
+                  <path strokeDasharray="4 4" d="M60,90 L140,90" stroke="#FF6E54" />
+                  <path strokeDasharray="4 4" d="M60,40 L140,40" stroke="#FF6E54" />
+                  <path strokeDasharray="4 4" d="M40,65 L80,65" stroke="#FF6E54" />
+                  <text x="90" y="20" fontSize="8" fill="currentColor" stroke="none">NECK</text>
+                  <text x="130" y="35" fontSize="8" fill="currentColor" stroke="none">SHOULDER</text>
+                  <text x="95" y="100" fontSize="8" fill="currentColor" stroke="none">CHEST</text>
+                  <text x="25" y="125" fontSize="8" fill="currentColor" stroke="none">SLEEVE</text>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Toast Message */}
+      {toastMessage && (
+        <div className="fixed bottom-[70px] left-1/2 -translate-x-1/2 bg-emerald-600 text-white px-4 py-2.5 rounded-full shadow-lg text-sm font-bold animate-slide-up z-[60] flex items-center gap-2 whitespace-nowrap">
+          <CheckCircle2 className="w-4 h-4" />
+          {toastMessage}
+        </div>
+      )}
 
     </div>
   );

@@ -1,44 +1,195 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Sparkles, Heart, MessageCircle, Share2, ShoppingBag, Eye, Star } from 'lucide-react';
+import { Heart, MessageCircle, Share2, ShoppingBag, Gift, ArrowLeft, CheckCircle2, ChevronLeft, Menu } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CRAZY_DEALS } from '../data/mockData';
+import fashionReel from '../assets/videos/fashion_reel.mp4';
+
+const ReelVideo = ({ src, isFirst }) => {
+  const videoRef = useRef(null);
+  const containerRef = useRef(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+
+  useEffect(() => {
+    const options = {
+      root: null,
+      rootMargin: '0px',
+      threshold: 0.6 // Play when 60% of the video is visible
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          // Play video if it comes into view
+          if (videoRef.current) {
+            videoRef.current.play().catch(e => console.log('Autoplay prevented:', e));
+            setIsPlaying(true);
+          }
+        } else {
+          // Pause video if it goes out of view
+          if (videoRef.current) {
+            videoRef.current.pause();
+            setIsPlaying(false);
+          }
+        }
+      });
+    }, options);
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      if (containerRef.current) {
+        observer.unobserve(containerRef.current);
+      }
+    };
+  }, []);
+
+  const togglePlay = (e) => {
+    e.stopPropagation();
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  return (
+    <div ref={containerRef} className="absolute inset-0 z-0 cursor-pointer" onClick={togglePlay}>
+      <video 
+        ref={videoRef}
+        src={src} 
+        className="w-full h-full object-cover"
+        loop
+        playsInline
+      />
+      {!isPlaying && (
+        <div className="absolute inset-0 flex items-center justify-center bg-black/20 z-10 pointer-events-none">
+          <div className="w-20 h-20 bg-black/30 rounded-full flex items-center justify-center backdrop-blur-md">
+            <svg className="w-10 h-10 text-white opacity-80 ml-1" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function StudioPage() {
-  const { addToCart, user } = useApp();
+  const { addToCart, user, userReels } = useApp();
   const navigate = useNavigate();
   
-  const [posts, setPosts] = useState([
+  const mockPosts = [
     {
       id: 1,
       username: "curated_by_vini",
-      desc: "This Cuddly Giant Teddy Bear is the absolute best gift for birthdays! 🧸✨ Super soft premium plush. #gifting #aesthetic #cuddles",
-      likes: 342,
-      comments: 24,
-      views: "2.1K",
+      desc: "The little details that make every outfit ✨💖 #mynzostudio #jewellery #aesthetic",
+      likes: 12500,
+      comments: 256,
+      shares: 508,
+      views: "2.1K Views",
       isLiked: false,
-      product: CRAZY_DEALS[0] // Teddy Bear
+      product: CRAZY_DEALS[0],
+      videoUrl: fashionReel,
+      imageUrl: null,
+      isFollowing: false
     },
     {
       id: 2,
       username: "tech_toy_reviews",
-      desc: "Off-roading with the rugged Mynzo RC Car! High-speed, solid shocks. Absolute beast! 🏎️💨 #toys #rccars #unboxing",
-      likes: 189,
-      comments: 12,
-      views: "1.4K",
+      desc: "Off-roading with the rugged Mynzo RC Car! High-speed, solid shocks. Absolute beast! 🏎️💨",
+      likes: 8200,
+      comments: 142,
+      shares: 210,
+      views: "1.4K Views",
       isLiked: true,
-      product: CRAZY_DEALS[1] // RC Car
+      product: CRAZY_DEALS[1],
+      videoUrl: fashionReel,
+      imageUrl: null,
+      isFollowing: true
     }
-  ]);
+  ];
+
+  // Combine user reels with mock posts
+  const [posts, setPosts] = useState([...userReels, ...mockPosts]);
+  const [activeCommentPost, setActiveCommentPost] = useState(null);
+  const [newComment, setNewComment] = useState("");
+  const [postComments, setPostComments] = useState({
+    1: [
+      { id: 101, username: "fashionista99", text: "Omg this is so cute!! 😍" },
+      { id: 102, username: "style_icon", text: "Need this ASAP!" }
+    ],
+    2: [
+      { id: 201, username: "gadget_guru", text: "Looks amazing!" }
+    ]
+  });
+
+  const formatNumber = (num) => {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
+  };
 
   const handleLike = (postId) => {
     setPosts((prevPosts) =>
-      prevPosts.map((post) =>
-        post.id === postId
-          ? { ...post, likes: post.isLiked ? post.likes - 1 : post.likes + 1, isLiked: !post.isLiked }
-          : post
-      )
+      prevPosts.map((post) => {
+        if (post.id === postId) {
+          return { 
+            ...post, 
+            likes: post.isLiked ? post.likes - 1 : post.likes + 1,
+            isLiked: !post.isLiked 
+          };
+        }
+        return post;
+      })
     );
+  };
+
+  const handleComment = (postId) => {
+    setActiveCommentPost(postId);
+  };
+
+  const submitComment = () => {
+    if (!newComment.trim()) return;
+    
+    setPostComments(prev => ({
+      ...prev,
+      [activeCommentPost]: [
+        ...(prev[activeCommentPost] || []),
+        { id: Date.now(), username: user ? user.name.toLowerCase().replace(' ', '_') : "you", text: newComment }
+      ]
+    }));
+    
+    // Also increment the comment count on the post
+    setPosts(prevPosts => prevPosts.map(post => {
+      if (post.id === activeCommentPost) {
+        return { ...post, comments: post.comments + 1 };
+      }
+      return post;
+    }));
+    
+    setNewComment("");
+  };
+
+  const handleShare = async (post) => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `Check out this post by @${post.username} on Mynzo Studio!`,
+          text: post.desc,
+          url: window.location.href,
+        });
+      } else {
+        alert("Share feature is not supported in your browser.");
+      }
+    } catch (error) {
+      console.log('Error sharing:', error);
+    }
   };
 
   const handleAddToCart = (product) => {
@@ -49,129 +200,198 @@ export default function StudioPage() {
     addToCart(product);
   };
 
+  const toggleFollow = (postId) => {
+    setPosts(prev => prev.map(post => 
+      post.id === postId ? { ...post, isFollowing: !post.isFollowing } : post
+    ));
+  };
+
   return (
-    <div className="flex-grow p-4 space-y-6 pb-6 animate-fade-in">
+    <div className="bg-black w-full h-[100dvh] overflow-y-scroll snap-y snap-mandatory scrollbar-hide text-white relative">
       
-      {/* Page Header */}
-      <div className="flex items-center justify-between border-b border-slate-50 pb-3">
-        <div>
-          <h2 className="text-sm font-black text-[#0F172A] flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-[#FF6E54]" />
-            Mynzo Studio
-          </h2>
-          <p className="text-[10px] text-slate-400 font-semibold italic">Explore gift unboxings and visual reviews</p>
+      {/* Top Navigation Overlay */}
+      <div className="fixed top-0 left-0 right-0 z-50 p-4 flex items-center justify-between bg-gradient-to-b from-black/60 to-transparent max-w-md mx-auto">
+        <button onClick={() => navigate(-1)} className="p-2 hover:bg-white/10 rounded-full transition-colors cursor-pointer">
+          <ArrowLeft className="w-6 h-6 text-white" />
+        </button>
+        
+        <div className="flex gap-4 items-center font-bold text-[15px] drop-shadow-md">
+          <span className="text-white/70">Following</span>
+          <span className="text-white border-b-2 border-white pb-1">For You</span>
         </div>
         
-        {/* Active live badge */}
-        <span className="flex items-center gap-1.5 bg-red-50 border border-red-100 px-2 py-0.5 rounded-full text-[9px] font-black text-red-600">
-          <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-ping"></span>
+        <div className="bg-[#FF6E54] text-white px-2 py-1 rounded text-[10px] font-black tracking-wider shadow-lg flex items-center gap-1">
+          <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
           LIVE
-        </span>
+        </div>
       </div>
 
-      {/* Social post reels */}
-      <div className="space-y-6">
-        {posts.map((post) => (
-          <div 
-            key={post.id} 
-            className="bg-slate-50 border border-slate-100 rounded-3xl p-4 space-y-4 hover:border-slate-200 transition-all duration-300"
-          >
-            {/* User details */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                {/* User avatar mockup */}
-                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-pink-500 via-red-500 to-yellow-500 p-0.5 shadow-sm">
-                  <div className="w-full h-full bg-white rounded-full flex items-center justify-center text-[10px] font-black text-[#FF6E54]">
-                    {post.username[0].toUpperCase()}
-                  </div>
-                </div>
-                <div>
-                  <h4 className="text-xs font-black text-[#0F172A]">@{post.username}</h4>
-                  <div className="flex items-center gap-1 text-[8px] text-slate-400 font-bold uppercase tracking-wider">
-                    <Eye className="w-2.5 h-2.5" />
-                    <span>{post.views} views</span>
-                  </div>
-                </div>
+      {posts.map((post, index) => (
+        <div key={post.id} className="w-full h-[100dvh] snap-start relative bg-slate-900 flex justify-center items-center overflow-hidden">
+          
+          {/* Media Background */}
+          {post.videoUrl ? (
+            <ReelVideo src={post.videoUrl} isFirst={index === 0} />
+          ) : (
+            <img 
+              src={post.imageUrl || post.product?.image || "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=80&w=800"} 
+              className="absolute inset-0 w-full h-full object-cover"
+              alt="Post media"
+            />
+          )}
+
+          {/* Gradient Overlays for readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-black/20 pointer-events-none"></div>
+
+          {/* Right Action Panel */}
+          <div className="absolute right-4 bottom-6 flex flex-col items-center gap-6 z-20">
+            {/* User Profile Pic (Top of action panel in typical reels? Wait, screenshot has user info on the left.) */}
+            {/* Let's follow screenshot: Heart, Comment, Share, ShoppingBag, Gift on right */}
+            
+            <button onClick={() => handleLike(post.id)} className="flex flex-col items-center gap-1 cursor-pointer hover:scale-110 transition-transform">
+              <div className="w-10 h-10 bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10">
+                <Heart className={`w-6 h-6 ${post.isLiked ? 'fill-rose-500 text-rose-500' : 'text-white'}`} />
               </div>
-              
-              {/* Follow action button */}
-              <button className="text-[9px] font-black text-[#FF6E54] border border-orange-200 hover:bg-orange-50 px-3 py-1 rounded-full transition-all duration-300">
-                FOLLOW
-              </button>
+              <span className="text-[11px] font-semibold drop-shadow-md">{formatNumber(post.likes)}</span>
+            </button>
+
+            <button onClick={() => handleComment(post.id)} className="flex flex-col items-center gap-1 cursor-pointer hover:scale-110 transition-transform">
+              <div className="w-10 h-10 bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10">
+                <MessageCircle className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-[11px] font-semibold drop-shadow-md">{formatNumber(post.comments)}</span>
+            </button>
+
+            <button onClick={() => handleShare(post)} className="flex flex-col items-center gap-1 cursor-pointer hover:scale-110 transition-transform">
+              <div className="w-10 h-10 bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10">
+                <Share2 className="w-6 h-6 text-white" />
+              </div>
+              <span className="text-[11px] font-semibold drop-shadow-md">{formatNumber(post.shares || 0)}</span>
+            </button>
+
+            <button onClick={() => handleAddToCart(post.product)} className="flex flex-col items-center gap-1 cursor-pointer hover:scale-110 transition-transform">
+              <div className="w-10 h-10 bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10">
+                <ShoppingBag className="w-5 h-5 text-white" />
+              </div>
+            </button>
+
+            <button className="flex flex-col items-center gap-1 cursor-pointer hover:scale-110 transition-transform">
+              <div className="w-10 h-10 bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10">
+                <Gift className="w-5 h-5 text-white" />
+              </div>
+            </button>
+          </div>
+
+          {/* Bottom Info Panel */}
+          <div className="absolute left-4 bottom-6 right-16 z-20 flex flex-col gap-3">
+            
+            {/* User Info */}
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full border border-white overflow-hidden bg-white flex-shrink-0">
+                <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${post.username}`} alt="avatar" className="w-full h-full object-cover" />
+              </div>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1">
+                  <span className="text-[14px] font-bold drop-shadow-md">@{post.username}</span>
+                  <CheckCircle2 className="w-3.5 h-3.5 text-blue-400 fill-white" />
+                </div>
+                <span className="text-[11px] text-white/80 drop-shadow-md">{post.views}</span>
+              </div>
+              {!post.isFollowing && (
+                <button 
+                  onClick={() => toggleFollow(post.id)}
+                  className="ml-2 border border-white/40 bg-white/10 backdrop-blur-sm px-3 py-1 rounded text-[11px] font-bold hover:bg-white/20 transition-colors"
+                >
+                  Follow
+                </button>
+              )}
             </div>
 
-            {/* Simulated rich visual card media overlay */}
-            <div className="w-full h-48 bg-gradient-to-tr from-slate-900 to-[#0F172A] rounded-2xl relative overflow-hidden flex items-center justify-center p-6 text-white group cursor-pointer shadow-inner">
-              <div className="absolute inset-0 bg-black/10 mix-blend-overlay"></div>
-              
-              {/* Central post artwork */}
-              <div className="flex flex-col items-center gap-2 relative z-10 text-center">
-                <div className="w-14 h-14 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center shadow-lg border border-white/20 group-hover:scale-105 transition-transform duration-300">
-                  <ShoppingBag className="w-7 h-7 text-white" />
-                </div>
-                <span className="text-[10px] font-extrabold tracking-widest text-[#FF6E54] uppercase">MYNZO ORIGINALS</span>
-                <p className="text-xs font-bold px-2 line-clamp-1">{post.product.name}</p>
-              </div>
-
-              {/* Glowing decorative gradient circles */}
-              <div className="absolute -top-12 -left-12 w-28 h-28 bg-[#FF6E54]/10 rounded-full blur-xl animate-pulse"></div>
-              <div className="absolute -bottom-12 -right-12 w-28 h-28 bg-[#FF6E54]/10 rounded-full blur-xl animate-pulse" style={{ animationDelay: '1.5s' }}></div>
-            </div>
-
-            {/* Shoppable Tag Box linked directly in post! */}
-            <div className="bg-white border border-slate-100 rounded-2xl p-3 flex items-center justify-between gap-3 shadow-xs">
-              <div className="flex items-center gap-2">
-                <div className="w-9 h-9 bg-orange-50 rounded-xl flex items-center justify-center flex-shrink-0 text-[#FF6E54]">
-                  <ShoppingBag className="w-4 h-4" />
-                </div>
-                <div className="min-w-0">
-                  <h5 className="text-[10px] font-black text-[#0F172A] truncate leading-tight">{post.product.name}</h5>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-xs font-black text-slate-800">₹{post.product.price}</span>
-                    <span className="text-[9px] text-[#FF6E54] font-extrabold">{post.product.discount} OFF</span>
+            {/* Product Tag Overlay */}
+            {post.product && (
+              <div className="bg-black/40 backdrop-blur-md border border-white/10 rounded-xl p-2.5 flex items-center gap-3 w-max max-w-[85%] pr-4 cursor-pointer hover:bg-black/50 transition-colors" onClick={() => navigate(`/product/${post.product.id}`)}>
+                <img src={post.product.image} className="w-12 h-12 rounded-lg object-cover bg-white" alt="product" />
+                <div className="flex flex-col">
+                  <span className="text-[13px] font-bold truncate max-w-[150px] drop-shadow-md">{post.product.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[13px] font-bold text-white drop-shadow-md">₹{post.product.price}</span>
+                    <span className="text-[10px] text-[#FF6E54] font-black bg-white/90 px-1 rounded">-{post.product.discount || '10%'} OFF</span>
                   </div>
                 </div>
+                <div className="bg-[#FF6E54] text-white text-[10px] font-bold px-2 py-1.5 rounded ml-2 whitespace-nowrap">
+                  View Product &gt;
+                </div>
               </div>
+            )}
 
-              <button
-                onClick={() => handleAddToCart(post.product)}
-                className="bg-[#FF6E54] hover:bg-orange-600 active:scale-95 text-white text-[9px] font-black px-3.5 py-2 rounded-xl shadow-xs transition-all duration-300"
-              >
-                BUY NOW
-              </button>
-            </div>
-
-            {/* Text description */}
-            <p className="text-[10px] text-slate-600 leading-relaxed font-medium">
+            {/* Description */}
+            <p className="text-[13px] text-white font-medium drop-shadow-md leading-snug line-clamp-2 mt-1">
               {post.desc}
             </p>
+          </div>
+        </div>
+      ))}
 
-            {/* Social action panel */}
-            <div className="flex items-center gap-5 border-t border-slate-100 pt-3">
+      {/* Comments Modal (Bottom Sheet) */}
+      {activeCommentPost && (
+        <>
+          <div className="fixed inset-0 bg-black/60 z-[100]" onClick={() => setActiveCommentPost(null)}></div>
+          <div className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl h-[60dvh] z-[110] flex flex-col max-w-md mx-auto shadow-2xl animate-in slide-in-from-bottom-full duration-300">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b border-slate-100">
+              <h3 className="font-bold text-slate-800 text-[16px]">
+                {posts.find(p => p.id === activeCommentPost)?.comments} Comments
+              </h3>
+              <button onClick={() => setActiveCommentPost(null)} className="p-1 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200 transition-colors">
+                <Menu className="w-5 h-5 opacity-0" /> {/* Spacer */}
+                <span className="absolute top-4 right-4 text-[20px] font-bold">&times;</span>
+              </button>
+            </div>
+
+            {/* Comments List */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-4">
+              {(postComments[activeCommentPost] || []).map((comment) => (
+                <div key={comment.id} className="flex gap-3">
+                  <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden flex-shrink-0">
+                    <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${comment.username}`} alt="avatar" />
+                  </div>
+                  <div>
+                    <h4 className="text-[12px] font-bold text-slate-700">@{comment.username}</h4>
+                    <p className="text-[13px] text-slate-800 mt-0.5">{comment.text}</p>
+                  </div>
+                </div>
+              ))}
+              {(!postComments[activeCommentPost] || postComments[activeCommentPost].length === 0) && (
+                <div className="text-center text-slate-500 text-[13px] mt-10">
+                  No comments yet. Be the first!
+                </div>
+              )}
+            </div>
+
+            {/* Add Comment Input */}
+            <div className="p-4 border-t border-slate-100 flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden flex-shrink-0">
+                <img src={`https://api.dicebear.com/7.x/notionists/svg?seed=${user ? user.name : 'guest'}`} alt="your avatar" />
+              </div>
+              <input 
+                type="text" 
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && submitComment()}
+                placeholder="Add comment..." 
+                className="flex-1 bg-slate-100 text-slate-800 text-[14px] rounded-full px-4 py-2 outline-none focus:ring-2 focus:ring-[#FF6E54]/30"
+              />
               <button 
-                onClick={() => handleLike(post.id)}
-                className={`flex items-center gap-1.5 text-[10px] font-bold transition-colors ${
-                  post.isLiked ? 'text-rose-500' : 'text-slate-400 hover:text-slate-600'
-                }`}
+                onClick={submitComment}
+                disabled={!newComment.trim()}
+                className="bg-[#FF6E54] text-white p-2 rounded-full disabled:opacity-50 disabled:bg-slate-300"
               >
-                <Heart className={`w-4.5 h-4.5 ${post.isLiked ? 'fill-current animate-pulse' : ''}`} />
-                <span>{post.likes}</span>
-              </button>
-
-              <button className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-slate-600 transition-colors">
-                <MessageCircle className="w-4.5 h-4.5" />
-                <span>{post.comments}</span>
-              </button>
-
-              <button className="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 hover:text-slate-600 ml-auto transition-colors">
-                <Share2 className="w-4.5 h-4.5" />
-                <span>SHARE</span>
+                <ArrowLeft className="w-4 h-4 rotate-180" />
               </button>
             </div>
           </div>
-        ))}
-      </div>
-
+        </>
+      )}
     </div>
   );
 }

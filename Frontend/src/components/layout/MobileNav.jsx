@@ -31,50 +31,49 @@ export default function MobileNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-slate-100 px-3 py-1 shadow-2xl flex items-center justify-between max-w-md mx-auto">
-      {navItems.map((item) => {
-        const Icon = item.icon;
-        const isActive = activeTab === item.id;
+    <div className="absolute bottom-0 left-0 right-0 z-50 w-full bg-white/90 backdrop-blur-2xl shadow-[0_-8px_30px_rgba(0,0,0,0.08)] border-t border-white/60 rounded-t-[2rem]">
+      <nav className="flex items-center justify-between px-2 py-1.5 w-full mx-auto pb-safe">
+        {navItems.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeTab === item.id;
 
-        return (
-          <button
-            key={item.id}
-            onClick={() => {
-              navigate(item.path);
-            }}
-            className="relative flex flex-col items-center justify-center py-1.5 px-1 min-w-[50px] transition-all duration-300 active:scale-90"
-          >
-            {/* Active Highlight Underlay */}
-            {isActive && (
-              <span className="absolute inset-x-2 top-0 h-1 bg-[#FF6E54] rounded-full animate-fade-in"></span>
-            )}
+          return (
+            <button
+              key={item.id}
+              onClick={() => navigate(item.path)}
+              className={`relative flex flex-col items-center justify-center flex-1 max-w-[54px] h-[54px] rounded-2xl transition-all duration-500 ease-out active:scale-95 ${
+                isActive 
+                  ? 'bg-gradient-to-br from-[#FFCFC2] to-[#FFE3DB]/90 backdrop-blur-md border border-white/80 shadow-[0_4px_15px_rgba(255,110,84,0.25)]' 
+                  : 'bg-transparent'
+              }`}
+            >
+              <div className={`transition-all duration-500 ${
+                isActive 
+                  ? 'text-[#FF6E54] -translate-y-0.5 scale-110' 
+                  : 'text-[#64748B] hover:text-[#0F172A]'
+              }`}>
+                <Icon className={`w-5 h-5 ${isActive ? 'stroke-[2.5]' : 'stroke-[2]'}`} />
+              </div>
 
-            <div className={`p-1 rounded-xl transition-all duration-300 ${
-              isActive 
-                ? 'text-[#FF6E54] scale-110' 
-                : 'text-slate-400 hover:text-slate-600'
-            }`}>
-              <Icon className="w-5 h-5 stroke-[2.2]" />
-            </div>
-
-            <span className={`text-[10px] font-bold tracking-tight transition-all duration-300 ${
-              isActive 
-                ? 'text-[#FF6E54] font-extrabold' 
-                : 'text-slate-400'
-            }`}>
-              {item.label}
-            </span>
-
-            {/* Red Badge for Cart */}
-            {item.badge && totalCartItems > 0 && (
-              <span className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[8px] font-extrabold text-white ring-1 ring-white animate-bounce">
-                {totalCartItems}
+              <span className={`text-[9px] tracking-wide transition-all duration-500 ${
+                isActive 
+                  ? 'text-[#FF6E54] font-bold mt-0.5' 
+                  : 'text-[#64748B] font-medium mt-1'
+              }`}>
+                {item.label}
               </span>
-            )}
-          </button>
-        );
-      })}
-    </nav>
+
+              {/* Red Badge for Cart */}
+              {item.badge && totalCartItems > 0 && (
+                <span className="absolute top-0.5 right-0.5 flex h-[16px] w-[16px] items-center justify-center rounded-full bg-[#FF6E54] text-[9px] font-bold text-white ring-2 ring-white shadow-sm">
+                  {totalCartItems}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </nav>
+    </div>
   );
 }
 

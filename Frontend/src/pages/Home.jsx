@@ -10,12 +10,19 @@ import CrazyDeals3 from '../assets/CrazyDeals/CrazyDeals3.jpg';
 import CrazyDeals4 from '../assets/CrazyDeals/CrazyDeals4.jpg';
 import CrazyDeals5 from '../assets/CrazyDeals/CrazyDeals5.jpg';
 
+import beauty1 from '../assets/BeautyProducts/Beauty1.png';
+import beauty2 from '../assets/BeautyProducts/Beauty2.jpg';
+import beauty3 from '../assets/BeautyProducts/Beauty3.jpg';
+import beauty4 from '../assets/BeautyProducts/Beauty4.jpg';
+import beauty5 from '../assets/BeautyProducts/Beauty5.jpg';
+
 export default function Home() {
   const navigate = useNavigate();
-  const { searchQuery } = useApp();
+  const { searchQuery, toggleWishlist, isInWishlist, user } = useApp();
   const [activeBanner, setActiveBanner] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('for-you');
   const [activeFlashTab, setActiveFlashTab] = useState('All');
+  const [budgetFilter, setBudgetFilter] = useState(null);
 
   // Auto-slide Banners
   useEffect(() => {
@@ -148,21 +155,21 @@ export default function Home() {
       case 'for-you':
         return items;
       case 'beauty':
-        return items.filter((p) => p.type === 'tint'); // Benefit Benetint Tint
+        return items.filter((p) => ['tint', 'makeup', 'skincare', 'haircare'].includes(p.type));
       case 'gifting':
-        return items.filter((p) => p.type === 'tee' || p.type === 'necklace' || p.type === 'watch' || p.type === 'tint');
+        return items.filter((p) => ['tee', 'necklace', 'watch', 'mug', 'tumbler', 'keychain', 'hamper', 'bouquet'].includes(p.type));
       case 'electronics':
-        return items.filter((p) => p.type === 'watch'); // Gold chain watch
+        return items.filter((p) => ['earbuds', 'powerbank', 'fan', 'headphones', 'smartwatch'].includes(p.type));
       case 'jewellery':
-        return items.filter((p) => p.type === 'necklace' || p.type === 'watch');
+        return items.filter((p) => ['necklace', 'bracelet', 'watch'].includes(p.type));
       case 'toys':
-        return items.filter((p) => p.type === 'tee');
+        return items.filter((p) => ['plush', 'toy', 'nightlight'].includes(p.type));
       case 'stationery':
-        return items.filter((p) => p.type === 'tee');
+        return items.filter((p) => ['notebook', 'pen', 'stapler'].includes(p.type));
       case 'fashion':
-        return items.filter((p) => p.type === 'tee' || p.type === 'necklace' || p.type === 'watch');
+        return items.filter((p) => ['tee', 'necklace', 'watch', 'pants', 'blouse', 'outfit'].includes(p.type));
       case 'electrical':
-        return items.filter((p) => p.type === 'watch');
+        return items.filter((p) => ['bulb', 'wire', 'fan', 'iron'].includes(p.type));
       default:
         return items;
     }
@@ -310,19 +317,24 @@ export default function Home() {
   ];
 
   const TOP_10_BUYS = [
-    { id: 3, name: "Maybelline foundation", discount: "Min. 45% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 3 },
-    { id: 4, name: "Pond's moisturiser", discount: "Flat 59% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 4 },
-    { id: 5, name: "Bellavita perfume", discount: "Min. 75% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 5 },
-    { id: 6, name: "Garnier", discount: "Min. 40% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 6 },
+    { id: 1, name: "MAC Lipstick", discount: "Min. 30% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 1, image: beauty2 },
+    { id: 2, name: "L'Oreal Serum", discount: "Min. 50% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 2, image: beauty3 },
+    { id: 3, name: "Maybelline foundation", discount: "Min. 45% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 3, image: beauty4 },
+    { id: 4, name: "Pond's moisturiser", discount: "Flat 59% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 4, image: beauty5 },
+    { id: 5, name: "Bellavita perfume", discount: "Min. 75% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 5, image: beauty1 },
+    { id: 6, name: "Garnier", discount: "Min. 40% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 6, image: beauty3 },
+    { id: 7, name: "Nykaa Cosmetics", discount: "Up to 60% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 7, image: beauty2 },
+    { id: 8, name: "Plum Green Tea", discount: "Min. 25% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 8, image: beauty4 },
+    { id: 9, name: "Minimalist Serum", discount: "Flat 10% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 9, image: beauty3 },
+    { id: 10, name: "Dot & Key", discount: "Min. 35% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 10, image: beauty5 },
   ];
 
   const TRENDING_BRANDS = [
-    { id: 1, brand: "Cetaphil", discount: "Up to 35% Off", badgeColor: "text-blue-600" },
-    { id: 2, brand: "derma co", discount: "Up to 50% Off", badgeColor: "text-slate-800" },
-    { id: 3, brand: "Clean Clear", discount: "Up to 60% Off", badgeColor: "text-blue-800" },
-    { id: 4, brand: "SWISS BEAUTY", discount: "Up to 50% Off", badgeColor: "text-slate-800" },
-    { id: 5, brand: "PERSONAL TOUCH", discount: "Up to 70% Off", badgeColor: "text-slate-800" },
-    { id: 6, brand: "sotrue", discount: "From ₹99", badgeColor: "text-slate-800" }
+    { id: 1, brand: "sotrue", discount: "Up to 35% Off", badgeColor: "text-blue-600", image: beauty1 },
+    { id: 2, brand: "derma co", discount: "Up to 50% Off", badgeColor: "text-slate-800", image: beauty2 },
+    { id: 3, brand: "medicube", discount: "Up to 60% Off", badgeColor: "text-blue-800", image: beauty3 },
+    { id: 4, brand: "SWISS BEAUTY", discount: "Up to 50% Off", badgeColor: "text-slate-800", image: beauty4 },
+    { id: 5, brand: "PERSONAL TOUCH", discount: "Up to 70% Off", badgeColor: "text-slate-800", image: beauty5 }
   ];
 
   return (
@@ -695,8 +707,21 @@ export default function Home() {
             flashDeals.slice(0, 4).map((deal) => (
               <div key={deal.id} onClick={() => navigate(`/product/${deal.id}`)} className="bg-[#F8F9FD] rounded-xl p-2 relative cursor-pointer hover:bg-slate-100 transition-colors group">
                 {/* Heart Icon */}
-                <button className="absolute top-2 right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm z-10 text-slate-300 hover:text-[#FF6E54] transition-colors">
-                  <Heart className="w-3.5 h-3.5" />
+                <button 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (!user) {
+                      navigate('/login');
+                      return;
+                    }
+                    toggleWishlist(deal);
+                  }}
+                  className={`absolute top-2 right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm z-10 transition-colors ${
+                    isInWishlist(deal.id) ? 'text-[#FF6E54]' : 'text-slate-300 hover:text-[#FF6E54]'
+                  }`}
+                >
+                  <Heart className={`w-3.5 h-3.5 ${isInWishlist(deal.id) ? 'fill-current' : ''}`} />
                 </button>
                 
                 <div className="aspect-square bg-transparent rounded-lg mb-2 flex items-center justify-center overflow-hidden">
@@ -745,9 +770,12 @@ export default function Home() {
                   </div>
                   
                   <div className="mt-8 flex-grow flex items-center justify-center relative z-10">
-                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-inner">
-                      {/* Placeholder for product */}
-                      <Sparkles className="w-8 h-8 text-white/80" />
+                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-inner overflow-hidden">
+                      {buy.image ? (
+                        <img src={buy.image} alt={buy.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <Sparkles className="w-8 h-8 text-white/80" />
+                      )}
                     </div>
                   </div>
 
@@ -766,21 +794,14 @@ export default function Home() {
             <div className="grid grid-cols-2 gap-x-3 gap-y-4">
               {TRENDING_BRANDS.map(brand => (
                 <div key={brand.id} className="flex flex-col cursor-pointer group">
-                  <div className="w-full aspect-[4/3] rounded-xl bg-gradient-to-br from-pink-300 to-pink-400 p-2 relative shadow-sm hover:shadow-md transition-shadow flex items-center justify-center overflow-hidden">
+                  <div className="w-full aspect-[4/3] rounded-xl bg-slate-100 relative shadow-sm hover:shadow-md transition-shadow flex items-center justify-center overflow-hidden">
                     {/* Brand Badge */}
                     <div className="absolute top-0 left-2 bg-white/95 backdrop-blur-md px-2 py-1 rounded-b-lg shadow-sm z-10">
                       <span className={`text-[10px] font-black ${brand.badgeColor}`}>{brand.brand}</span>
                     </div>
 
-                    {/* Placeholder for products */}
-                    <div className="flex items-end gap-1 mt-4 group-hover:scale-105 transition-transform">
-                      <div className="w-8 h-12 bg-white rounded flex items-center justify-center shadow-sm rotate-[-5deg]">
-                         <span className="text-[8px] text-slate-300 font-bold">Item</span>
-                      </div>
-                      <div className="w-10 h-14 bg-white/90 rounded flex items-center justify-center shadow-sm z-10">
-                         <span className="text-[8px] text-slate-400 font-bold">Item</span>
-                      </div>
-                    </div>
+                    {/* Real Product Image Covering the Card */}
+                    <img src={brand.image} alt={brand.brand} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   </div>
                   <div className="mt-1.5 text-center">
                     <p className="text-[11px] font-black text-slate-800">{brand.discount}</p>
@@ -791,10 +812,174 @@ export default function Home() {
           </div>
           
         </div>
+      ) : selectedCategory === 'electronics' ? (
+        <div className="px-3 py-2 animate-fade-in pb-10 mt-1">
+          <div className="grid grid-cols-5 gap-x-3 gap-y-5 pt-2 pb-2 w-full">
+            {filteredDeals.map((deal) => (
+              <div 
+                key={deal.id} 
+                className="flex flex-col items-center gap-1 cursor-pointer group w-full" 
+                onClick={() => navigate(`/product/${deal.id}`)}
+              >
+                {/* Small 3D Base Platform */}
+                <div className="w-full aspect-square bg-[#F3E8FF] rounded-xl relative shadow-[0_3px_0_0_#E9D5FF] flex items-center justify-center group-hover:translate-y-0.5 group-hover:shadow-[0_1px_0_0_#E9D5FF] transition-all">
+                  <img 
+                    src={deal.image} 
+                    alt={deal.name} 
+                    className="absolute bottom-[5%] w-[85%] h-[85%] object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-300" 
+                  />
+                </div>
+                <span className="text-[8.5px] font-bold text-slate-800 text-center leading-tight line-clamp-2 px-0.5 mt-0.5 w-full">
+                  {deal.name}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* Top Electronics Section */}
+          <div className="mt-8 px-1">
+            <h3 className="text-[17px] font-black text-slate-900 tracking-tight mb-4">Top Electronics</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {filteredDeals.map((deal) => (
+                <ProductCard key={`elec-top-${deal.id}`} product={deal} />
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : selectedCategory === 'gifting' ? (
+        <div className="px-3 py-2 animate-fade-in pb-10 mt-1">
+          <div className="grid grid-cols-5 gap-x-3 gap-y-5 pt-2 pb-2 w-full">
+            {filteredDeals.map((deal) => (
+              <div 
+                key={deal.id} 
+                className="flex flex-col items-center gap-1 cursor-pointer group w-full" 
+                onClick={() => navigate(`/product/${deal.id}`)}
+              >
+                {/* Small 3D Base Platform */}
+                <div className="w-full aspect-square bg-[#F3E8FF] rounded-xl relative shadow-[0_3px_0_0_#E9D5FF] flex items-center justify-center group-hover:translate-y-0.5 group-hover:shadow-[0_1px_0_0_#E9D5FF] transition-all">
+                  <img 
+                    src={deal.image} 
+                    alt={deal.name} 
+                    className="absolute bottom-[5%] w-[85%] h-[85%] object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-300" 
+                  />
+                </div>
+                <span className="text-[8.5px] font-bold text-slate-800 text-center leading-tight line-clamp-2 px-0.5 mt-0.5 w-full">
+                  {deal.name}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          {/* BEST ON A BUDGET SECTION */}
+          <div className="mt-8 px-1 pb-4">
+            <div className="flex items-center justify-between mb-4 pr-1">
+              <h3 className="text-[17px] font-black text-slate-900 tracking-tight">Best on a budget</h3>
+              <button 
+                onClick={() => setBudgetFilter(null)}
+                className={`text-[10px] font-bold px-3 py-1 rounded-full transition-colors shadow-sm ${
+                  budgetFilter === null 
+                    ? 'bg-[#CD97FE] text-white' 
+                    : 'bg-slate-100 text-slate-500 hover:bg-purple-50 hover:text-purple-600'
+                }`}
+              >
+                All
+              </button>
+            </div>
+            <div className="grid grid-cols-3 gap-x-3 gap-y-5">
+              {[
+                { id: 1, line1: 'From', line2: '₹99', coin: 'bottom-left', coinSize: 'w-6 h-6', coinPos: '-bottom-1.5 -left-1' },
+                { id: 2, line1: 'From', line2: '₹299', coin: 'top-right', coinSize: 'w-5 h-5', coinPos: '-top-1.5 right-0' },
+                { id: 3, line1: 'From', line2: '₹499', coin: 'bottom-left', coinSize: 'w-5 h-5', coinPos: '-bottom-1 -left-1' },
+                { id: 4, line1: 'Min.', line2: '70%', line3: 'Off', coin: 'top-right', coinSize: 'w-4 h-4', coinPos: '-top-0.5 -right-0.5' },
+                { id: 5, line1: 'From', line2: '₹999', coin: 'top-top', coinSize: 'w-5 h-5', coinPos: '-top-1.5 right-4' },
+                { id: 6, line1: 'Min.', line2: '50%', line3: 'Off', coin: 'bottom-right', coinSize: 'w-3.5 h-3.5', coinPos: 'bottom-1 -right-0.5' }
+              ].map(badge => {
+                const isSelected = budgetFilter === badge.id;
+                return (
+                <div 
+                  key={badge.id} 
+                  className={`relative w-full aspect-square cursor-pointer transition-transform flex items-center justify-center group ${isSelected ? 'scale-105 drop-shadow-md ring-2 ring-purple-400 rounded-full' : 'hover:scale-105'}`}
+                  onClick={() => setBudgetFilter(budgetFilter === badge.id ? null : badge.id)}
+                >
+                  {/* Scalloped SVG Background */}
+                  <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full text-[#CD97FE] drop-shadow-sm">
+                    <path fill="currentColor" d="M50 3 C 58 3 61 9 67 11 C 74 13 78 8 83 14 C 88 20 83 25 86 31 C 88 38 95 40 95 48 C 95 56 88 58 86 65 C 83 71 88 76 83 82 C 78 88 74 83 67 85 C 61 87 58 93 50 93 C 42 93 39 87 33 85 C 26 83 22 88 17 82 C 12 76 17 71 14 65 C 12 58 5 56 5 48 C 5 40 12 38 14 31 C 17 25 12 20 17 14 C 22 8 26 13 33 11 C 39 9 42 3 50 3 Z" />
+                    {/* Dotted texture overlay */}
+                    <circle cx="30" cy="30" r="1.5" fill="white" opacity="0.25" />
+                    <circle cx="70" cy="30" r="1.5" fill="white" opacity="0.25" />
+                    <circle cx="30" cy="70" r="1.5" fill="white" opacity="0.25" />
+                    <circle cx="70" cy="70" r="1.5" fill="white" opacity="0.25" />
+                    <circle cx="50" cy="20" r="1.5" fill="white" opacity="0.25" />
+                    <circle cx="50" cy="80" r="1.5" fill="white" opacity="0.25" />
+                    <circle cx="20" cy="50" r="1.5" fill="white" opacity="0.25" />
+                    <circle cx="80" cy="50" r="1.5" fill="white" opacity="0.25" />
+                  </svg>
+                  
+                  {/* Content */}
+                  <div className="relative z-10 flex flex-col items-center justify-center text-white drop-shadow-sm mt-1">
+                    <span className="text-[11px] font-extrabold leading-tight">{badge.line1}</span>
+                    <span className="text-[18px] font-black leading-none my-0.5 tracking-tight" style={{textShadow: '1px 1px 0px rgba(0,0,0,0.1)'}}>{badge.line2}</span>
+                    {badge.line3 && <span className="text-[11px] font-extrabold leading-tight">{badge.line3}</span>}
+                  </div>
+
+                  {/* Coin Decoration */}
+                  <div className={`absolute ${badge.coinPos} ${badge.coinSize} bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-full border-b-[2px] border-r-[1px] border-yellow-600 shadow-md z-20 group-hover:rotate-12 transition-transform`} />
+                </div>
+              )})}
+            </div>
+          </div>
+
+          {/* GIFTS YOU LIKE SECTION */}
+          <div className="mt-8 px-1">
+            <h3 className="text-[17px] font-black text-slate-900 tracking-tight mb-4">Gifts you like</h3>
+            <div className="grid grid-cols-2 gap-3">
+              {(() => {
+                let displayDeals = filteredDeals;
+                if (budgetFilter === 1) displayDeals = displayDeals.filter(d => d.price < 299);
+                if (budgetFilter === 2) displayDeals = displayDeals.filter(d => d.price >= 299 && d.price < 499);
+                if (budgetFilter === 3) displayDeals = displayDeals.filter(d => d.price >= 499 && d.price < 999);
+                if (budgetFilter === 5) displayDeals = displayDeals.filter(d => d.price >= 999);
+                if (budgetFilter === 4) displayDeals = displayDeals.filter(d => (parseInt(d.discount.replace(/\D/g, '')) || 0) >= 70);
+                if (budgetFilter === 6) displayDeals = displayDeals.filter(d => (parseInt(d.discount.replace(/\D/g, '')) || 0) >= 50);
+
+                if (displayDeals.length === 0) {
+                  return <div className="col-span-2 text-center text-slate-400 text-sm py-4">No gifts found for this filter.</div>;
+                }
+
+                return displayDeals.map((deal) => (
+                  <ProductCard key={`gift-like-${deal.id}`} product={deal} />
+                ));
+              })()}
+            </div>
+          </div>
+        </div>
       ) : (
-        <div className="px-4 py-2 animate-fade-in">
+        <div className="px-3 py-2 animate-fade-in pb-10 mt-1">
+          {/* Dynamic Top Horizontal Grid (Purple 3D Blocks) */}
+          <div className="grid grid-cols-5 gap-x-3 gap-y-5 pt-2 pb-6 w-full">
+            {filteredDeals.map((deal) => (
+              <div 
+                key={`top-${deal.id}`} 
+                className="flex flex-col items-center gap-1 cursor-pointer group w-full" 
+                onClick={() => navigate(`/product/${deal.id}`)}
+              >
+                {/* Small 3D Base Platform */}
+                <div className="w-full aspect-square bg-[#F3E8FF] rounded-xl relative shadow-[0_3px_0_0_#E9D5FF] flex items-center justify-center group-hover:translate-y-0.5 group-hover:shadow-[0_1px_0_0_#E9D5FF] transition-all">
+                  <img 
+                    src={deal.image} 
+                    alt={deal.name} 
+                    className="absolute bottom-[5%] w-[85%] h-[85%] object-contain drop-shadow-sm group-hover:scale-110 transition-transform duration-300" 
+                  />
+                </div>
+                <span className="text-[8.5px] font-bold text-slate-800 text-center leading-tight line-clamp-2 px-0.5 mt-0.5 w-full">
+                  {deal.name}
+                </span>
+              </div>
+            ))}
+          </div>
+
           {/* Category UI: Filtered Product Grid */}
-          <div className="flex items-center justify-between mb-4 mt-2">
+          <div className="flex items-center justify-between mb-4 mt-2 px-1">
             <h3 className="text-[17px] font-bold text-[#02006c] capitalize">
               {selectedCategory.replace('-', ' ')}
             </h3>
@@ -803,7 +988,7 @@ export default function Home() {
             </span>
           </div>
           
-          <div className="grid grid-cols-2 gap-3 pb-8">
+          <div className="grid grid-cols-2 gap-3 pb-8 px-1">
             {filteredDeals.length > 0 ? (
               filteredDeals.map((deal) => (
                 <ProductCard key={deal.id} product={deal} />
