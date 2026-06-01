@@ -5,7 +5,13 @@ import { useApp } from '../context/AppContext';
 
 export default function ReviewOrderPage() {
   const navigate = useNavigate();
-  const { cart, totalCartPrice } = useApp();
+  const { cart, totalCartPrice, user } = useApp();
+
+  React.useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
 
   const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState(null);

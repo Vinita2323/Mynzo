@@ -11,7 +11,13 @@ import cardsLogo from '../assets/UPI/Cards-removebg-preview.png';
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
-  const { cart, totalCartPrice, clearCart, addOrder } = useApp();
+  const { cart, totalCartPrice, clearCart, addOrder, user } = useApp();
+
+  React.useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
   
   // Calculate total with static GST/delivery matching CartPage
   const deliveryFee = 0;

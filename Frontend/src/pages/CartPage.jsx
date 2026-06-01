@@ -7,7 +7,15 @@ import addToCartAnimation from '../assets/Lotties/AddToCart.json';
 
 export default function CartPage() {
   const navigate = useNavigate();
-  const { cart, updateQuantity, removeFromCart, totalCartPrice, totalCartItems, setActiveTab } = useApp();
+  const { cart, updateQuantity, removeFromCart, totalCartPrice, totalCartItems, setActiveTab, user } = useApp();
+
+  const handleCheckout = () => {
+    if (!user) {
+      navigate('/login');
+    } else {
+      navigate('/review-order');
+    }
+  };
 
   // Mock addresses for selection
   const addresses = [
@@ -188,7 +196,7 @@ export default function CartPage() {
                       <Trash2 className="w-3.5 h-3.5" /> Remove
                     </button>
                     <button 
-                      onClick={() => navigate('/review-order')} 
+                      onClick={handleCheckout} 
                       className="flex-1 flex items-center justify-center gap-1.5 text-[#ee4923] hover:bg-orange-50 text-xs font-bold transition-colors"
                     >
                       <Zap className="w-3.5 h-3.5" /> Buy this now
@@ -242,7 +250,7 @@ export default function CartPage() {
                 </div>
               </div>
               <button 
-                onClick={() => navigate('/review-order')} 
+                onClick={handleCheckout} 
                 className="w-1/2 bg-[#ee4923] active:bg-[#d8401e] text-white py-3.5 rounded-lg font-black text-[15px] shadow-sm transition-all"
               >
                 Place Order

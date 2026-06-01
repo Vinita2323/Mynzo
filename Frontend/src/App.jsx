@@ -81,7 +81,7 @@ function AppContent() {
           {/* Centered Mobile Phone Frame */}
           <div className="w-full max-w-md h-full bg-white relative flex items-center justify-center overflow-hidden shadow-2xl border-x border-slate-100">
             <video
-              src="/FinalSplashScreen.mp4"
+              src="/FinalSpalshScreen.mp4"
               autoPlay
               muted
               playsInline

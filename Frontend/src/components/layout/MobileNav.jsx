@@ -41,7 +41,7 @@ export default function MobileNav() {
             <button
               key={item.id}
               onClick={() => navigate(item.path)}
-              className={`relative flex flex-col items-center justify-center flex-1 max-w-[64px] h-[64px] rounded-2xl outline-none focus:outline-none [-webkit-tap-highlight-color:transparent] transition-all duration-500 ease-out active:scale-95 ${
+              className={`relative flex flex-col items-center justify-center flex-1 max-w-[64px] h-[54px] rounded-2xl outline-none focus:outline-none [-webkit-tap-highlight-color:transparent] transition-all duration-500 ease-out active:scale-95 ${
                 isActive 
                   ? 'bg-[#d8421b]/35 backdrop-blur-md border border-white/80 shadow-[0_4px_15px_rgba(216,66,27,0.25)]' 
                   : 'bg-transparent border border-transparent'
