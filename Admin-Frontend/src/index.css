@@ -1,0 +1,94 @@
+@import "tailwindcss";
+
+@theme {
+  --color-gold: #e2a750;
+  --color-gold-hover: #c99344;
+  --color-black: #000000;
+  --color-black-soft: #121212;
+  --color-bg-luxury: #F4F4F4;
+}
+
+/* ── Global heading style ── */
+.section-heading {
+  font-family: 'Montserrat', sans-serif !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+  letter-spacing: -0.3px !important;
+  font-size: 26px !important;
+}
+
+.font-montserrat {
+  font-family: 'Montserrat', sans-serif;
+}
+
+.font-nunito {
+  font-family: 'Nunito', sans-serif;
+}
+
+.font-raleway {
+  font-family: 'Raleway', sans-serif;
+}
+
+.font-roboto {
+  font-family: 'Roboto', sans-serif;
+}
+
+@media (min-width: 640px) {
+  .section-heading {
+    font-size: 30px !important;
+  }
+}
+
+@layer base {
+  :root {
+    --card-bg: #ffffff;
+    --card-text: #111827;
+    --card-sub: #6b7280;
+    --card-border: #f3f4f6;
+  }
+
+  body {
+    @apply bg-gray-50 text-blue-950 transition-colors duration-300;
+    font-family: 'Nunito', Arial, sans-serif;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+  }
+
+  .product-img-blend {
+    mix-blend-mode: multiply;
+  }
+}
+
+@layer utilities {
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Global image styling for proper rendering */
+  img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+
+  /* Product images specific styling */
+  .product-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+  }
+
+  .product-img-cover {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+}
