@@ -26,12 +26,27 @@ export const AppProvider = ({ children }) => {
   const [orderReviews, setOrderReviews] = useState({});
   const [user, setUser] = useState(() => {
     const loggedIn = sessionStorage.getItem('isLoggedIn');
+    const userInfo = localStorage.getItem('userInfo');
+    if (loggedIn === 'true' && userInfo) {
+      try {
+        const info = JSON.parse(userInfo);
+        return {
+          name: info.name || 'User',
+          phone: info.phone || '',
+          email: info.email || null,
+          gender: info.gender || null,
+          joined: info.joinedAt
+            ? `Member since ${new Date(info.joinedAt).toLocaleString('default', { month: 'long', year: 'numeric' })}`
+            : 'Member since May 2026'
+        };
+      } catch { /* ignore */ }
+    }
     if (loggedIn === 'true') {
       return {
-        name: "Vini",
-        email: "vini@mynzoworld.com",
-        tier: "Gold Tier Gifter",
-        joined: "Member since May 2026"
+        name: 'Vini',
+        email: 'vini@mynzoworld.com',
+        tier: 'Gold Tier Gifter',
+        joined: 'Member since May 2026'
       };
     }
     return null;
