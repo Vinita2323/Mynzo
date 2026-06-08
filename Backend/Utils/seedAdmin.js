@@ -5,8 +5,8 @@ require('dotenv').config();
 const seedAdmin = async () => {
   await connectDB();
 
-  const email = process.env.ADMIN_EMAIL || 'admin@gmail.com';
-  const password = process.env.ADMIN_PASSWORD || '123';
+  const email = 'admin@gmail.com';
+  const password = '123';
 
   try {
     const existing = await Admin.findOne({ email });
