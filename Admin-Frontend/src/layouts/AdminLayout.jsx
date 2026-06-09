@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Package, ShoppingCart, Users, LogOut,
@@ -19,6 +19,24 @@ const AdminLayout = () => {
 
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Auth Guard - redirect to login if not authenticated
+  useEffect(() => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      navigate('/admin/auth', { replace: true });
+    }
+  }, [navigate]);
+
+  // Get logged in admin info
+  const adminInfo = JSON.parse(localStorage.getItem('adminInfo') || '{"name":"Admin","email":"admin@gmail.com"}');
+
+  // Proper logout function
+  const handleLogout = () => {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminInfo');
+    navigate('/admin/auth', { replace: true });
+  };
 
   const mockNotifications = [
     { id: 1, title: 'New Vendor Request', time: '5m ago', type: 'info', read: false },
@@ -111,7 +129,6 @@ const AdminLayout = () => {
       title: 'SYSTEM',
       items: [
         { name: 'Settings', path: '/admin/settings', icon: <Settings size={18} /> },
-        { name: 'Logout', path: '/admin/auth', icon: <LogOut size={18} /> },
       ]
     }
   ];
@@ -236,23 +253,30 @@ const AdminLayout = () => {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-6 border-t border-slate-50">
+        <div className="p-6 border-t border-slate-50 space-y-3">
             <div 
               onClick={() => navigate('/admin/settings')}
               className={`p-4 bg-blue-50 rounded-2xl flex items-center gap-3 cursor-pointer hover:bg-blue-100 transition-all`}
             >
               <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center font-bold text-xs text-blue-500 border border-blue-100">
-                 A
+                 {adminInfo.name?.charAt(0).toUpperCase() || 'A'}
               </div>
               {isSidebarOpen && (
-                <div>
-                   <p className="text-[11px] font-bold text-blue-500 uppercase leading-none">System Admin</p>
+                <div className="flex-1 min-w-0">
+                   <p className="text-[11px] font-bold text-blue-500 uppercase leading-none truncate">{adminInfo.name || 'Super Admin'}</p>
                    <p className="text-[10px] text-green-500 font-bold mt-1 flex items-center gap-1">
                       <span className="w-1 h-1 bg-green-500 rounded-full animate-pulse" /> Live & Secure
                    </p>
                 </div>
               )}
            </div>
+           <button
+             onClick={handleLogout}
+             className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl transition-all text-red-400 hover:bg-red-50 hover:text-red-500 ${!isSidebarOpen ? 'justify-center' : ''}`}
+           >
+             <LogOut size={16} />
+             {isSidebarOpen && <span className="font-bold text-[13px]">Logout</span>}
+           </button>
         </div>
       </aside>
 

@@ -1,23 +1,52 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Lock, Mail, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, ShieldCheck, Loader2 } from 'lucide-react';
+
+const API_URL = 'http://localhost:5000/api/admin/auth';
 
 const Auth = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState('admin@gmail.com');
+  const [password, setPassword] = useState('123');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       setError('Please fill in all fields');
       return;
     }
     setError('');
-    // Mock login
-    navigate('/admin/dashboard');
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setError(data.message || 'Login failed');
+        setLoading(false);
+        return;
+      }
+
+      // Store token and admin info in localStorage
+      localStorage.setItem('adminToken', data.token);
+      localStorage.setItem('adminInfo', JSON.stringify(data.admin));
+
+      navigate('/admin/dashboard');
+    } catch (err) {
+      setError('Server se connect nahi ho pa raha. Backend chal raha hai?');
+      console.error('Login error:', err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -62,7 +91,7 @@ const Auth = () => {
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@cocio.com"
+                  placeholder="admin@gmail.com"
                   className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3.5 pl-14 pr-6 text-slate-900 font-bold placeholder:text-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all text-sm"
                 />
               </div>
@@ -91,9 +120,17 @@ const Auth = () => {
 
             <button 
               type="submit"
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[11px] uppercase tracking-[2px] py-4 rounded-xl shadow-lg shadow-blue-100 active:scale-[0.98] transition-all mt-2"
+              disabled={loading}
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold text-[11px] uppercase tracking-[2px] py-4 rounded-xl shadow-lg shadow-blue-100 active:scale-[0.98] transition-all mt-2 flex items-center justify-center gap-2"
             >
-              Sign In to Dashboard
+              {loading ? (
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  Signing In...
+                </>
+              ) : (
+                'Sign In to Dashboard'
+              )}
             </button>
           </form>
 

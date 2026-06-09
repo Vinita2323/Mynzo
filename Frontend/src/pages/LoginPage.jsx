@@ -1,85 +1,163 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { ArrowLeft, Edit2 } from 'lucide-react';
+import { ArrowLeft, Edit2, Loader2 } from 'lucide-react';
 import dollImage from '../assets/DollMynzo-removebg-preview.png';
+
+const API_URL = 'http://localhost:5000/api/auth';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const { setUser } = useApp();
 
   // Phone + OTP states
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [otpSent, setOtpSent] = useState(false);
-  
-  // 4-digit OTP state
-  const [otp, setOtp] = useState(["", "", "", ""]);
-  const otpRefs = [useRef(null), useRef(null), useRef(null), useRef(null)];
-  
-  const [signInError, setSignInError] = useState("");
-  const [signInSuccess, setSignInSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSendOtp = (e) => {
+  // 6-digit OTP state
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const otpRefs = [
+    useRef(null), useRef(null), useRef(null),
+    useRef(null), useRef(null), useRef(null)
+  ];
+
+  const [signInError, setSignInError] = useState('');
+  const [signInSuccess, setSignInSuccess] = useState('');
+
+  const handleSendOtp = async (e) => {
     e.preventDefault();
     if (!phoneNumber.trim() || phoneNumber.length < 10) {
-      setSignInError("Please enter a valid 10-digit phone number");
+      setSignInError('Please enter a valid 10-digit phone number');
       return;
     }
-    
-    setSignInError("");
-    setOtpSent(true);
-    setSignInSuccess("OTP Sent successfully! Enter '1234' to verify.");
+
+    setSignInError('');
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_URL}/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phoneNumber })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setSignInError(data.message || 'Failed to send OTP');
+        return;
+      }
+
+      setOtpSent(true);
+      setSignInSuccess(
+        data.isNewUser
+          ? '✨ New account milega! OTP enter karo.'
+          : '📱 OTP sent! Enter karo.'
+      );
+    } catch (err) {
+      console.error(err);
+      setSignInError('Server se connect nahi ho pa raha. Backend chal raha hai?');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleOtpChange = (index, value) => {
     if (isNaN(value)) return;
-    
+
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
-    setSignInError("");
+    setSignInError('');
 
     // Move to next input if value is entered
-    if (value !== "" && index < 3) {
+    if (value !== '' && index < 5) {
       otpRefs[index + 1].current.focus();
     }
   };
 
   const handleOtpKeyDown = (index, e) => {
     // Move to previous input on backspace if current is empty
-    if (e.key === "Backspace" && otp[index] === "" && index > 0) {
+    if (e.key === 'Backspace' && otp[index] === '' && index > 0) {
       otpRefs[index - 1].current.focus();
     }
   };
 
-  const handleVerifyOtpAndLogin = (e) => {
+  const handleVerifyOtpAndLogin = async (e) => {
     e.preventDefault();
-    const fullOtp = otp.join("");
-    
-    if (fullOtp.length < 4) {
-      setSignInError("Please enter the complete 4-digit OTP");
-      return;
-    }
-    if (fullOtp !== "1234") {
-      setSignInError("Invalid OTP. For mock login, enter '1234'.");
+    const fullOtp = otp.join('');
+
+    if (fullOtp.length < 6) {
+      setSignInError('Please enter the complete 6-digit OTP');
       return;
     }
 
-    // Set mock user session in global context and sessionStorage
-    sessionStorage.setItem('isLoggedIn', 'true');
-    if (setUser) {
-      setUser({
-        name: `User_${phoneNumber.slice(-4)}`,
-        phone: `+91 ${phoneNumber}`,
-        tier: "Gold Tier Gifter",
-        joined: "Member since May 2026"
+    setLoading(true);
+    setSignInError('');
+
+    try {
+      const res = await fetch(`${API_URL}/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phoneNumber, otp: fullOtp })
       });
-    }
 
-    navigate('/');
+      const data = await res.json();
+
+      if (!res.ok || !data.success) {
+        setSignInError(data.message || 'OTP verification failed');
+        return;
+      }
+
+      // Store token and user info
+      localStorage.setItem('userToken', data.token);
+      localStorage.setItem('userInfo', JSON.stringify(data.user));
+      sessionStorage.setItem('isLoggedIn', 'true');
+
+      // Update app context
+      if (setUser) {
+        setUser({
+          name: data.user.name || null,
+          phone: `+91 ${phoneNumber}`,
+          email: data.user.email || null,
+          gender: data.user.gender || null,
+          dob: data.user.dob || null,
+          joined: `Member since ${new Date(data.user.joinedAt).toLocaleString('default', { month: 'long', year: 'numeric' })}`
+        });
+      }
+
+      navigate('/');
+    } catch (err) {
+      console.error(err);
+      setSignInError('Server se connect nahi ho pa raha. Backend chal raha hai?');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // SVG Leaf Overlay background to repeat across slides
+  const handleResendOtp = async () => {
+    setOtp(['', '', '', '', '', '']);
+    setSignInError('');
+    setLoading(true);
+
+    try {
+      const res = await fetch(`${API_URL}/send-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: phoneNumber })
+      });
+      const data = await res.json();
+      setSignInSuccess(data.success ? '📱 New OTP sent!' : 'Failed to resend OTP');
+    } catch {
+      setSignInError('Server error. Try again.');
+    } finally {
+      setLoading(false);
+      otpRefs[0].current?.focus();
+    }
+  };
+
+  // SVG Leaf Overlay background
   const renderLeafOverlay = () => (
     <div className="absolute inset-0 opacity-15 pointer-events-none select-none z-0">
       <svg className="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
@@ -135,19 +213,19 @@ export default function LoginPage() {
 
   return (
     <div className="h-[100dvh] w-full flex flex-col justify-between overflow-hidden relative bg-[#F8F9FD]">
-      
+
       {/* Curved Orange top banner */}
       <div className="relative h-[28%] bg-gradient-to-br from-orange-300 via-orange-400 to-[#FF8E4D] flex flex-col items-center justify-center pt-4">
         {renderLeafOverlay()}
-        
+
         {/* Back to Home or Back to Phone Input */}
-        <button 
+        <button
           onClick={() => {
             if (otpSent) {
               setOtpSent(false);
-              setOtp(["", "", "", ""]);
-              setSignInError("");
-              setSignInSuccess("");
+              setOtp(['', '', '', '', '', '']);
+              setSignInError('');
+              setSignInSuccess('');
             } else {
               navigate('/');
             }
@@ -159,9 +237,9 @@ export default function LoginPage() {
 
         {/* Logo Container */}
         <div className="relative z-10 h-28 flex items-center justify-center mb-2 animate-fade-in drop-shadow-xl">
-          <img 
-            src="/HopeFinal.png" 
-            alt="Mynzo Logo" 
+          <img
+            src="/HopeFinal.png"
+            alt="Mynzo Logo"
             className="h-full w-auto object-contain rounded-3xl"
             onError={(e) => { e.target.style.display = 'none'; }}
           />
@@ -175,7 +253,7 @@ export default function LoginPage() {
 
       {/* Main Content Area */}
       <div className="bg-[#F8F9FD] px-8 pb-16 pt-4 flex-grow flex flex-col justify-start z-10 space-y-6">
-        
+
         {!otpSent ? (
           /* ================================ */
           /* PHONE NUMBER INPUT SCREEN        */
@@ -183,8 +261,8 @@ export default function LoginPage() {
           <div className="space-y-6 animate-fade-in">
             {/* Form Header */}
             <div className="space-y-1">
-              <h2 className="text-2xl font-extrabold text-[#02006c]">Sign In</h2>
-              <p className="text-[10px] text-slate-400 font-bold">Sign in to your Registered Account.</p>
+              <h2 className="text-2xl font-extrabold text-[#02006c]">Sign In / Register</h2>
+              <p className="text-[10px] text-slate-400 font-bold">Sign in to your Registered Account</p>
               <div className="w-6 h-0.75 bg-[#ee4923] rounded-full mt-1.5"></div>
             </div>
 
@@ -193,13 +271,13 @@ export default function LoginPage() {
                 <label className="text-sm font-syne font-black text-slate-500 uppercase tracking-widest">Phone Number</label>
                 <div className="flex gap-2 border-b-2 border-slate-200 focus-within:border-[#ee4923] transition-colors py-2">
                   <span className="text-lg text-[#02006c] font-black pr-2 border-r-2 border-slate-100 flex items-center select-none">+91</span>
-                  <input 
-                    type="tel" 
+                  <input
+                    type="tel"
                     placeholder="Enter 10-digit number"
                     value={phoneNumber}
                     onChange={(e) => {
                       setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10));
-                      setSignInError("");
+                      setSignInError('');
                     }}
                     className="w-full text-lg text-[#02006c] font-bold outline-none placeholder-slate-300 bg-transparent"
                   />
@@ -211,18 +289,19 @@ export default function LoginPage() {
               )}
 
               <div className="pt-4">
-                <button 
+                <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-orange-400 to-[#FF8E4D] hover:scale-[1.01] active:scale-95 text-white text-[10px] font-black py-3.5 rounded-full tracking-wider shadow-md shadow-orange-500/10 transition-all cursor-pointer text-center uppercase"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-orange-400 to-[#FF8E4D] hover:scale-[1.01] active:scale-95 disabled:opacity-60 text-white text-[10px] font-black py-3.5 rounded-full tracking-wider shadow-md shadow-orange-500/10 transition-all cursor-pointer text-center uppercase flex items-center justify-center gap-2"
                 >
-                  Send OTP
+                  {loading ? <><Loader2 size={14} className="animate-spin" /> Sending...</> : 'Send OTP'}
                 </button>
               </div>
             </form>
           </div>
         ) : (
           /* ================================ */
-          /* OTP VERIFICATION SCREEN          */
+          /* OTP VERIFICATION SCREEN (6-digit)*/
           /* ================================ */
           <div className="space-y-6 animate-fade-in">
             {/* Form Header */}
@@ -230,11 +309,11 @@ export default function LoginPage() {
               <h2 className="text-2xl font-extrabold text-[#02006c]">Verify OTP</h2>
               <div className="flex items-center gap-2">
                 <p className="text-[10px] text-slate-400 font-bold">Code sent to +91 {phoneNumber}</p>
-                <button 
+                <button
                   onClick={() => {
                     setOtpSent(false);
-                    setOtp(["", "", "", ""]);
-                    setSignInError("");
+                    setOtp(['', '', '', '', '', '']);
+                    setSignInError('');
                   }}
                   className="p-1 rounded-full bg-slate-100 hover:bg-slate-200 transition-colors text-slate-500"
                 >
@@ -247,11 +326,11 @@ export default function LoginPage() {
             <form onSubmit={handleVerifyOtpAndLogin} className="flex flex-col gap-2 pt-4">
               <div className="space-y-3 text-left">
                 <label className="text-sm font-syne font-black text-slate-500 uppercase tracking-widest text-center block">
-                  Enter 4-Digit OTP
+                  Enter 6-Digit OTP
                 </label>
-                
-                {/* 4 Box OTP Input */}
-                <div className="flex justify-center gap-3">
+
+                {/* 6 Box OTP Input */}
+                <div className="flex justify-center gap-2">
                   {otp.map((digit, index) => (
                     <input
                       key={index}
@@ -263,7 +342,8 @@ export default function LoginPage() {
                       value={digit}
                       onChange={(e) => handleOtpChange(index, e.target.value)}
                       onKeyDown={(e) => handleOtpKeyDown(index, e)}
-                      className="w-12 h-14 rounded-xl border-2 border-slate-200 bg-white text-center text-xl font-black text-[#02006c] focus:border-[#ee4923] focus:ring-2 focus:ring-orange-100 outline-none transition-all shadow-sm"
+                      className="w-10 h-13 rounded-xl border-2 border-slate-200 bg-white text-center text-xl font-black text-[#02006c] focus:border-[#ee4923] focus:ring-2 focus:ring-orange-100 outline-none transition-all shadow-sm"
+                      style={{ height: '52px' }}
                     />
                   ))}
                 </div>
@@ -278,24 +358,21 @@ export default function LoginPage() {
               )}
 
               <div className="mt-1">
-                <button 
+                <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-orange-400 to-[#FF8E4D] hover:scale-[1.01] active:scale-95 text-white text-[10px] font-black py-3.5 rounded-full tracking-wider shadow-md shadow-orange-500/10 transition-all cursor-pointer text-center uppercase"
+                  disabled={loading}
+                  className="w-full bg-gradient-to-r from-orange-400 to-[#FF8E4D] hover:scale-[1.01] active:scale-95 disabled:opacity-60 text-white text-[10px] font-black py-3.5 rounded-full tracking-wider shadow-md shadow-orange-500/10 transition-all cursor-pointer text-center uppercase flex items-center justify-center gap-2"
                 >
-                  Verify & Sign In
+                  {loading ? <><Loader2 size={14} className="animate-spin" /> Verifying...</> : 'Verify & Sign In'}
                 </button>
               </div>
 
               <div className="text-center mt-1">
-                <button 
+                <button
                   type="button"
-                  onClick={() => {
-                    setOtp(["", "", "", ""]);
-                    setSignInError("");
-                    setSignInSuccess("New OTP sent successfully!");
-                    otpRefs[0].current.focus();
-                  }}
-                  className="text-[10px] font-extrabold text-[#FF8E4D] hover:underline cursor-pointer tracking-wide"
+                  onClick={handleResendOtp}
+                  disabled={loading}
+                  className="text-[10px] font-extrabold text-[#FF8E4D] hover:underline cursor-pointer tracking-wide disabled:opacity-50"
                 >
                   Resend Verification Code?
                 </button>
