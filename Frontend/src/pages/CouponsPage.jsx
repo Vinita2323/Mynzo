@@ -18,7 +18,7 @@ export default function CouponsPage() {
     const token = localStorage.getItem('userToken');
     try {
       // 1. Fetch available active coupons
-      const couponsRes = await fetch(`${API_BASE}/api/admin/promotions/coupons`);
+      const couponsRes = await fetch(`${API_BASE}/admin/promotions/coupons`);
       const couponsData = await couponsRes.json();
       if (couponsData.success) {
         setCoupons(couponsData.coupons.filter(c => c.status === 'Active'));
@@ -26,7 +26,7 @@ export default function CouponsPage() {
 
       // 2. Fetch history of used coupons (if logged in)
       if (token) {
-        const historyRes = await fetch(`${API_BASE}/api/admin/promotions/coupons/history`, {
+        const historyRes = await fetch(`${API_BASE}/admin/promotions/coupons/history`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const historyData = await historyRes.json();

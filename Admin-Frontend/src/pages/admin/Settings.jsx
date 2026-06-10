@@ -48,7 +48,7 @@ const Settings = () => {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       
       // Get Admin Profile
-      const profileRes = await fetch(`${apiBase}/api/admin/auth/me`, {
+      const profileRes = await fetch(`${apiBase}/admin/auth/me`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const profileData = await profileRes.json();
@@ -63,7 +63,7 @@ const Settings = () => {
       }
 
       // Get System Config Settings
-      const settingsRes = await fetch(`${apiBase}/api/admin/settings`, {
+      const settingsRes = await fetch(`${apiBase}/admin/settings`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const settingsData = await settingsRes.json();
@@ -122,7 +122,7 @@ const Settings = () => {
         }
 
         // Save Admin Info
-        const profileRes = await fetch(`${apiBase}/api/admin/auth/profile`, {
+        const profileRes = await fetch(`${apiBase}/admin/auth/profile`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -132,7 +132,7 @@ const Settings = () => {
         const profileData = await profileRes.json();
 
         // Save Helpline & GST registration to settings
-        const settingsRes = await fetch(`${apiBase}/api/admin/settings`, {
+        const settingsRes = await fetch(`${apiBase}/admin/settings`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -162,7 +162,7 @@ const Settings = () => {
         }
       } else if (activeSection === 'Business') {
         // Save Platform commission & GST rate
-        const settingsRes = await fetch(`${apiBase}/api/admin/settings`, {
+        const settingsRes = await fetch(`${apiBase}/admin/settings`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -192,7 +192,7 @@ const Settings = () => {
           return;
         }
 
-        const securityRes = await fetch(`${apiBase}/api/admin/auth/change-password`, {
+        const securityRes = await fetch(`${apiBase}/admin/auth/change-password`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

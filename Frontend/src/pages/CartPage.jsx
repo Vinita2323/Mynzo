@@ -46,7 +46,7 @@ export default function CartPage() {
       try {
         const token = localStorage.getItem('userToken');
         if (!token) return;
-        const res = await fetch(`${API_BASE}/api/addresses`, {
+        const res = await fetch(`${API_BASE}/addresses`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -123,7 +123,7 @@ export default function CartPage() {
     }
     try {
       const token = localStorage.getItem('userToken');
-      const res = await fetch(`${API_BASE}/api/addresses`, {
+      const res = await fetch(`${API_BASE}/addresses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +160,7 @@ export default function CartPage() {
       return;
     }
     try {
-      const res = await fetch(`${API_BASE}/api/admin/promotions/coupons`);
+      const res = await fetch(`${API_BASE}/admin/promotions/coupons`);
       const data = await res.json();
       if (data.success && data.coupons) {
         const found = data.coupons.find(c => c.code.toUpperCase() === promoInput.trim().toUpperCase());

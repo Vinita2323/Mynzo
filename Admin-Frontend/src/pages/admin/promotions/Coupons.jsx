@@ -40,7 +40,7 @@ const Coupons = () => {
   const fetchCoupons = async () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/promotions/coupons`);
+      const res = await fetch(`${apiBase}/admin/promotions/coupons`);
       const data = await res.json();
       if (res.ok && data.success) {
         setCoupons(data.coupons || []);
@@ -73,8 +73,8 @@ const Coupons = () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const url = editingCoupon 
-        ? `${apiBase}/api/admin/promotions/coupons/${editingCoupon._id}`
-        : `${apiBase}/api/admin/promotions/coupons`;
+        ? `${apiBase}/admin/promotions/coupons/${editingCoupon._id}`
+        : `${apiBase}/admin/promotions/coupons`;
       const method = editingCoupon ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
@@ -124,7 +124,7 @@ const Coupons = () => {
 
         try {
           const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-          const res = await fetch(`${apiBase}/api/admin/promotions/coupons/${id}`, {
+          const res = await fetch(`${apiBase}/admin/promotions/coupons/${id}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`
@@ -152,7 +152,7 @@ const Coupons = () => {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/promotions/coupons/${id}/status`, {
+      const res = await fetch(`${apiBase}/admin/promotions/coupons/${id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -39,7 +39,7 @@ const ReferralProgram = () => {
       const params = new URLSearchParams({ limit: 50 });
       if (statusFilter !== 'all') params.set('status', statusFilter);
 
-      const res = await fetch(`${API_BASE}/api/admin/referrals?${params}`, { headers });
+      const res = await fetch(`${API_BASE}/admin/referrals?${params}`, { headers });
       const data = await res.json();
       if (data.success) {
         setReferrals(data.referrals);
@@ -57,7 +57,7 @@ const ReferralProgram = () => {
   const fetchConfig = async () => {
     setConfigLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/admin/referrals/config`, { headers });
+      const res = await fetch(`${API_BASE}/admin/referrals/config`, { headers });
       const data = await res.json();
       if (data.success) {
         setCoinsPerReferral(data.config.referralCoinsPerReferral);
@@ -73,7 +73,7 @@ const ReferralProgram = () => {
   const handleSaveConfig = async () => {
     setSavingConfig(true);
     try {
-      const res = await fetch(`${API_BASE}/api/admin/referrals/config`, {
+      const res = await fetch(`${API_BASE}/admin/referrals/config`, {
         method: 'PUT',
         headers: { ...headers, 'Content-Type': 'application/json' },
         body: JSON.stringify({ referralCoinsPerReferral: coinsPerReferral, referralEnabled })

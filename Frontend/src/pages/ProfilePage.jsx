@@ -177,7 +177,7 @@ export default function ProfilePage() {
           try {
             const formData = new FormData();
             formData.append('image', file);
-            const apiBase = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth`;
+            const apiBase = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/auth`;
             const res = await fetch(`${apiBase}/profile`, {
               method: 'PUT',
               headers: {

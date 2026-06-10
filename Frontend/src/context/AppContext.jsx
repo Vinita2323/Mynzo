@@ -129,7 +129,7 @@ export const AppProvider = ({ children }) => {
       try {
         const token = localStorage.getItem('userToken');
         if (!token) return;
-        const res = await fetch(`${API_BASE}/api/cart`, {
+        const res = await fetch(`${API_BASE}/cart`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -171,7 +171,7 @@ export const AppProvider = ({ children }) => {
       try {
         const token = localStorage.getItem('userToken');
         if (!token) return;
-        const res = await fetch(`${API_BASE}/api/orders`, {
+        const res = await fetch(`${API_BASE}/orders`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -211,7 +211,7 @@ export const AppProvider = ({ children }) => {
       setAddressesLoading(true);
       const token = localStorage.getItem('userToken');
       if (!token) return;
-      const res = await fetch(`${API_BASE}/api/addresses`, {
+      const res = await fetch(`${API_BASE}/addresses`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -228,7 +228,7 @@ export const AppProvider = ({ children }) => {
   const addAddress = async (addressData) => {
     try {
       const token = localStorage.getItem('userToken');
-      const res = await fetch(`${API_BASE}/api/addresses`, {
+      const res = await fetch(`${API_BASE}/addresses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -251,7 +251,7 @@ export const AppProvider = ({ children }) => {
   const updateAddress = async (id, addressData) => {
     try {
       const token = localStorage.getItem('userToken');
-      const res = await fetch(`${API_BASE}/api/addresses/${id}`, {
+      const res = await fetch(`${API_BASE}/addresses/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -274,7 +274,7 @@ export const AppProvider = ({ children }) => {
   const deleteAddress = async (id) => {
     try {
       const token = localStorage.getItem('userToken');
-      const res = await fetch(`${API_BASE}/api/addresses/${id}`, {
+      const res = await fetch(`${API_BASE}/addresses/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -306,7 +306,7 @@ export const AppProvider = ({ children }) => {
     if (user && user.id) {
       try {
         const token = localStorage.getItem('userToken');
-        const res = await fetch(`${API_BASE}/api/cart`, {
+        const res = await fetch(`${API_BASE}/cart`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -356,7 +356,7 @@ export const AppProvider = ({ children }) => {
     if (user && user.id) {
       try {
         const token = localStorage.getItem('userToken');
-        const res = await fetch(`${API_BASE}/api/cart/${productId}`, {
+        const res = await fetch(`${API_BASE}/cart/${productId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`
@@ -396,7 +396,7 @@ export const AppProvider = ({ children }) => {
     if (user && user.id) {
       try {
         const token = localStorage.getItem('userToken');
-        const res = await fetch(`${API_BASE}/api/cart`, {
+        const res = await fetch(`${API_BASE}/cart`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -447,7 +447,7 @@ export const AppProvider = ({ children }) => {
     if (user && user.id) {
       try {
         const token = localStorage.getItem('userToken');
-        await fetch(`${API_BASE}/api/cart`, {
+        await fetch(`${API_BASE}/cart`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`

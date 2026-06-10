@@ -21,7 +21,7 @@ const LegalPolicies = () => {
   const fetchPolicies = async () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/content/legal`);
+      const res = await fetch(`${apiBase}/admin/content/legal`);
       const data = await res.json();
       if (res.ok && data.success) {
         setPrivacyPolicy(data.privacy || '');
@@ -52,7 +52,7 @@ const LegalPolicies = () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const content = activeTab === 'privacy' ? privacyPolicy : termsConditions;
-      const res = await fetch(`${apiBase}/api/admin/content/legal`, {
+      const res = await fetch(`${apiBase}/admin/content/legal`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

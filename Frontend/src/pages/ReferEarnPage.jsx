@@ -35,7 +35,7 @@ export default function ReferEarnPage() {
     }
     try {
       const token = localStorage.getItem('userToken');
-      const res = await fetch(`${API_BASE}/api/referral/me`, {
+      const res = await fetch(`${API_BASE}/referral/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -86,7 +86,7 @@ export default function ReferEarnPage() {
     setApplying(true);
     try {
       const token = localStorage.getItem('userToken');
-      const res = await fetch(`${API_BASE}/api/referral/apply`, {
+      const res = await fetch(`${API_BASE}/referral/apply`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

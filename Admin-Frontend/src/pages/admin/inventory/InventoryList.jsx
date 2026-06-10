@@ -72,7 +72,7 @@ export default function InventoryList() {
   const fetchProducts = async () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/catalog/products`);
+      const res = await fetch(`${apiBase}/admin/catalog/products`);
       const data = await res.json();
       if (res.ok && data.success) {
         setDbProducts(data.products.map(p => ({
@@ -197,7 +197,7 @@ export default function InventoryList() {
         if (!token) return;
         try {
           const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-          const res = await fetch(`${apiBase}/api/admin/catalog/products/${id}`, {
+          const res = await fetch(`${apiBase}/admin/catalog/products/${id}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`
@@ -229,7 +229,7 @@ export default function InventoryList() {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/catalog/products/${id}`, {
+      const res = await fetch(`${apiBase}/admin/catalog/products/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -259,7 +259,7 @@ export default function InventoryList() {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const promises = selectedIds.map(id => {
         if (String(id).startsWith('P0')) return Promise.resolve();
-        return fetch(`${apiBase}/api/admin/catalog/products/${id}`, {
+        return fetch(`${apiBase}/admin/catalog/products/${id}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -293,7 +293,7 @@ export default function InventoryList() {
           const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
           const promises = selectedIds.map(id => {
             if (String(id).startsWith('P0')) return Promise.resolve();
-            return fetch(`${apiBase}/api/admin/catalog/products/${id}`, {
+            return fetch(`${apiBase}/admin/catalog/products/${id}`, {
               method: 'DELETE',
               headers: {
                 'Authorization': `Bearer ${token}`
@@ -325,7 +325,7 @@ export default function InventoryList() {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/catalog/products/${id}`, {
+      const res = await fetch(`${apiBase}/admin/catalog/products/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

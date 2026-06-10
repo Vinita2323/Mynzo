@@ -5,7 +5,7 @@ import { ArrowLeft, Edit2, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import dollImage from '../assets/DollMynzo-removebg-preview.png';
 
-const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth`;
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/auth`;
 
 export default function LoginPage() {
   const navigate = useNavigate();

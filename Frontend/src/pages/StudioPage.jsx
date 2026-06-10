@@ -143,7 +143,7 @@ export default function StudioPage() {
     try {
       setLoading(true);
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/reels`);
+      const res = await fetch(`${apiBase}/reels`);
       const data = await res.json();
       if (res.ok && data.success) {
         const userId = user?._id || user?.id;
@@ -272,7 +272,7 @@ export default function StudioPage() {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/reels/${activeCommentPost}/comment`, {
+      const res = await fetch(`${apiBase}/reels/${activeCommentPost}/comment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -311,7 +311,7 @@ export default function StudioPage() {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/reels/${activeCommentPost}/comment/${commentId}`, {
+      const res = await fetch(`${apiBase}/reels/${activeCommentPost}/comment/${commentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -345,7 +345,7 @@ export default function StudioPage() {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/reels/${activeCommentPost}/comment/${commentId}`, {
+      const res = await fetch(`${apiBase}/reels/${activeCommentPost}/comment/${commentId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -372,7 +372,7 @@ export default function StudioPage() {
   const handleVisible = async (postId) => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      await fetch(`${apiBase}/api/reels/${postId}/view`, {
+      await fetch(`${apiBase}/reels/${postId}/view`, {
         method: 'POST'
       });
     } catch (err) {

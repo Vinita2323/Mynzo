@@ -34,7 +34,7 @@ const QnAModeration = () => {
   const fetchQnAs = async () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/content/qna`);
+      const res = await fetch(`${apiBase}/admin/content/qna`);
       const data = await res.json();
       if (res.ok && data.success) {
         setQnas(data.qnas || []);
@@ -67,8 +67,8 @@ const QnAModeration = () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const url = editingFaq 
-        ? `${apiBase}/api/admin/content/qna/${editingFaq._id}`
-        : `${apiBase}/api/admin/content/qna`;
+        ? `${apiBase}/admin/content/qna/${editingFaq._id}`
+        : `${apiBase}/admin/content/qna`;
       const method = editingFaq ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
@@ -106,7 +106,7 @@ const QnAModeration = () => {
 
         try {
           const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-          const res = await fetch(`${apiBase}/api/admin/content/qna/${id}`, {
+          const res = await fetch(`${apiBase}/admin/content/qna/${id}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`

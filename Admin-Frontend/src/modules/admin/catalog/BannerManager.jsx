@@ -138,7 +138,7 @@ const BannerManager = () => {
   const fetchBanners = async () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/catalog/banners`);
+      const res = await fetch(`${apiBase}/admin/catalog/banners`);
       const data = await res.json();
       if (res.ok && data.success) {
         setBanners(data.banners.map(b => ({
@@ -165,7 +165,7 @@ const BannerManager = () => {
     const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     const bodyFormData = new FormData();
     bodyFormData.append('image', file);
-    const res = await fetch(`${apiBase}/api/admin/catalog/banners/upload`, {
+    const res = await fetch(`${apiBase}/admin/catalog/banners/upload`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`
@@ -283,7 +283,7 @@ const BannerManager = () => {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/catalog/banners/publish`, {
+      const res = await fetch(`${apiBase}/admin/catalog/banners/publish`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

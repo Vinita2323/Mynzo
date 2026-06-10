@@ -41,7 +41,7 @@ export default function GamesPage() {
       return;
     }
     try {
-      const res = await fetch(`${API_BASE}/api/games`, {
+      const res = await fetch(`${API_BASE}/games`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -74,7 +74,7 @@ export default function GamesPage() {
         }
         return;
       }
-      const res = await fetch(`${API_BASE}/api/games/play`, {
+      const res = await fetch(`${API_BASE}/games/play`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

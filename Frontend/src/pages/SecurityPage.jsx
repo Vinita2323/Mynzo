@@ -94,7 +94,7 @@ export default function SecurityPage() {
 
     try {
       const token = localStorage.getItem('userToken');
-      const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+      const res = await fetch(`${API_BASE}/auth/change-password`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

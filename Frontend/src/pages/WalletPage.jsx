@@ -20,7 +20,7 @@ export default function WalletPage() {
       return;
     }
     try {
-      const res = await fetch(`${API_BASE}/api/auth/wallet`, {
+      const res = await fetch(`${API_BASE}/auth/wallet`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();

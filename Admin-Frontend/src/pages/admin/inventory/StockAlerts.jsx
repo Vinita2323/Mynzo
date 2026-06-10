@@ -17,7 +17,7 @@ const StockAlerts = () => {
   const fetchProducts = async () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/catalog/products`);
+      const res = await fetch(`${apiBase}/admin/catalog/products`);
       const data = await res.json();
       if (res.ok && data.success) {
         setProducts(data.products || []);
@@ -43,7 +43,7 @@ const StockAlerts = () => {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/catalog/products/${id}`, {
+      const res = await fetch(`${apiBase}/admin/catalog/products/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

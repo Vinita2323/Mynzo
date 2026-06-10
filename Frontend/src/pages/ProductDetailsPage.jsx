@@ -30,7 +30,7 @@ export default function ProductDetailsPage() {
   const fetchProductReels = async () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/reels`);
+      const res = await fetch(`${apiBase}/reels`);
       const data = await res.json();
       if (res.ok && data.success) {
         // Filter approved reels for this product
@@ -75,7 +75,7 @@ export default function ProductDetailsPage() {
     try {
       setIsUploadingReel(true);
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/reels`, {
+      const res = await fetch(`${apiBase}/reels`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -131,7 +131,7 @@ export default function ProductDetailsPage() {
       setIsLoading(true);
       try {
         const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const res = await fetch(`${apiBase}/api/admin/catalog/products/${id}`);
+        const res = await fetch(`${apiBase}/admin/catalog/products/${id}`);
         const data = await res.json();
         
         if (res.ok && data.success && data.product) {

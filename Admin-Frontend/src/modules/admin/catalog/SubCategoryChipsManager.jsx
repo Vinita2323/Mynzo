@@ -136,7 +136,7 @@ const SubCategoryChipsManager = () => {
   const fetchCategories = async () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/catalog/chips`);
+      const res = await fetch(`${apiBase}/admin/catalog/chips`);
       const data = await res.json();
       if (res.ok && data.success) {
         setCategories(data.chips);
@@ -150,7 +150,7 @@ const SubCategoryChipsManager = () => {
   const fetchSubChips = async () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/catalog/subchips`);
+      const res = await fetch(`${apiBase}/admin/catalog/subchips`);
       const data = await res.json();
       if (res.ok && data.success) {
         setSubCategories(data.subchips);
@@ -175,7 +175,7 @@ const SubCategoryChipsManager = () => {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/catalog/subchips/${id}`, {
+      const res = await fetch(`${apiBase}/admin/catalog/subchips/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -208,7 +208,7 @@ const SubCategoryChipsManager = () => {
         if (!token) return;
         try {
           const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-          const res = await fetch(`${apiBase}/api/admin/catalog/subchips/${id}`, {
+          const res = await fetch(`${apiBase}/admin/catalog/subchips/${id}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`
@@ -255,7 +255,7 @@ const SubCategoryChipsManager = () => {
         bodyFormData.append('image', imageFile);
       }
 
-      const res = await fetch(`${apiBase}/api/admin/catalog/subchips/${editingId}`, {
+      const res = await fetch(`${apiBase}/admin/catalog/subchips/${editingId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -299,7 +299,7 @@ const SubCategoryChipsManager = () => {
         bodyFormData.append('image', imageFile);
       }
 
-      const res = await fetch(`${apiBase}/api/admin/catalog/subchips`, {
+      const res = await fetch(`${apiBase}/admin/catalog/subchips`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

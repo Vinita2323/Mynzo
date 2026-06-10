@@ -42,7 +42,7 @@ export default function Home() {
     const fetchCategoryChips = async () => {
       try {
         const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const res = await fetch(`${apiBase}/api/admin/catalog/chips`);
+        const res = await fetch(`${apiBase}/admin/catalog/chips`);
         const data = await res.json();
         if (res.ok && data.success && data.chips && data.chips.length > 0) {
           const activeChips = data.chips.filter(c => c.active && c.id !== 'for-you');
@@ -59,7 +59,7 @@ export default function Home() {
     const fetchBanners = async () => {
       try {
         const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const res = await fetch(`${apiBase}/api/admin/catalog/banners`);
+        const res = await fetch(`${apiBase}/admin/catalog/banners`);
         const data = await res.json();
         if (res.ok && data.success && data.banners) {
           setDynamicBanners(data.banners.filter(b => b.active));
@@ -75,9 +75,9 @@ export default function Home() {
         const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         
         const [resProducts, resTopBuys, resTrending] = await Promise.all([
-          fetch(`${apiBase}/api/admin/catalog/products?status=Approved`),
-          fetch(`${apiBase}/api/admin/catalog/products/top-buys`),
-          fetch(`${apiBase}/api/admin/catalog/products/trending-brands`)
+          fetch(`${apiBase}/admin/catalog/products?status=Approved`),
+          fetch(`${apiBase}/admin/catalog/products/top-buys`),
+          fetch(`${apiBase}/admin/catalog/products/trending-brands`)
         ]);
 
         const dataProducts = await resProducts.json();
@@ -118,7 +118,7 @@ export default function Home() {
     const fetchSubCategoryChips = async () => {
       try {
         const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const res = await fetch(`${apiBase}/api/admin/catalog/subchips`);
+        const res = await fetch(`${apiBase}/admin/catalog/subchips`);
         const data = await res.json();
         if (res.ok && data.success && data.subchips) {
           setSubCategoryChips(data.subchips.filter(sc => sc.active));

@@ -43,7 +43,7 @@ const Orders = () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       setLoading(true);
-      const res = await fetch(`${apiBase}/api/orders/admin/all`, {
+      const res = await fetch(`${apiBase}/orders/admin/all`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -72,7 +72,7 @@ const Orders = () => {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/orders/admin/${orderId}/status`, {
+      const res = await fetch(`${apiBase}/orders/admin/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -104,7 +104,7 @@ const Orders = () => {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/orders/admin/${orderId}/status`, {
+      const res = await fetch(`${apiBase}/orders/admin/${orderId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

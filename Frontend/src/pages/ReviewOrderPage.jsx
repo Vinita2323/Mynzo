@@ -46,7 +46,7 @@ export default function ReviewOrderPage() {
       try {
         const token = localStorage.getItem('userToken');
         if (!token) return;
-        const res = await fetch(`${API_BASE}/api/addresses`, {
+        const res = await fetch(`${API_BASE}/addresses`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -108,7 +108,7 @@ export default function ReviewOrderPage() {
     }
     try {
       const token = localStorage.getItem('userToken');
-      const res = await fetch(`${API_BASE}/api/addresses`, {
+      const res = await fetch(`${API_BASE}/addresses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -146,7 +146,7 @@ export default function ReviewOrderPage() {
     }
     try {
       const token = localStorage.getItem('userToken');
-      const res = await fetch(`${API_BASE}/api/admin/promotions/coupons/validate`, {
+      const res = await fetch(`${API_BASE}/admin/promotions/coupons/validate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -261,7 +261,7 @@ export default function ReviewOrderPage() {
         image: item.image
       }));
       
-      const res = await fetch(`${API_BASE}/api/orders`, {
+      const res = await fetch(`${API_BASE}/orders`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

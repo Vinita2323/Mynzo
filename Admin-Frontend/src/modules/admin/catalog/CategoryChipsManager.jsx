@@ -126,7 +126,7 @@ const CategoryChipsManager = () => {
   const fetchChips = async () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/catalog/chips`);
+      const res = await fetch(`${apiBase}/admin/catalog/chips`);
       const data = await res.json();
       if (res.ok && data.success) {
         setCategories(data.chips);
@@ -150,7 +150,7 @@ const CategoryChipsManager = () => {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/catalog/chips/${id}`, {
+      const res = await fetch(`${apiBase}/admin/catalog/chips/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -183,7 +183,7 @@ const CategoryChipsManager = () => {
         if (!token) return;
         try {
           const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-          const res = await fetch(`${apiBase}/api/admin/catalog/chips/${id}`, {
+          const res = await fetch(`${apiBase}/admin/catalog/chips/${id}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}`
@@ -226,7 +226,7 @@ const CategoryChipsManager = () => {
         bodyFormData.append('image', imageFile);
       }
 
-      const res = await fetch(`${apiBase}/api/admin/catalog/chips/${editingId}`, {
+      const res = await fetch(`${apiBase}/admin/catalog/chips/${editingId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -266,7 +266,7 @@ const CategoryChipsManager = () => {
         bodyFormData.append('image', imageFile);
       }
 
-      const res = await fetch(`${apiBase}/api/admin/catalog/chips`, {
+      const res = await fetch(`${apiBase}/admin/catalog/chips`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

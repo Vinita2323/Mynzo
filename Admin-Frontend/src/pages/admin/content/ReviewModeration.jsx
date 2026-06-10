@@ -46,7 +46,7 @@ const ReviewModeration = () => {
     try {
       setLoadingReels(true);
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/reels/admin/all`, {
+      const res = await fetch(`${apiBase}/reels/admin/all`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -68,7 +68,7 @@ const ReviewModeration = () => {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/admin/catalog/products`, {
+      const res = await fetch(`${apiBase}/admin/catalog/products`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -94,7 +94,7 @@ const ReviewModeration = () => {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/reels/admin/${reelId}/status`, {
+      const res = await fetch(`${apiBase}/reels/admin/${reelId}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -123,7 +123,7 @@ const ReviewModeration = () => {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/reels/admin/${reelId}`, {
+      const res = await fetch(`${apiBase}/reels/admin/${reelId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -165,7 +165,7 @@ const ReviewModeration = () => {
     try {
       setIsUploading(true);
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/reels/admin/upload`, {
+      const res = await fetch(`${apiBase}/reels/admin/upload`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` },
         body: formData

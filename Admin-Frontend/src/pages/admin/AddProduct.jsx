@@ -113,7 +113,7 @@ const AddProduct = () => {
     const fetchProduct = async () => {
       try {
         const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const res = await fetch(`${apiBase}/api/admin/catalog/products/${id}`);
+        const res = await fetch(`${apiBase}/admin/catalog/products/${id}`);
         const data = await res.json();
         if (res.ok && data.success && data.product) {
           const p = data.product;
@@ -339,7 +339,7 @@ const AddProduct = () => {
       });
 
       toast.loading(isEditMode ? 'Updating product...' : 'Publishing product to catalog...', { id: 'publish' });
-      const saveUrl = isEditMode ? `${apiBase}/api/admin/catalog/products/${id}` : `${apiBase}/api/admin/catalog/products`;
+      const saveUrl = isEditMode ? `${apiBase}/admin/catalog/products/${id}` : `${apiBase}/admin/catalog/products`;
       const res = await fetch(saveUrl, {
         method: isEditMode ? 'PUT' : 'POST',
         headers: {

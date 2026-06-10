@@ -39,7 +39,7 @@ export default function GameManager() {
   const fetchGames = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/games/admin`, { headers });
+      const res = await fetch(`${API_BASE}/games/admin`, { headers });
       const data = await res.json();
       if (data.success) {
         setGames(data.data);
@@ -56,7 +56,7 @@ export default function GameManager() {
   const fetchReports = async () => {
     setReportsLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/games/admin/reports`, { headers });
+      const res = await fetch(`${API_BASE}/games/admin/reports`, { headers });
       const data = await res.json();
       if (data.success) {
         setReports(data.data);
@@ -76,7 +76,7 @@ export default function GameManager() {
   const handleToggleStatus = async (game) => {
     try {
       const updatedStatus = !game.status;
-      const res = await fetch(`${API_BASE}/api/games/admin/${game.id}`, {
+      const res = await fetch(`${API_BASE}/games/admin/${game.id}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({ status: updatedStatus })
@@ -101,7 +101,7 @@ export default function GameManager() {
   const handleSaveConfig = async () => {
     if (!editingGame) return;
     try {
-      const res = await fetch(`${API_BASE}/api/games/admin/${editingGame.id}`, {
+      const res = await fetch(`${API_BASE}/games/admin/${editingGame.id}`, {
         method: 'PUT',
         headers,
         body: JSON.stringify({

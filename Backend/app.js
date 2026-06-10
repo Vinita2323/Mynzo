@@ -18,24 +18,24 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
-app.use('/api/admin/auth', require('./Utils/adminAuthRoutes'));
-app.use('/api/auth', require('./Utils/userAuthRoutes'));
-app.use('/api/addresses', require('./Utils/addressRoutes'));
-app.use('/api/cart', require('./Utils/cartRoutes'));
-app.use('/api/orders', require('./Utils/orderRoutes'));
-app.use('/api/referral', require('./Utils/referralRoutes'));
-app.use('/api/games', require('./Utils/gameRoutes'));
-app.use('/api/reels', require('./Utils/reelRoutes'));
+app.use('/admin/auth', require('./Utils/adminAuthRoutes'));
+app.use('/auth', require('./Utils/userAuthRoutes'));
+app.use('/addresses', require('./Utils/addressRoutes'));
+app.use('/cart', require('./Utils/cartRoutes'));
+app.use('/orders', require('./Utils/orderRoutes'));
+app.use('/referral', require('./Utils/referralRoutes'));
+app.use('/games', require('./Utils/gameRoutes'));
+app.use('/reels', require('./Utils/reelRoutes'));
 
-app.use('/api/admin/catalog/chips', require('./Utils/categoryChipRoutes'));
-app.use('/api/admin/catalog/subchips', require('./Utils/subCategoryChipRoutes'));
-app.use('/api/admin/catalog/banners', require('./Utils/bannerRoutes'));
-app.use('/api/admin/catalog/products', require('./Utils/productRoutes'));
-app.use('/api/admin/settings', require('./Utils/settingsRoutes'));
-app.use('/api/admin/promotions/coupons', require('./Utils/couponRoutes'));
-app.use('/api/admin/referrals', require('./Utils/adminReferralRoutes'));
-app.use('/api/admin/content/legal', require('./Utils/legalRoutes'));
-app.use('/api/admin/content/qna', require('./Utils/qnaRoutes'));
+app.use('/admin/catalog/chips', require('./Utils/categoryChipRoutes'));
+app.use('/admin/catalog/subchips', require('./Utils/subCategoryChipRoutes'));
+app.use('/admin/catalog/banners', require('./Utils/bannerRoutes'));
+app.use('/admin/catalog/products', require('./Utils/productRoutes'));
+app.use('/admin/settings', require('./Utils/settingsRoutes'));
+app.use('/admin/promotions/coupons', require('./Utils/couponRoutes'));
+app.use('/admin/referrals', require('./Utils/adminReferralRoutes'));
+app.use('/admin/content/legal', require('./Utils/legalRoutes'));
+app.use('/admin/content/qna', require('./Utils/qnaRoutes'));
 
 // Health check
 app.get('/', (req, res) => {

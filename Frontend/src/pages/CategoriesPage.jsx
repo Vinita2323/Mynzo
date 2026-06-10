@@ -35,7 +35,7 @@ export default function CategoriesPage() {
     const fetchCategoryChips = async () => {
       try {
         const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const res = await fetch(`${apiBase}/api/admin/catalog/chips`);
+        const res = await fetch(`${apiBase}/admin/catalog/chips`);
         const data = await res.json();
         if (res.ok && data.success && data.chips && data.chips.length > 0) {
           const activeChips = data.chips.filter(c => c.active && c.id !== 'for-you');
@@ -50,7 +50,7 @@ export default function CategoriesPage() {
     const fetchSubCategoryChips = async () => {
       try {
         const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const res = await fetch(`${apiBase}/api/admin/catalog/subchips`);
+        const res = await fetch(`${apiBase}/admin/catalog/subchips`);
         const data = await res.json();
         if (res.ok && data.success && data.subchips) {
           const activeSubChips = data.subchips.filter(sc => sc.active);
@@ -65,7 +65,7 @@ export default function CategoriesPage() {
       setLoading(true);
       try {
         const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const res = await fetch(`${apiBase}/api/admin/catalog/products?status=Approved`);
+        const res = await fetch(`${apiBase}/admin/catalog/products?status=Approved`);
         const data = await res.json();
         if (res.ok && data.success && data.products) {
           setRawProducts(data.products);

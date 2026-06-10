@@ -4,7 +4,7 @@ import { ChevronLeft, User, Mail, Phone, Calendar, Camera } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import toast from 'react-hot-toast';
 
-const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth`;
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/auth`;
 
 export default function AccountInfoPage() {
   const navigate = useNavigate();

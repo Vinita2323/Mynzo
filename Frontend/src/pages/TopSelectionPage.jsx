@@ -11,7 +11,7 @@ export default function TopSelectionPage() {
     const fetchTopSelections = async () => {
       try {
         const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const res = await fetch(`${apiBase}/api/admin/catalog/products?status=Approved`);
+        const res = await fetch(`${apiBase}/admin/catalog/products?status=Approved`);
         const data = await res.json();
         if (res.ok && data.success && data.products) {
           const topSelected = data.products.filter(p => p.flags?.topSection);

@@ -65,7 +65,7 @@ export default function Navbar() {
       try {
         const token = localStorage.getItem('userToken');
         if (!token) return;
-        const res = await fetch(`${API_BASE}/api/addresses`, {
+        const res = await fetch(`${API_BASE}/addresses`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -376,8 +376,8 @@ export default function Navbar() {
                         try {
                           const token = localStorage.getItem('userToken');
                           const url = editingAddressId 
-                            ? `${API_BASE}/api/addresses/${editingAddressId}`
-                            : `${API_BASE}/api/addresses`;
+                            ? `${API_BASE}/addresses/${editingAddressId}`
+                            : `${API_BASE}/addresses`;
                           const method = editingAddressId ? 'PUT' : 'POST';
 
                           const res = await fetch(url, {
@@ -397,7 +397,7 @@ export default function Navbar() {
                           if (data.success) {
                             toast.success(editingAddressId ? "Address updated!" : "Address saved!");
                             // Refresh addresses
-                            const updatedRes = await fetch(`${API_BASE}/api/addresses`, {
+                            const updatedRes = await fetch(`${API_BASE}/addresses`, {
                               headers: { 'Authorization': `Bearer ${token}` }
                             });
                             const updatedData = await updatedRes.json();
@@ -432,7 +432,7 @@ export default function Navbar() {
                           if (!confirm("Are you sure you want to delete this address?")) return;
                           try {
                             const token = localStorage.getItem('userToken');
-                            const res = await fetch(`${API_BASE}/api/addresses/${editingAddressId}`, {
+                            const res = await fetch(`${API_BASE}/addresses/${editingAddressId}`, {
                               method: 'DELETE',
                               headers: {
                                 'Authorization': `Bearer ${token}`

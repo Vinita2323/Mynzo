@@ -33,7 +33,7 @@ export default function HelpSupportPage() {
   useEffect(() => {
     const fetchFaqsAndSettings = async () => {
       try {
-        const res = await fetch(`${API_BASE}/api/admin/content/qna`);
+        const res = await fetch(`${API_BASE}/admin/content/qna`);
         const data = await res.json();
         if (data.success && data.qnas && data.qnas.length > 0) {
           setFaqs(data.qnas);
@@ -46,7 +46,7 @@ export default function HelpSupportPage() {
       }
 
       try {
-        const resSettings = await fetch(`${API_BASE}/api/admin/settings`);
+        const resSettings = await fetch(`${API_BASE}/admin/settings`);
         const dataSettings = await resSettings.json();
         if (dataSettings.success && dataSettings.settings) {
           if (dataSettings.settings.supportEmail) {
