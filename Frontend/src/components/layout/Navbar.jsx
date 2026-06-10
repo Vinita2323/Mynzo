@@ -34,7 +34,8 @@ export default function Navbar() {
     searchQuery,
     setSearchQuery,
     isLocationModalOpen,
-    setIsLocationModalOpen
+    setIsLocationModalOpen,
+    logout
   } = useApp();
 
   const [tempLocation, setTempLocation] = useState(location);
@@ -71,10 +72,7 @@ export default function Navbar() {
           }
         });
         if (res.status === 401) {
-          localStorage.removeItem('userToken');
-          localStorage.removeItem('userInfo');
-          sessionStorage.removeItem('isLoggedIn');
-          setUser(null);
+          logout();
           toast.error("Session expired. Please log in again.");
           return;
         }

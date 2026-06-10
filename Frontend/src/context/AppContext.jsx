@@ -2,6 +2,8 @@ import React, { createContext, useState, useContext, useEffect, useRef } from 'r
 import { io } from 'socket.io-client';
 import { CRAZY_DEALS } from '../data/mockData';
 import toast from 'react-hot-toast';
+import { requestFcmToken, messaging } from '../firebase';
+import { onMessage } from 'firebase/messaging';
 
 const AppContext = createContext();
 
@@ -56,6 +58,79 @@ export const AppProvider = ({ children }) => {
   });
 
   const socketRef = useRef(null);
+
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  const logout = async () => {
+    try {
+      const token = localStorage.getItem('fcmToken');
+      const userToken = localStorage.getItem('userToken');
+      if (token && userToken) {
+        await fetch(`${API_BASE}/auth/fcm-token`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${userToken}`
+          },
+          body: JSON.stringify({ token, deviceType: 'web' })
+        });
+      }
+    } catch (err) {
+      console.error('Error deleting FCM token:', err);
+    }
+    localStorage.removeItem('userToken');
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('fcmToken');
+    sessionStorage.removeItem('isLoggedIn');
+    setUser(null);
+  };
+
+  useEffect(() => {
+    const registerFcm = async () => {
+      if (user && user.id) {
+        try {
+          const token = await requestFcmToken();
+          if (token) {
+            localStorage.setItem('fcmToken', token);
+            const userToken = localStorage.getItem('userToken');
+            if (userToken) {
+              await fetch(`${API_BASE}/auth/fcm-token`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${userToken}`
+                },
+                body: JSON.stringify({ token, deviceType: 'web' })
+              });
+            }
+          }
+        } catch (err) {
+          console.error('Error during FCM registration:', err);
+        }
+      }
+    };
+    registerFcm();
+  }, [user]);
+
+  useEffect(() => {
+    if (user && user.id && messaging) {
+      const unsubscribe = onMessage(messaging, (payload) => {
+        console.log('Foreground message received:', payload);
+        const title = payload.notification?.title || 'Notification';
+        const body = payload.notification?.body || '';
+        toast((t) => (
+          <div className="flex flex-col gap-1">
+            <span className="font-bold text-[#02006c]">{title}</span>
+            <span className="text-xs text-slate-600">{body}</span>
+          </div>
+        ), {
+          icon: '🔔',
+          duration: 6000
+        });
+      });
+      return () => unsubscribe();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (user && user.id) {
@@ -119,7 +194,6 @@ export const AppProvider = ({ children }) => {
     }
   }, [user]);
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   useEffect(() => {
     const fetchCart = async () => {
@@ -544,6 +618,7 @@ export const AppProvider = ({ children }) => {
         getOrderReview,
         user,
         setUser,
+        logout,
         addresses,
         addressesLoading,
         fetchAddresses,

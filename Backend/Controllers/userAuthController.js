@@ -322,5 +322,61 @@ const getWallet = async (req, res) => {
   }
 };
 
-module.exports = { sendOtp, verifyOtp, getMe, updateProfile, changePassword, getWallet };
+// @desc    Update FCM Token for user
+// @route   PUT /auth/fcm-token
+// @access  Private
+const updateFcmToken = async (req, res) => {
+  try {
+    const { token, deviceType } = req.body;
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'FCM Token is required' });
+    }
+
+    const User = require('../Models/User');
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const targetField = (deviceType === 'app' || deviceType === 'mobile') ? 'fcmMobileTokens' : 'fcmWebTokens';
+    if (!user[targetField].includes(token)) {
+      user[targetField].push(token);
+      await user.save();
+    }
+
+    res.status(200).json({ success: true, message: `FCM token registered for ${deviceType || 'web'} successfully` });
+  } catch (error) {
+    console.error('Update FCM Token Error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Remove FCM Token for user (on logout)
+// @route   DELETE /auth/fcm-token
+// @access  Private
+const removeFcmToken = async (req, res) => {
+  try {
+    const { token, deviceType } = req.body;
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'FCM Token is required' });
+    }
+
+    const User = require('../Models/User');
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const targetField = (deviceType === 'app' || deviceType === 'mobile') ? 'fcmMobileTokens' : 'fcmWebTokens';
+    user[targetField] = user[targetField].filter(t => t !== token);
+    await user.save();
+
+    res.status(200).json({ success: true, message: `FCM token removed for ${deviceType || 'web'} successfully` });
+  } catch (error) {
+    console.error('Remove FCM Token Error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+module.exports = { sendOtp, verifyOtp, getMe, updateProfile, changePassword, getWallet, updateFcmToken, removeFcmToken };
 

@@ -130,7 +130,7 @@ function DynamicAvatar({ config, size = "w-20 h-20" }) {
 }
 
 export default function ProfilePage() {
-  const { coins, user, setUser } = useApp();
+  const { coins, user, setUser, logout } = useApp();
   const navigate = useNavigate();
 
   // Load avatar config from sessionStorage
@@ -639,7 +639,7 @@ export default function ProfilePage() {
           {/* Logout Button */}
           <button 
             onClick={() => {
-              setUser(null);
+              logout();
               navigate('/login');
             }}
             className="w-full flex items-center justify-between p-3.5 rounded hover:bg-rose-50/60 active:scale-[0.98] transition-all duration-300 text-left cursor-pointer group"
