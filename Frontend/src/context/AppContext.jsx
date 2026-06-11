@@ -57,9 +57,9 @@ export const AppProvider = ({ children }) => {
     return null;
   });
 
-  const socketRef = useRef(null);
-
-  const [isForceLoggedOut, setIsForceLoggedOut] = useState(false);
+  const [isForceLoggedOut, setIsForceLoggedOut] = useState(() => {
+    return localStorage.getItem('forceLogoutState') === 'true';
+  });
   
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -70,7 +70,8 @@ export const AppProvider = ({ children }) => {
     localStorage.removeItem('fcmToken');
     localStorage.removeItem('isLoggedIn');
     setUser(null);
-    // Show undismissable modal
+    // Show undismissable modal and persist it across reloads
+    localStorage.setItem('forceLogoutState', 'true');
     setIsForceLoggedOut(true);
   };
 
@@ -693,6 +694,7 @@ export const AppProvider = ({ children }) => {
             </p>
             <button 
               onClick={() => {
+                localStorage.removeItem('forceLogoutState');
                 setIsForceLoggedOut(false);
                 window.location.href = '/login';
               }}
