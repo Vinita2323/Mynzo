@@ -327,7 +327,7 @@ const getWallet = async (req, res) => {
 // @access  Private
 const updateFcmToken = async (req, res) => {
   try {
-    const { token, deviceType } = req.body;
+    const { token, platform } = req.body;
     if (!token) {
       return res.status(400).json({ success: false, message: 'FCM Token is required' });
     }
@@ -338,13 +338,13 @@ const updateFcmToken = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const targetField = (deviceType === 'app' || deviceType === 'mobile') ? 'fcmMobileTokens' : 'fcmWebTokens';
+    const targetField = (platform === 'app' || platform === 'mobile') ? 'fcmMobileTokens' : 'fcmWebTokens';
     if (!user[targetField].includes(token)) {
       user[targetField].push(token);
       await user.save();
     }
 
-    res.status(200).json({ success: true, message: `FCM token registered for ${deviceType || 'web'} successfully` });
+    res.status(200).json({ success: true, message: `FCM token registered for ${platform || 'web'} successfully` });
   } catch (error) {
     console.error('Update FCM Token Error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
@@ -356,7 +356,7 @@ const updateFcmToken = async (req, res) => {
 // @access  Private
 const removeFcmToken = async (req, res) => {
   try {
-    const { token, deviceType } = req.body;
+    const { token, platform } = req.body;
     if (!token) {
       return res.status(400).json({ success: false, message: 'FCM Token is required' });
     }
@@ -367,11 +367,11 @@ const removeFcmToken = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const targetField = (deviceType === 'app' || deviceType === 'mobile') ? 'fcmMobileTokens' : 'fcmWebTokens';
+    const targetField = (platform === 'app' || platform === 'mobile') ? 'fcmMobileTokens' : 'fcmWebTokens';
     user[targetField] = user[targetField].filter(t => t !== token);
     await user.save();
 
-    res.status(200).json({ success: true, message: `FCM token removed for ${deviceType || 'web'} successfully` });
+    res.status(200).json({ success: true, message: `FCM token removed for ${platform || 'web'} successfully` });
   } catch (error) {
     console.error('Remove FCM Token Error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });

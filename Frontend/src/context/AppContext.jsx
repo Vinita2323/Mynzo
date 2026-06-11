@@ -72,7 +72,7 @@ export const AppProvider = ({ children }) => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${userToken}`
           },
-          body: JSON.stringify({ token, deviceType: 'web' })
+          body: JSON.stringify({ token, platform: 'web' })
         });
       }
     } catch (err) {
@@ -100,7 +100,7 @@ export const AppProvider = ({ children }) => {
                   'Content-Type': 'application/json',
                   'Authorization': `Bearer ${userToken}`
                 },
-                body: JSON.stringify({ token, deviceType: 'web' })
+                body: JSON.stringify({ token, platform: 'web' })
               });
             }
           }
