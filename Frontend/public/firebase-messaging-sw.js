@@ -18,11 +18,23 @@ const messaging = firebase.messaging();
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
   
-  const notificationTitle = payload.notification.title || "Mynzo Notification";
-  const notificationOptions = {
-    body: payload.notification.body || "",
-    icon: payload.notification.image || "/HopeFinal.webp"
-  };
+  // If the payload already has a notification object, Firebase automatically displays it.
+  // We only need to manually show it if it's a data-only message.
+  if (!payload.notification) {
+    const notificationTitle = payload.data?.title || "Mynzo Notification";
+    const notificationOptions = {
+      body: payload.data?.body || "",
+      icon: payload.data?.image || "/HopeFinal.webp"
+    };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
+    self.registration.showNotification(notificationTitle, notificationOptions);
+  }
+
+  if (payload.data?.type === 'FORCE_LOGOUT') {
+    self.clients.matchAll({ includeUncontrolled: true, type: 'window' }).then(clients => {
+      clients.forEach(client => {
+        client.postMessage({ type: 'FORCE_LOGOUT' });
+      });
+    });
+  }
 });

@@ -1,11 +1,13 @@
-const admin = require('firebase-admin');
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getMessaging } = require('firebase-admin/messaging');
 const path = require('path');
 
+let adminApp;
 try {
   const serviceAccount = require('../config/firebase-service-account.json');
 
-  admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+  adminApp = initializeApp({
+    credential: cert(serviceAccount)
   });
 
   console.log('🔥 Firebase Admin SDK Initialized Successfully');
@@ -29,7 +31,8 @@ const sendNotificationToUser = async (userId, payload) => {
 
     const webTokens = user.fcmWebTokens || [];
     const mobileTokens = user.fcmMobileTokens || [];
-    const allTokens = [...webTokens, ...mobileTokens];
+    // Remove duplicates by using Set
+    const allTokens = [...new Set([...webTokens, ...mobileTokens])];
 
     if (allTokens.length === 0) {
       console.log(`📡 No FCM tokens registered for user ${userId}`);
@@ -45,7 +48,7 @@ const sendNotificationToUser = async (userId, payload) => {
     console.log(`📡 Sending push notification to user ${userId} on ${allTokens.length} device(s)...`);
     
     const sendPromises = allTokens.map(token => 
-      admin.messaging().send({
+      getMessaging(adminApp).send({
         token,
         ...messagePayload
       }).catch(err => {
@@ -75,6 +78,6 @@ const sendNotificationToUser = async (userId, payload) => {
 };
 
 module.exports = {
-  admin,
+  adminApp,
   sendNotificationToUser
 };

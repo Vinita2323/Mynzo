@@ -223,4 +223,117 @@ const changeAdminPassword = async (req, res) => {
   }
 };
 
-module.exports = { adminLogin, getMe, adminLogout, getUsers, createUser, updateAdminProfile, changeAdminPassword };
+// @desc    Force logout a user
+// @route   POST /api/admin/auth/users/:id/force-logout
+// @access  Private
+const forceLogoutUser = async (req, res) => {
+  try {
+    const User = require('../Models/User');
+    const { sendNotificationToUser } = require('../Utils/firebaseAdmin');
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // 1. Increment tokenVersion to invalidate existing JWT sessions
+    user.tokenVersion = (user.tokenVersion || 0) + 1;
+
+    // 2. Clear FMC tokens to fully revoke notification access
+    const oldWebTokens = user.fcmWebTokens || [];
+    const oldMobileTokens = user.fcmMobileTokens || [];
+    user.fcmWebTokens = [];
+    user.fcmMobileTokens = [];
+
+    await user.save();
+
+    // 3. Send force logout push notification to all OLD tokens
+    const pushPayload = {
+      notification: {
+        title: "Session Expired",
+        body: "Your account has been logged out by the administrator."
+      },
+      data: {
+        type: "FORCE_LOGOUT"
+      }
+    };
+    
+    // We send directly via admin to the old tokens since we just cleared them from DB
+    const { getMessaging } = require('firebase-admin/messaging');
+    const { adminApp } = require('../Utils/firebaseAdmin');
+    
+    const allOldTokens = [...new Set([...oldWebTokens, ...oldMobileTokens])];
+    
+    if (allOldTokens.length > 0) {
+      const sendPromises = allOldTokens.map(token => 
+        getMessaging(adminApp).send({
+          token,
+          ...pushPayload
+        }).catch(err => console.log('FCM token already invalid:', err.message))
+      );
+      
+      Promise.allSettled(sendPromises);
+    }
+
+    res.status(200).json({ success: true, message: 'User forced logged out successfully' });
+  } catch (error) {
+    console.error('Force Logout Error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Force logout ALL users
+// @route   POST /api/admin/auth/users/force-logout-all
+// @access  Private
+const forceLogoutAllUsers = async (req, res) => {
+  try {
+    const User = require('../Models/User');
+    const users = await User.find({}).select('fcmWebTokens fcmMobileTokens');
+
+    // Collect all tokens to send push notification
+    let allOldTokens = [];
+    users.forEach(u => {
+      if (u.fcmWebTokens) allOldTokens.push(...u.fcmWebTokens);
+      if (u.fcmMobileTokens) allOldTokens.push(...u.fcmMobileTokens);
+    });
+    allOldTokens = [...new Set(allOldTokens)];
+
+    // 1. Increment tokenVersion and clear tokens for ALL users
+    await User.updateMany({}, {
+      $inc: { tokenVersion: 1 },
+      $set: { fcmWebTokens: [], fcmMobileTokens: [] }
+    });
+
+    // 2. Send force logout push notification to all OLD tokens
+    const pushPayload = {
+      notification: {
+        title: "Session Expired",
+        body: "All user sessions have been terminated by the administrator."
+      },
+      data: {
+        type: "FORCE_LOGOUT"
+      }
+    };
+    
+    if (allOldTokens.length > 0) {
+      const { getMessaging } = require('firebase-admin/messaging');
+      const { adminApp } = require('../Utils/firebaseAdmin');
+      
+      const sendPromises = allOldTokens.map(token => 
+        getMessaging(adminApp).send({
+          token,
+          ...pushPayload
+        }).catch(err => console.log('FCM token already invalid:', err.message))
+      );
+      
+      Promise.allSettled(sendPromises);
+    }
+
+    res.status(200).json({ success: true, message: `Successfully forced logout for ${users.length} users.` });
+  } catch (error) {
+    console.error('Force Logout All Error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+module.exports = { adminLogin, getMe, adminLogout, getUsers, createUser, updateAdminProfile, changeAdminPassword, forceLogoutUser, forceLogoutAllUsers };

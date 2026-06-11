@@ -1,21 +1,81 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ChevronLeft, CheckCircle2, Package, Truck, Home, MapPin } from 'lucide-react';
+import { ChevronLeft, CheckCircle2, Package, Truck, Home, MapPin, Loader2, AlertCircle } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 export default function TrackOrderPage() {
   const navigate = useNavigate();
   const { orderId } = useParams();
+  const [order, setOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const isDelivered = orderId !== 'ORD-8X92-K1';
+  useEffect(() => {
+    const fetchOrder = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${apiBase}/orders/${orderId}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setOrder(data.order);
+        } else {
+          toast.error('Could not fetch order details');
+        }
+      } catch (error) {
+        toast.error('Error fetching tracking info');
+      } finally {
+        setLoading(false);
+      }
+    };
+    if (orderId) fetchOrder();
+  }, [orderId]);
+
+  if (loading) {
+    return <div className="min-h-screen flex items-center justify-center"><Loader2 className="animate-spin text-[#02006c]" size={32} /></div>;
+  }
+
+  if (!order) {
+    return <div className="min-h-screen flex flex-col gap-2 items-center justify-center font-bold text-slate-500">
+      <AlertCircle size={40} className="text-slate-300" />
+      <p>Order not found</p>
+      <button onClick={() => navigate(-1)} className="text-[#02006c] underline mt-2 text-sm">Go Back</button>
+    </div>;
+  }
+
+  const isDelivered = order.status === 'Delivered';
+  const isCancelled = order.status === 'Cancelled';
+  const trackingHistory = order.trackingHistory || [];
 
   // Dynamic tracking steps
-  const steps = [
-    { id: 1, title: 'Order Placed', desc: 'We have received your order', date: 'May 20, 10:00 AM', icon: CheckCircle2, status: 'completed' },
-    { id: 2, title: 'Order Processed', desc: 'Your order is being prepared', date: 'May 21, 09:30 AM', icon: Package, status: 'completed' },
-    { id: 3, title: 'Shipped', desc: 'Your item has been shipped', date: 'May 22, 08:00 AM', icon: Truck, status: isDelivered ? 'completed' : 'active' },
-    { id: 4, title: 'Out for Delivery', desc: 'Delivery partner is on the way', date: 'May 23, 11:15 AM', icon: MapPin, status: isDelivered ? 'completed' : 'pending' },
-    { id: 5, title: 'Delivered', desc: 'Package arrived', date: 'May 24, 02:30 PM', icon: Home, status: isDelivered ? 'active' : 'pending' },
-  ];
+  let steps = [];
+  
+  if (trackingHistory.length > 0) {
+    steps = [
+      { id: 'placed', title: 'Order Placed', desc: 'We have received your order', date: new Date(order.createdAt).toLocaleString(), icon: CheckCircle2, status: 'completed' },
+      ...trackingHistory.map((history, idx) => ({
+        id: idx,
+        title: history.status,
+        desc: history.activity || history.location || 'Update from courier',
+        date: new Date(history.timestamp).toLocaleString(),
+        icon: history.status.includes('DELIVERED') ? Home : (history.status.includes('OUT FOR DELIVERY') ? MapPin : Truck),
+        status: 'completed'
+      }))
+    ];
+  } else {
+    steps = [
+      { id: 1, title: 'Order Placed', desc: 'We have received your order', date: new Date(order.createdAt).toLocaleString(), icon: CheckCircle2, status: 'completed' },
+      { id: 2, title: 'Order Processed', desc: 'Your order is being prepared', date: '', icon: Package, status: order.status !== 'Pending' ? 'completed' : 'pending' },
+      { id: 3, title: 'Shipped', desc: 'Your item has been shipped', date: '', icon: Truck, status: ['Shipped', 'Delivered'].includes(order.status) ? 'completed' : (order.status === 'Processing' ? 'active' : 'pending') },
+      { id: 4, title: 'Out for Delivery', desc: 'Delivery partner is on the way', date: '', icon: MapPin, status: isDelivered ? 'completed' : 'pending' },
+      { id: 5, title: 'Delivered', desc: 'Package arrived', date: '', icon: Home, status: isDelivered ? 'completed' : 'pending' },
+    ];
+  }
+
+  // Estimated delivery based on order date
+  const estDeliveryDate = new Date(order.createdAt);
+  estDeliveryDate.setDate(estDeliveryDate.getDate() + 4); // basic 4 days estimate
 
   return (
     <div className="min-h-[100dvh] bg-slate-50 flex flex-col font-sans pb-20">
@@ -35,15 +95,30 @@ export default function TrackOrderPage() {
       
       <div className="p-4 space-y-4">
         
-        {/* Estimated Delivery Card */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex items-center justify-between">
-          <div>
-            <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Estimated Delivery</p>
-            <p className="text-lg font-black text-[#02006c]">24 May, 2026</p>
+        {/* Estimated Delivery & Courier Card */}
+        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Estimated Delivery</p>
+              <p className="text-lg font-black text-[#02006c]">{estDeliveryDate.toDateString()}</p>
+            </div>
+            <div className="w-10 h-10 bg-[#ee4923]/10 rounded-full flex items-center justify-center">
+              <Truck className="w-5 h-5 text-[#ee4923]" />
+            </div>
           </div>
-          <div className="w-10 h-10 bg-[#ee4923]/10 rounded-full flex items-center justify-center">
-            <Truck className="w-5 h-5 text-[#ee4923]" />
-          </div>
+          
+          {order.awbCode && (
+            <div className="pt-3 border-t border-slate-50 flex justify-between items-center">
+              <div>
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Courier</p>
+                <p className="text-sm font-black text-slate-700">{order.courierName || 'Shiprocket Partner'}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tracking Number</p>
+                <p className="text-sm font-black text-blue-600">{order.awbCode}</p>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Tracking Timeline */}

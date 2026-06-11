@@ -51,7 +51,39 @@ const orderSchema = new mongoose.Schema({
   couponCode: {
     type: String,
     default: null
-  }
+  },
+  shiprocketOrderId: {
+    type: String,
+    default: null
+  },
+  shipmentId: {
+    type: String,
+    default: null
+  },
+  awbCode: {
+    type: String,
+    default: null
+  },
+  courierName: {
+    type: String,
+    default: null
+  },
+  shipmentStatus: {
+    type: String,
+    default: null
+  },
+  pickupScheduled: {
+    type: Boolean,
+    default: false
+  },
+  trackingHistory: [
+    {
+      status: String,
+      timestamp: Date,
+      location: String,
+      activity: String
+    }
+  ]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Order', orderSchema);

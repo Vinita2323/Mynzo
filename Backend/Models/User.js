@@ -71,6 +71,10 @@ const userSchema = new mongoose.Schema({
   fcmMobileTokens: {
     type: [String],
     default: []
+  },
+  tokenVersion: {
+    type: Number,
+    default: 0
   }
 }, { timestamps: true });
 

@@ -18,6 +18,12 @@ const protectUser = async (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ success: false, message: 'User not found' });
     }
+    
+    // Check if token version matches to enforce Force Logout
+    if (decoded.tokenVersion !== req.user.tokenVersion) {
+      return res.status(401).json({ success: false, message: 'Session expired' });
+    }
+
     next();
   } catch (error) {
     return res.status(401).json({ success: false, message: 'Not authorized, invalid token' });

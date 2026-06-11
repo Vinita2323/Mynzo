@@ -36,6 +36,10 @@ app.use('/admin/promotions/coupons', require('./Utils/couponRoutes'));
 app.use('/admin/referrals', require('./Utils/adminReferralRoutes'));
 app.use('/admin/content/legal', require('./Utils/legalRoutes'));
 app.use('/admin/content/qna', require('./Utils/qnaRoutes'));
+app.use('/admin/shiprocket', require('./Utils/shiprocketRoutes'));
+app.use('/api/shiprocket', require('./Utils/shiprocketRoutes'));
+app.use('/api/logistics', require('./Utils/shiprocketRoutes')); // Alias without 'shiprocket' keyword for webhook
+app.use('/admin/notifications', require('./Utils/notificationRoutes'));
 
 // Health check
 app.get('/', (req, res) => {

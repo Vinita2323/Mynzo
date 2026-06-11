@@ -116,6 +116,14 @@ export const AppProvider = ({ children }) => {
     if (user && user.id && messaging) {
       const unsubscribe = onMessage(messaging, (payload) => {
         console.log('Foreground message received:', payload);
+        
+        if (payload.data?.type === 'FORCE_LOGOUT') {
+          logout();
+          alert('Session Expired: Your account has been logged out by the administrator.');
+          window.location.href = '/';
+          return;
+        }
+
         const title = payload.notification?.title || 'Notification';
         const body = payload.notification?.body || '';
         toast((t) => (
@@ -128,7 +136,25 @@ export const AppProvider = ({ children }) => {
           duration: 6000
         });
       });
-      return () => unsubscribe();
+
+      const handleSwMessage = (event) => {
+        if (event.data?.type === 'FORCE_LOGOUT') {
+          logout();
+          alert('Session Expired: Your account has been logged out by the administrator.');
+          window.location.href = '/';
+        }
+      };
+
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', handleSwMessage);
+      }
+
+      return () => {
+        unsubscribe();
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.removeEventListener('message', handleSwMessage);
+        }
+      };
     }
   }, [user]);
 
@@ -206,6 +232,11 @@ export const AppProvider = ({ children }) => {
         const res = await fetch(`${API_BASE}/cart`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        if (res.status === 401) {
+          logout();
+          window.location.href = '/';
+          return;
+        }
         const data = await res.json();
         if (data.success && data.data && data.data.items) {
           const mapped = data.data.items.map(item => {
@@ -248,6 +279,11 @@ export const AppProvider = ({ children }) => {
         const res = await fetch(`${API_BASE}/orders`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
+        if (res.status === 401) {
+          logout();
+          window.location.href = '/';
+          return;
+        }
         const data = await res.json();
         if (data.success && data.orders) {
           const mappedOrders = data.orders.map(o => ({
@@ -288,6 +324,11 @@ export const AppProvider = ({ children }) => {
       const res = await fetch(`${API_BASE}/addresses`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
+      if (res.status === 401) {
+        logout();
+        window.location.href = '/';
+        return;
+      }
       const data = await res.json();
       if (data.success && data.data) {
         setAddresses(data.data);

@@ -19,6 +19,7 @@ export default function ProductDetailsPage() {
   const [isSizeChartOpen, setIsSizeChartOpen] = useState(false);
   const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [fullscreenImage, setFullscreenImage] = useState(null);
+  const [similarProducts, setSimilarProducts] = useState([]);
   
   // Video Reels States
   const [productReels, setProductReels] = useState([]);
@@ -163,6 +164,17 @@ export default function ProductDetailsPage() {
           };
           
           setProduct(normalised);
+
+          // Fetch similar products dynamically
+          try {
+             const simRes = await fetch(`${apiBase}/admin/catalog/products`);
+             const simData = await simRes.json();
+             if (simRes.ok && simData.success) {
+                const similar = simData.products.filter(p => p._id !== p.id && p._id !== id).slice(0, 10);
+                setSimilarProducts(similar);
+             }
+          } catch(e) { console.error(e); }
+
         } else {
           const foundProduct = CRAZY_DEALS.find(item => item.id === id);
           if (foundProduct) {
@@ -530,18 +542,20 @@ export default function ProductDetailsPage() {
           {/* Delivery Date */}
           <div className="bg-[#FFE4D6] flex items-center gap-2 py-2.5 px-3.5 border-b border-white/60">
             <Truck className="w-4 h-4 text-[#02006c] flex-shrink-0" />
-            <span className="text-xs font-bold text-slate-800">Delivery by 27 May, Wed</span>
+            <span className="text-xs font-bold text-slate-800">
+              Delivery by {new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+            </span>
           </div>
 
           {/* Seller Details */}
           <div className="bg-[#FFE4D6] flex items-start gap-2 py-2.5 px-3.5">
             <Store className="w-4 h-4 text-[#02006c] flex-shrink-0 mt-0.5" />
             <div className="flex flex-col">
-              <span className="text-xs text-slate-700 font-medium">Fulfilled by PumaSportsIndia</span>
+              <span className="text-xs text-slate-700 font-medium">Fulfilled by {product.brandName || 'Mynzo Retail'}</span>
               <div className="flex items-center gap-1 mt-0.5">
-                <span className="text-[10px] text-slate-500">4.3</span>
+                <span className="text-[10px] text-slate-500">{product.rating || '4.3'}</span>
                 <Star className="w-2.5 h-2.5 fill-slate-400 text-slate-400" />
-                <span className="text-[10px] text-slate-400">• 9 years with Mynzo</span>
+                <span className="text-[10px] text-slate-400">• Certified Seller</span>
               </div>
               <span className="text-[10px] font-bold text-[#02006c] mt-1 cursor-pointer">See other sellers</span>
             </div>
@@ -593,7 +607,25 @@ export default function ProductDetailsPage() {
         
         {/* Horizontal Scroll List */}
         <div className="flex overflow-x-auto gap-4 pl-6 pr-4 pb-2 snap-x scroll-pl-6 scrollbar-none">
-          {CRAZY_DEALS.map((deal) => (
+          {similarProducts.length > 0 ? similarProducts.map((deal) => (
+              <div key={deal._id} className="w-32 flex-shrink-0 snap-start flex flex-col cursor-pointer" onClick={() => { navigate(`/product/${deal._id}`); window.scrollTo(0,0); }}>
+              <div className="aspect-[3/4] bg-slate-100 rounded-lg overflow-hidden relative mb-2">
+                <OptimizedImage src={getImageUrl(deal.images && deal.images[0]) || 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800'} alt={deal.name} type="product" className="absolute inset-0" />
+                <div className="absolute bottom-1 left-1 bg-white/90 px-1.5 rounded flex items-center gap-0.5">
+                  <span className="text-[9px] font-bold text-slate-800">{deal.rating || '4.2'}</span>
+                  <Star className="w-2 h-2 fill-emerald-600 text-emerald-600" />
+                </div>
+              </div>
+              <h4 className="text-[10px] font-bold text-[#02006c] truncate">{deal.name}</h4>
+              <p className="text-[9px] text-slate-400 truncate mb-1">{deal.description || 'Premium Product'}</p>
+              <div className="flex items-center gap-1">
+                <span className="text-xs font-bold text-[#ee4923]">₹{deal.sellingPrice}</span>
+                <span className="text-[9px] text-slate-400 line-through">₹{deal.mrp || deal.sellingPrice + 500}</span>
+              </div>
+              <span className="text-[8px] text-emerald-600 font-bold mt-0.5">{deal.discountLabel || 'Hot Deal'}</span>
+              <span className="text-[8px] text-slate-500 mt-0.5">Free Delivery</span>
+            </div>
+          )) : CRAZY_DEALS.map((deal) => (
               <div key={deal.id} className="w-32 flex-shrink-0 snap-start flex flex-col cursor-pointer" onClick={() => { navigate(`/product/${deal.id}`); window.scrollTo(0,0); }}>
               <div className="aspect-[3/4] bg-slate-100 rounded-lg overflow-hidden relative mb-2">
                 <OptimizedImage src={deal.image} alt={deal.name} type="product" className="absolute inset-0" />
@@ -609,7 +641,7 @@ export default function ProductDetailsPage() {
                 <span className="text-[9px] text-slate-400 line-through">₹{deal.originalPrice}</span>
               </div>
               <span className="text-[8px] text-emerald-600 font-bold mt-0.5">60% OFF</span>
-              <span className="text-[8px] text-slate-500 mt-0.5">Get it by 29 May</span>
+              <span className="text-[8px] text-slate-500 mt-0.5">Get it by {new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</span>
             </div>
           ))}
         </div>
@@ -797,46 +829,18 @@ export default function ProductDetailsPage() {
                 </div>
               ))}
             </div>
-
             {/* User Review with Video */}
-            <div className="border-t border-slate-100 pt-4 mt-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 bg-purple-100 rounded-full flex items-center justify-center text-xs font-bold text-purple-700">A</div>
-                  <span className="text-xs font-bold text-slate-800">Aman Sharma</span>
-                </div>
-                <div className="flex items-center gap-0.5 bg-emerald-600 px-1.5 py-0.5 rounded text-white">
-                  <span className="text-[10px] font-bold">4</span>
-                  <Star className="w-2.5 h-2.5 fill-white text-white" />
-                </div>
+            {productReels.length === 0 && (
+              <div className="border-t border-slate-100 pt-4 mt-2 text-center text-slate-400 text-xs">
+                No text reviews yet. Be the first to submit a video reel!
               </div>
-              <p className="text-[11px] text-slate-600 mb-3 leading-relaxed">
-                Amazing quality! The fabric feels premium and the fit is exactly as shown. The color hasn't faded even after multiple washes. Definitely recommend buying this.
-              </p>
-              
-              {/* Video/Reel Thumbnail */}
-              <div className="flex gap-2 overflow-x-auto scrollbar-none mb-2">
-                <div 
-                  onClick={() => setSelectedReviewMedia({ type: 'video', url: '/fit-check.mp4' })}
-                  className="relative w-20 h-[104px] rounded-md overflow-hidden flex-shrink-0 bg-slate-100 cursor-pointer shadow-sm"
-                >
-                  <img src="https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=200" alt="User review video" className="w-full h-full object-cover" />
-                  <div className="absolute inset-0 bg-black/25 flex items-center justify-center transition-colors hover:bg-black/40">
-                    <Play className="w-6 h-6 text-white fill-white opacity-90 drop-shadow-md" />
-                  </div>
-                </div>
-                <div 
-                  onClick={() => setSelectedReviewMedia({ type: 'image', url: 'https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&q=80&w=800' })}
-                  className="w-20 h-[104px] rounded-md overflow-hidden flex-shrink-0 bg-slate-100 cursor-pointer shadow-sm"
-                >
-                  <img src="https://images.unsplash.com/photo-1583743814966-8936f5b7be1a?auto=format&fit=crop&q=80&w=200" alt="User review photo" className="w-full h-full object-cover" />
-                </div>
-              </div>
-            </div>
+            )}
             
-            <button className="w-full mt-4 py-2 text-[11px] font-bold text-[#02006c] border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-              View All Reviews
-            </button>
+            {productReels.length > 0 && (
+              <button className="w-full mt-4 py-2 text-[11px] font-bold text-[#02006c] border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
+                View All Reviews
+              </button>
+            )}
           </div>
         )}
       </div>

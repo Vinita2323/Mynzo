@@ -4,7 +4,7 @@ import {
   Users as UsersIcon, Search, Filter, Mail, 
   Phone, MapPin, Calendar, MoreVertical,
   CheckCircle2, XCircle, Clock, ShieldCheck,
-  Download, UserPlus, Star, Edit2, ShieldAlert, Eye
+  Download, UserPlus, Star, Edit2, ShieldAlert, Eye, LogOut
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -135,11 +135,32 @@ const Users = () => {
     setActiveMenu(activeMenu === userId ? null : userId);
   };
 
-  const handleAction = (e, action, user) => {
+  const handleAction = async (e, action, user) => {
     e.stopPropagation();
-    console.log(`${action} user: ${user.name}`);
-    if (action === 'view') navigate(`/admin/users/${user.id}`);
     setActiveMenu(null);
+    if (action === 'view') navigate(`/admin/users/${user.id}`);
+    if (action === 'force-logout') {
+      const confirmLogout = window.confirm(`Are you sure you want to FORCE LOGOUT ${user.name}? This will clear their session on all devices immediately.`);
+      if (!confirmLogout) return;
+
+      const token = localStorage.getItem('adminToken');
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      try {
+        const res = await fetch(`${apiBase}/admin/auth/users/${user.id}/force-logout`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          toast.success(data.message || 'User forced logged out successfully');
+        } else {
+          toast.error(data.message || 'Failed to force logout user');
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('Could not connect to backend server');
+      }
+    }
   };
 
   const handleExport = () => {
@@ -160,6 +181,29 @@ const Users = () => {
     document.body.removeChild(link);
   };
 
+  const handleForceLogoutAll = async () => {
+    const confirmLogout = window.confirm(`⚠️ WARNING: Are you sure you want to FORCE LOGOUT ALL ${usersList.length} CUSTOMERS? This will invalidate every user session across the platform immediately.`);
+    if (!confirmLogout) return;
+
+    const token = localStorage.getItem('adminToken');
+    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+    try {
+      const res = await fetch(`${apiBase}/admin/auth/users/force-logout-all`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(data.message || 'All users forced logged out successfully');
+      } else {
+        toast.error(data.message || 'Failed to force logout all users');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Could not connect to backend server');
+    }
+  };
+
   return (
     <div className="space-y-6 pb-10 animate-in fade-in duration-700 relative">
       {/* Header */}
@@ -170,11 +214,18 @@ const Users = () => {
         </div>
         <div className="flex gap-3">
           <button 
+            onClick={handleForceLogoutAll}
+            className="flex items-center gap-2 px-6 py-3 bg-red-50 border border-red-100 text-red-600 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-red-100 transition-all shadow-sm active:scale-95"
+          >
+            <LogOut size={16} />
+            Logout All
+          </button>
+          <button 
             onClick={handleExport}
             className="flex items-center gap-2 px-6 py-3 bg-white border border-slate-200 text-slate-700 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-slate-50 transition-all shadow-sm active:scale-95"
           >
             <Download size={16} />
-            Export List
+            Export
           </button>
           <button 
             onClick={() => setIsAddModalOpen(true)}
@@ -340,6 +391,10 @@ const Users = () => {
                                 <span className="text-[10px] font-black uppercase tracking-widest">Send Email</span>
                              </button>
                              <div className="h-px bg-slate-50 my-1" />
+                             <button onClick={(e) => handleAction(e, 'force-logout', user)} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-orange-50 text-orange-600 transition-colors">
+                                <LogOut size={14} />
+                                <span className="text-[10px] font-black uppercase tracking-widest">Force Logout</span>
+                             </button>
                              <button onClick={(e) => handleAction(e, 'suspend', user)} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-red-50 text-red-600 transition-colors">
                                 <ShieldAlert size={14} />
                                 <span className="text-[10px] font-black uppercase tracking-widest">Suspend Account</span>

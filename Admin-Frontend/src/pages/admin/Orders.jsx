@@ -128,6 +128,70 @@ const Orders = () => {
     }
   };
 
+  const handleAssignAWB = async (shipmentId) => {
+    if (!shipmentId) return toast.error('No shipment ID available for this order');
+    const token = localStorage.getItem('adminToken');
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/admin/shiprocket/assign-awb`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ shipmentId })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('AWB Assigned Successfully');
+        fetchOrders(); // Refresh to get updated AWB code
+      } else {
+        toast.error(data.message || 'Failed to assign AWB');
+      }
+    } catch (err) {
+      toast.error('Error assigning AWB');
+    }
+  };
+
+  const handleGenerateLabel = async (shipmentId) => {
+    if (!shipmentId) return toast.error('No shipment ID available');
+    const token = localStorage.getItem('adminToken');
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/admin/shiprocket/generate-label`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ shipmentId })
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.data.label_created) {
+        window.open(data.data.label_url, '_blank');
+      } else {
+        toast.error('Label not ready or failed to generate');
+      }
+    } catch (err) {
+      toast.error('Error generating label');
+    }
+  };
+
+  const handleRequestPickup = async (shipmentId) => {
+    if (!shipmentId) return toast.error('No shipment ID available');
+    const token = localStorage.getItem('adminToken');
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/admin/shiprocket/request-pickup`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ shipmentId })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Pickup requested successfully');
+      } else {
+        toast.error(data.message || 'Failed to request pickup');
+      }
+    } catch (err) {
+      toast.error('Error requesting pickup');
+    }
+  };
+
   const handleExport = () => {
     const headers = ['Order ID', 'Customer', 'Email', 'Total Amount', 'Status', 'Payment Method', 'Payment Status', 'Date'];
     const csvContent = [
@@ -412,6 +476,60 @@ const Orders = () => {
                     <p className="text-xs text-slate-600 mt-1 leading-normal font-medium">{selectedOrder.deliveryAddress?.address}</p>
                     <p className="text-[10px] font-bold text-slate-400 mt-1.5 uppercase">PINCODE: {selectedOrder.deliveryAddress?.pincode} | Type: {selectedOrder.deliveryAddress?.type}</p>
                   </div>
+                </div>
+              </div>
+
+              {/* Shiprocket Logistics Info */}
+              <div className="space-y-4 mb-6">
+                <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Logistics (Shiprocket)</h3>
+                <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100/50 space-y-3">
+                  <div className="flex flex-wrap gap-4 text-xs font-bold text-slate-700">
+                    <div>
+                      <span className="text-slate-400 uppercase text-[10px]">Shiprocket Order ID:</span> 
+                      <p>{selectedOrder.shiprocketOrderId || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 uppercase text-[10px]">Shipment ID:</span> 
+                      <p>{selectedOrder.shipmentId || 'N/A'}</p>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 uppercase text-[10px]">AWB Code:</span> 
+                      <p className={selectedOrder.awbCode ? 'text-blue-600' : ''}>{selectedOrder.awbCode || 'Pending'}</p>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 uppercase text-[10px]">Courier:</span> 
+                      <p>{selectedOrder.courierName || 'Unassigned'}</p>
+                    </div>
+                  </div>
+
+                  {selectedOrder.shipmentId && (
+                    <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+                      {!selectedOrder.awbCode && (
+                        <button 
+                          onClick={() => handleAssignAWB(selectedOrder.shipmentId)}
+                          className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors shadow-sm"
+                        >
+                          Assign AWB
+                        </button>
+                      )}
+                      {selectedOrder.awbCode && (
+                        <>
+                          <button 
+                            onClick={() => handleGenerateLabel(selectedOrder.shipmentId)}
+                            className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors shadow-sm"
+                          >
+                            Download Label
+                          </button>
+                          <button 
+                            onClick={() => handleRequestPickup(selectedOrder.shipmentId)}
+                            className="px-4 py-2 bg-green-50 text-green-600 rounded-lg text-xs font-bold hover:bg-green-100 transition-colors shadow-sm"
+                          >
+                            Request Pickup
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

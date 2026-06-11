@@ -2,9 +2,9 @@ const User = require('../Models/User');
 const jwt = require('jsonwebtoken');
 
 // Generate JWT Token
-const generateToken = (id, phone) => {
+const generateToken = (id, phone, tokenVersion = 0) => {
   return jwt.sign(
-    { id, phone },
+    { id, phone, tokenVersion },
     process.env.JWT_SECRET,
     { expiresIn: '30d' }
   );
@@ -48,30 +48,16 @@ const sendOtp = async (req, res) => {
 
     console.log(`📱 OTP for ${phone}: ${otp} [ENV: ${process.env.ENV}]`);
 
-    // In production, send SMS using SMS India Hub
+    // In production, send SMS using SMS India Hub//
     if (process.env.ENV === 'production') {
-      const smsUser = process.env.SMS_INDIA_HUB_USER;
-      const smsPassword = process.env.SMS_INDIA_HUB_PASSWORD;
-      const smsSenderId = process.env.SMS_INDIA_HUB_SENDER_ID;
-      const smsGwid = process.env.SMS_INDIA_HUB_GWID || '2';
+      const apiKey = process.env.SMS_API_KEY;
+      const senderId = process.env.SMS_SENDER_ID;
       
-      const message = `Welcome to the ${smsUser} powered by SMSINDIAHUB. Your OTP for registration is ${otp}`;
+      const message = `Welcome to princejaiswal Powered by IIDMTB. Use OTP ${otp} to verify your login.`;
       const encodedMsg = encodeURIComponent(message);
       
-      // Determine if smsPassword is an API Key (typically long string) or a standard password
-      const isApiKey = smsPassword && smsPassword.length > 15;
-      let smsUrl = '';
-      let maskedUrl = '';
-
-      if (isApiKey) {
-        // API Key query parameters: APIKey, sid, msisdn, msg, fl, gwid
-        smsUrl = `http://cloud.smsindiahub.in/vendorsms/pushsms.aspx?APIKey=${smsPassword}&sid=${smsSenderId}&msisdn=91${phone}&msg=${encodedMsg}&fl=0&gwid=${smsGwid}`;
-        maskedUrl = `http://cloud.smsindiahub.in/vendorsms/pushsms.aspx?APIKey=******&sid=${smsSenderId}&msisdn=91${phone}&msg=${encodedMsg}&fl=0&gwid=${smsGwid}`;
-      } else {
-        // Classic User/Password parameters: user, password, msisdn, sid, msg, fl, gwid
-        smsUrl = `http://cloud.smsindiahub.in/vendorsms/pushsms.aspx?user=${smsUser}&password=${smsPassword}&msisdn=91${phone}&sid=${smsSenderId}&msg=${encodedMsg}&fl=0&gwid=${smsGwid}`;
-        maskedUrl = `http://cloud.smsindiahub.in/vendorsms/pushsms.aspx?user=${smsUser}&password=******&msisdn=91${phone}&sid=${smsSenderId}&msg=${encodedMsg}&fl=0&gwid=${smsGwid}`;
-      }
+      const smsUrl = `https://cloud.smsindiahub.in/vendorsms/pushsms.aspx?APIKey=${apiKey}&msisdn=91${phone}&sid=${senderId}&msg=${encodedMsg}&fl=0&gwid=2`;
+      const maskedUrl = `https://cloud.smsindiahub.in/vendorsms/pushsms.aspx?APIKey=******&msisdn=91${phone}&sid=${senderId}&msg=${encodedMsg}&fl=0&gwid=2`;
       
       console.log(`📡 Sending SMS via SMS India Hub to 91${phone}...`);
       console.log(`📡 Request URL (Masked): ${maskedUrl}`);
@@ -142,7 +128,7 @@ const verifyOtp = async (req, res) => {
 
     await user.save();
 
-    const token = generateToken(user._id, user.phone);
+    const token = generateToken(user._id, user.phone, user.tokenVersion);
 
     res.status(200).json({
       success: true,
