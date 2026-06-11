@@ -62,6 +62,12 @@ export const AppProvider = ({ children }) => {
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const logout = async () => {
+    localStorage.removeItem('userToken');
+    localStorage.removeItem('userInfo');
+    localStorage.removeItem('fcmToken');
+    localStorage.removeItem('isLoggedIn');
+    setUser(null);
+
     try {
       const token = localStorage.getItem('fcmToken');
       const userToken = localStorage.getItem('userToken');
@@ -78,11 +84,6 @@ export const AppProvider = ({ children }) => {
     } catch (err) {
       console.error('Error deleting FCM token:', err);
     }
-    localStorage.removeItem('userToken');
-    localStorage.removeItem('userInfo');
-    localStorage.removeItem('fcmToken');
-    localStorage.removeItem('isLoggedIn');
-    setUser(null);
   };
 
   useEffect(() => {
@@ -120,7 +121,7 @@ export const AppProvider = ({ children }) => {
         if (payload.data?.type === 'FORCE_LOGOUT') {
           logout();
           alert('Session Expired: Your account has been logged out by the administrator.');
-          window.location.href = '/';
+          window.location.href = '/login';
           return;
         }
 
@@ -141,7 +142,7 @@ export const AppProvider = ({ children }) => {
         if (event.data?.type === 'FORCE_LOGOUT') {
           logout();
           alert('Session Expired: Your account has been logged out by the administrator.');
-          window.location.href = '/';
+          window.location.href = '/login';
         }
       };
 
@@ -234,7 +235,7 @@ export const AppProvider = ({ children }) => {
         });
         if (res.status === 401) {
           logout();
-          window.location.href = '/';
+          window.location.href = '/login';
           return;
         }
         const data = await res.json();
@@ -281,7 +282,7 @@ export const AppProvider = ({ children }) => {
         });
         if (res.status === 401) {
           logout();
-          window.location.href = '/';
+          window.location.href = '/login';
           return;
         }
         const data = await res.json();
@@ -326,7 +327,7 @@ export const AppProvider = ({ children }) => {
       });
       if (res.status === 401) {
         logout();
-        window.location.href = '/';
+        window.location.href = '/login';
         return;
       }
       const data = await res.json();
