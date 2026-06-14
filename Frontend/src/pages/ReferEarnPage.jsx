@@ -55,6 +55,8 @@ export default function ReferEarnPage() {
 
   const referralCode = referralData?.referralCode || '...';
   const shareText = `Hey! Join Mynzo using my referral code ${referralCode} and we both get ${referralData?.stats?.coinsPerReferral || 100} Mynzo Coins! 🎉`;
+  const shareUrl = `${window.location.origin}/register?ref=${referralCode}`;
+  const fullShareText = `${shareText}\n\n${shareUrl}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(referralCode);
@@ -64,17 +66,23 @@ export default function ReferEarnPage() {
   };
 
   const handleWhatsAppShare = () => {
-    const url = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+    const url = `https://wa.me/?text=${encodeURIComponent(fullShareText)}`;
     window.open(url, '_blank');
   };
 
   const handleNativeShare = async () => {
-    if (navigator.share) {
+    if (window.flutter_inappwebview && window.flutter_inappwebview.callHandler) {
+      window.flutter_inappwebview.callHandler('shareContent', {
+        title: 'Join Mynzo!',
+        text: fullShareText
+      });
+    } else if (navigator.share) {
       try {
-        await navigator.share({ title: 'Join Mynzo!', text: shareText, url: window.location.origin });
+        await navigator.share({ title: 'Join Mynzo!', text: shareText, url: shareUrl });
       } catch (err) { /* canceled */ }
     } else {
-      handleCopy();
+      navigator.clipboard.writeText(fullShareText);
+      toast.success('Share text copied!');
     }
   };
 
