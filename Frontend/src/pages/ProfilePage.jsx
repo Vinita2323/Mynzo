@@ -7,7 +7,7 @@ import {
   ChevronLeft, User, Lock, Settings, Phone, LogOut, Camera, 
   ChevronRight, Coins, Gift, ShoppingBag, Sparkles, X,
   CreditCard, Globe, Bell, Headphones, Store, FileText, HelpCircle,
-  Heart, Package, Edit2, MapPin, Truck, RotateCcw, ShieldCheck, Tag
+  Heart, Package, Edit2, MapPin, Truck, RotateCcw, ShieldCheck, Tag, Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CRAZY_DEALS, VALUE_PROPS } from '../data/mockData';
@@ -150,6 +150,8 @@ export default function ProfilePage() {
   const [tempConfig, setTempConfig] = useState({ ...avatarConfig });
   const [modalStep, setModalStep] = useState(0); // 0 = Welcome onboarding, 1 = Creator editor
   const [infoModalType, setInfoModalType] = useState(null); // 'terms', 'faq', or null
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
 
   // Custom Image Upload State
   const [uploadedImage, setUploadedImage] = useState(() => {
@@ -262,7 +264,7 @@ export default function ProfilePage() {
             {[
               { icon: FileText, label: 'Terms, Policies and Licenses', id: 'terms' },
               { icon: HelpCircle, label: 'Browse FAQs', id: 'faq' },
-              { icon: Phone, label: 'Help & Support', path: '/help' }
+              { icon: Phone, label: 'Help & Support', path: '/support' }
             ].map((item, idx) => (
               <div 
                 key={idx} 
@@ -549,7 +551,7 @@ export default function ProfilePage() {
           </div>
 
           <div 
-            onClick={() => navigate('/help')}
+            onClick={() => navigate('/support')}
             className="bg-white rounded h-[52px] px-3.5 flex items-center gap-3 shadow-sm border border-slate-100 hover:border-orange-200 hover:shadow-md transition-all cursor-pointer group"
           >
             <Headphones className="w-5 h-5 text-[#ee4923] group-hover:scale-110 transition-transform" />
@@ -655,9 +657,106 @@ export default function ProfilePage() {
             </div>
             <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-rose-400 transition-colors" />
           </button>
+
+          <div className="h-[1px] w-full bg-slate-100 my-1"></div>
+
+          {/* Delete Account Button */}
+          <button
+            onClick={() => setShowDeleteModal(true)}
+            className="w-full flex items-center justify-between p-3.5 rounded hover:bg-red-50/80 active:scale-[0.98] transition-all duration-300 text-left cursor-pointer group"
+          >
+            <div className="flex items-center gap-4">
+              <div className="w-11 h-11 bg-red-50 text-red-500 rounded flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105 shadow-inner">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="text-sm font-bold text-red-500 font-sans tracking-wide block leading-tight">Delete Account</span>
+                <span className="text-[9px] text-slate-400 font-bold block mt-1 leading-none tracking-wide">Permanently remove your account</span>
+              </div>
+            </div>
+            <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-red-400 transition-colors" />
+          </button>
         </div>
         </div>
       </div>
+
+      {/* Delete Account Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[60] bg-[#0a0927]/70 backdrop-blur-sm flex items-center justify-center p-6"
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.85, y: 24 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 16 }}
+              transition={{ type: 'spring', damping: 22, stiffness: 220 }}
+              className="bg-white rounded-[28px] w-full max-w-sm p-6 shadow-2xl border border-slate-100 relative overflow-hidden"
+            >
+              {!deleteSuccess ? (
+                <>
+                  {/* Icon */}
+                  <div className="flex justify-center mb-4">
+                    <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center shadow-inner">
+                      <Trash2 className="w-7 h-7 text-red-500" />
+                    </div>
+                  </div>
+
+                  {/* Text */}
+                  <h3 className="text-[18px] font-black text-[#02006c] text-center mb-1">Delete Account?</h3>
+                  <p className="text-[12px] text-slate-500 font-medium text-center leading-relaxed mb-6">
+                    Are you sure you want to permanently delete your account? This action <span className="text-red-500 font-bold">cannot be undone</span> and all your data will be lost.
+                  </p>
+
+                  {/* Buttons */}
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setShowDeleteModal(false)}
+                      className="flex-1 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-700 text-[14px] font-bold hover:bg-slate-100 active:scale-95 transition-all cursor-pointer"
+                    >
+                      No, Keep It
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDeleteSuccess(true);
+                        setTimeout(() => {
+                          setShowDeleteModal(false);
+                          setDeleteSuccess(false);
+                          setUser(null);
+                          navigate('/login');
+                        }, 2000);
+                      }}
+                      className="flex-1 py-3 rounded-2xl bg-red-500 hover:bg-red-600 text-white text-[14px] font-bold active:scale-95 transition-all cursor-pointer shadow-md shadow-red-200"
+                    >
+                      Yes, Delete
+                    </button>
+                  </div>
+                </>
+              ) : (
+                /* Success State */
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="flex flex-col items-center py-4"
+                >
+                  <div className="w-16 h-16 bg-emerald-50 rounded-full flex items-center justify-center shadow-inner mb-4">
+                    <svg className="w-8 h-8 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <h3 className="text-[17px] font-black text-[#02006c] text-center mb-1">Account Deleted</h3>
+                  <p className="text-[12px] text-slate-500 font-medium text-center leading-relaxed">
+                    Your account has been successfully deleted. Redirecting you now…
+                  </p>
+                </motion.div>
+              )}
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* 3. Snapchat-Style Interactive Avatar Creator Modal (BottomSheet) */}
       <AnimatePresence>

@@ -30,6 +30,8 @@ export default function Layout({ children }) {
                      location.pathname.toLowerCase().startsWith('/similar-products') ||
                      location.pathname.toLowerCase().startsWith('/top-selection') ||
                      location.pathname.toLowerCase().startsWith('/help') ||
+                     location.pathname.toLowerCase().startsWith('/support') ||
+                     location.pathname.toLowerCase().startsWith('/privacy') ||
                      location.pathname.toLowerCase().startsWith('/account') ||
                      location.pathname.toLowerCase().startsWith('/security') ||
                      location.pathname.toLowerCase().startsWith('/settings') ||
@@ -41,7 +43,7 @@ export default function Layout({ children }) {
                      location.pathname.toLowerCase().startsWith('/saved-addresses') ||
                      location.pathname.toLowerCase().startsWith('/review-order');
 
-  const hideMobileNav = isLoginPage || location.pathname.toLowerCase().startsWith('/studio') || location.pathname.toLowerCase().startsWith('/profile') || location.pathname.toLowerCase().startsWith('/checkout') || location.pathname.toLowerCase().startsWith('/review-order') || location.pathname.toLowerCase().startsWith('/product') || location.pathname.toLowerCase().startsWith('/account') || location.pathname.toLowerCase().startsWith('/security') || location.pathname.toLowerCase().startsWith('/settings') || location.pathname.toLowerCase().startsWith('/wallet') || location.pathname.toLowerCase().startsWith('/coupons') || location.pathname.toLowerCase().startsWith('/refer') || location.pathname.toLowerCase().startsWith('/track-order') || location.pathname.toLowerCase().startsWith('/order-details') || location.pathname.toLowerCase().startsWith('/saved-addresses') || location.pathname.toLowerCase().startsWith('/cart');
+  const hideMobileNav = isLoginPage || location.pathname.toLowerCase().startsWith('/studio') || location.pathname.toLowerCase().startsWith('/profile') || location.pathname.toLowerCase().startsWith('/checkout') || location.pathname.toLowerCase().startsWith('/review-order') || location.pathname.toLowerCase().startsWith('/product') || location.pathname.toLowerCase().startsWith('/account') || location.pathname.toLowerCase().startsWith('/security') || location.pathname.toLowerCase().startsWith('/settings') || location.pathname.toLowerCase().startsWith('/wallet') || location.pathname.toLowerCase().startsWith('/coupons') || location.pathname.toLowerCase().startsWith('/refer') || location.pathname.toLowerCase().startsWith('/track-order') || location.pathname.toLowerCase().startsWith('/order-details') || location.pathname.toLowerCase().startsWith('/saved-addresses') || location.pathname.toLowerCase().startsWith('/cart') || location.pathname.toLowerCase().startsWith('/support') || location.pathname.toLowerCase().startsWith('/privacy');
 
   const isStudio = location.pathname.toLowerCase().startsWith('/studio');
 

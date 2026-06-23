@@ -78,7 +78,7 @@ export default function HelpSupportPage() {
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
-        <h1 className="text-[#02006c] text-[20px] font-black tracking-tight">Help & Support</h1>
+        <h1 className="text-[#02006c] text-[20px] font-black tracking-tight">Support</h1>
       </div>
 
       <div className="p-5 flex-grow space-y-6">

@@ -21,6 +21,7 @@ import ProductDetailsPage from './pages/ProductDetailsPage';
 import TopSelectionPage from './pages/TopSelectionPage';
 import SimilarProductsPage from './pages/SimilarProductsPage';
 import HelpSupportPage from './pages/HelpSupportPage';
+import PrivacyPage from './pages/PrivacyPage';
 import AccountInfoPage from './pages/AccountInfoPage';
 import SecurityPage from './pages/SecurityPage';
 import SettingsPage from './pages/SettingsPage';
@@ -38,8 +39,10 @@ function AppContent() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Show splash screen video on initial app load/open
-  const [showSplash, setShowSplash] = useState(true);
+  // Only show splash screen when landing on the root path '/'.
+  // If the user opens a direct link (e.g. /support), skip it immediately.
+  const isRootPath = window.location.pathname === '/';
+  const [showSplash, setShowSplash] = useState(isRootPath);
   const [isFading, setIsFading] = useState(false);
 
   const handleSplashEnd = () => {
@@ -118,6 +121,8 @@ function AppContent() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/help" element={<HelpSupportPage />} />
+        <Route path="/support" element={<HelpSupportPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
         <Route path="/account" element={<AccountInfoPage />} />
         <Route path="/security" element={<SecurityPage />} />
         <Route path="/settings" element={<SettingsPage />} />

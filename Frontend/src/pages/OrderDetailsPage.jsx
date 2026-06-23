@@ -161,10 +161,10 @@ Thank you for shopping with Mynzo!
           <h1 className="text-[18px] font-semibold tracking-wide text-[#02006c]">Order Details</h1>
         </div>
         <button 
-          onClick={() => navigate('/help')}
+          onClick={() => navigate('/support')}
           className="border border-[#02006c]/20 bg-white/50 rounded-lg px-4 py-1.5 text-[14px] font-semibold text-[#02006c] hover:bg-white transition-colors cursor-pointer"
         >
-          Help
+          Help & Support
         </button>
       </div>
 
