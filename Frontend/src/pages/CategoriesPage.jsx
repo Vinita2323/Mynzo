@@ -40,6 +40,9 @@ export default function CategoriesPage() {
     let active = true;
     const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
+    // Clear search query on mount so it doesn't carry over from home search and hide all items
+    setSearchQuery('');
+
     const loadAll = async () => {
       if (globalCombinedData) {
         if (active) {
