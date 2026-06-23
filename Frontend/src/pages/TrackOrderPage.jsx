@@ -9,14 +9,33 @@ export default function TrackOrderPage() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const [liveTracking, setLiveTracking] = useState(null);
+
   useEffect(() => {
-    const fetchOrder = async () => {
+    const fetchOrderAndTracking = async () => {
       try {
         const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const res = await fetch(`${apiBase}/orders/track/${orderId}`);
         const data = await res.json();
         if (res.ok && data.success) {
           setOrder(data.order);
+          
+          // Fetch Live Tracking from Shiprocket if AWB exists
+          if (data.order.awbCode) {
+            try {
+              const srRes = await fetch(`${apiBase}/api/shiprocket/track/${data.order.awbCode}`);
+              const srData = await srRes.json();
+              if (srRes.ok && srData.success) {
+                // Shiprocket tracking response structure varies, usually in tracking_data.shipment_track
+                const trackingData = srData.tracking?.tracking_data?.shipment_track || [];
+                const trackingActivities = srData.tracking?.tracking_data?.shipment_track_activities || [];
+                setLiveTracking({ track: trackingData[0], activities: trackingActivities });
+              }
+            } catch (e) {
+              console.error('Error fetching live tracking:', e);
+            }
+          }
+          
         } else {
           toast.error('Could not fetch order details');
         }
@@ -26,7 +45,7 @@ export default function TrackOrderPage() {
         setLoading(false);
       }
     };
-    if (orderId) fetchOrder();
+    if (orderId) fetchOrderAndTracking();
   }, [orderId]);
 
   if (loading) {
@@ -48,11 +67,24 @@ export default function TrackOrderPage() {
   // Dynamic tracking steps
   let steps = [];
   
-  if (trackingHistory.length > 0) {
+  if (liveTracking && liveTracking.activities && liveTracking.activities.length > 0) {
+    // Merge live tracking data
+    steps = [
+      { id: 'placed', title: 'Order Placed', desc: 'We have received your order', date: new Date(order.createdAt).toLocaleString(), icon: CheckCircle2, status: 'completed' },
+      ...liveTracking.activities.map((history, idx) => ({
+        id: `live_${idx}`,
+        title: history.activity,
+        desc: history.location || 'Update from courier',
+        date: new Date(history.date).toLocaleString(),
+        icon: history.activity.toUpperCase().includes('DELIVERED') ? Home : (history.activity.toUpperCase().includes('OUT FOR DELIVERY') ? MapPin : Truck),
+        status: 'completed'
+      }))
+    ];
+  } else if (trackingHistory.length > 0) {
     steps = [
       { id: 'placed', title: 'Order Placed', desc: 'We have received your order', date: new Date(order.createdAt).toLocaleString(), icon: CheckCircle2, status: 'completed' },
       ...trackingHistory.map((history, idx) => ({
-        id: idx,
+        id: `hist_${idx}`,
         title: history.status,
         desc: history.activity || history.location || 'Update from courier',
         date: new Date(history.timestamp).toLocaleString(),
@@ -70,9 +102,17 @@ export default function TrackOrderPage() {
     ];
   }
 
-  // Estimated delivery based on order date
-  const estDeliveryDate = new Date(order.createdAt);
-  estDeliveryDate.setDate(estDeliveryDate.getDate() + 4); // basic 4 days estimate
+  // Estimated delivery based on order ETD, live tracking, or fallback
+  let estDeliveryDate = new Date(order.createdAt);
+  estDeliveryDate.setDate(estDeliveryDate.getDate() + 4); // basic 4 days fallback
+  
+  if (order.etd) {
+    estDeliveryDate = new Date(order.etd);
+  }
+
+  if (liveTracking?.track?.expected_date) {
+    estDeliveryDate = new Date(liveTracking.track.expected_date);
+  }
 
   return (
     <div className="min-h-[100dvh] bg-slate-50 flex flex-col font-sans pb-20">

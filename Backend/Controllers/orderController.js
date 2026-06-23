@@ -9,7 +9,7 @@ const shiprocketService = require('../Router/shiprocketService');
 // @access  Private
 exports.createOrder = async (req, res) => {
   try {
-    const { items, total, deliveryAddress, paymentMethod, paymentStatus, paymentId, couponCode } = req.body;
+    const { items, total, deliveryAddress, paymentMethod, paymentStatus, paymentId, couponCode, deliveryCharge, etd } = req.body;
 
     if (!items || items.length === 0 || !total || !deliveryAddress || !paymentMethod) {
       return res.status(400).json({ success: false, message: 'Please provide all required fields' });
@@ -83,7 +83,9 @@ exports.createOrder = async (req, res) => {
       paymentStatus: paymentStatus || 'Pending',
       paymentId: paymentId || '',
       status: paymentMethod === 'Online' && paymentStatus !== 'Paid' ? 'Pending' : 'Processing',
-      couponCode: couponCode || null
+      couponCode: couponCode || null,
+      deliveryCharge: deliveryCharge || 0,
+      etd: etd || ''
     });
 
     // Send order to Shiprocket
@@ -139,8 +141,15 @@ exports.createOrder = async (req, res) => {
         if (serviceResponse && serviceResponse.data && serviceResponse.data.available_courier_companies) {
           const couriers = serviceResponse.data.available_courier_companies;
           if (couriers.length > 0) {
-            const minFreight = Math.min(...couriers.map(c => c.freight_charge));
+            const isCod = paymentMethod === 'COD';
+            const calculateTotalFreight = (c) => isCod ? (c.freight_charge + (c.cod_charges || 0)) : c.freight_charge;
+            const minFreight = Math.min(...couriers.map(calculateTotalFreight));
             order.deliveryCharge = minFreight;
+            
+            const bestCourier = couriers.find(c => calculateTotalFreight(c) === minFreight);
+            if (bestCourier && bestCourier.etd) {
+              order.etd = bestCourier.etd;
+            }
           }
         }
       } catch (svcErr) {

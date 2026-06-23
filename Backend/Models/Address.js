@@ -24,6 +24,10 @@ const addressSchema = new mongoose.Schema({
   },
   pincode: {
     type: String
+  },
+  isDefault: {
+    type: Boolean,
+    default: false
   }
 }, { timestamps: true });
 

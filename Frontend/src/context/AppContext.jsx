@@ -291,7 +291,8 @@ export const AppProvider = ({ children }) => {
               image: p.images && p.images[0] ? p.images[0] : '',
               brandName: p.brandName || 'Mynzo Originals',
               sales: p.sales || 0,
-              quantity: item.quantity
+              quantity: item.quantity,
+              weight: p.shippingSpecs?.weight || 0.5
             };
           }).filter(Boolean);
           setCart(mapped);
@@ -336,7 +337,9 @@ export const AppProvider = ({ children }) => {
             status: o.status,
             paymentMethod: o.paymentMethod,
             paymentStatus: o.paymentStatus,
-            deliveryAddress: o.deliveryAddress
+            deliveryAddress: o.deliveryAddress,
+            deliveryCharge: o.deliveryCharge,
+            etd: o.etd
           }));
           setOrders(mappedOrders);
         }
@@ -481,7 +484,8 @@ export const AppProvider = ({ children }) => {
               image: p.images && p.images[0] ? p.images[0] : '',
               brandName: p.brandName || 'Mynzo Originals',
               sales: p.sales || 0,
-              quantity: item.quantity
+              quantity: item.quantity,
+              weight: p.shippingSpecs?.weight || 0.5
             };
           }).filter(Boolean);
           setCart(mapped);
@@ -497,7 +501,7 @@ export const AppProvider = ({ children }) => {
             item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
           );
         }
-        return [...prevCart, { ...product, quantity: 1 }];
+        return [...prevCart, { ...product, quantity: 1, weight: product.shippingSpecs?.weight || 0.5 }];
       });
     }
   };
@@ -529,7 +533,8 @@ export const AppProvider = ({ children }) => {
               image: p.images && p.images[0] ? p.images[0] : '',
               brandName: p.brandName || 'Mynzo Originals',
               sales: p.sales || 0,
-              quantity: item.quantity
+              quantity: item.quantity,
+              weight: p.shippingSpecs?.weight || 0.5
             };
           }).filter(Boolean);
           setCart(mapped);
@@ -571,7 +576,8 @@ export const AppProvider = ({ children }) => {
               image: p.images && p.images[0] ? p.images[0] : '',
               brandName: p.brandName || 'Mynzo Originals',
               sales: p.sales || 0,
-              quantity: item.quantity
+              quantity: item.quantity,
+              weight: p.shippingSpecs?.weight || 0.5
             };
           }).filter(Boolean);
           setCart(mapped);

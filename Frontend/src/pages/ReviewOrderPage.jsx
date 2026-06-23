@@ -41,6 +41,11 @@ export default function ReviewOrderPage() {
   const [paymentMethod, setPaymentMethod] = useState('COD'); // 'COD' | 'ONLINE'
   const [isPlacingOrder, setIsPlacingOrder] = useState(false);
 
+  // Shipping estimate states
+  const [deliveryCharge, setDeliveryCharge] = useState(0);
+  const [etd, setEtd] = useState('');
+  const [isEstimatingDelivery, setIsEstimatingDelivery] = useState(false);
+
 
   // Fetch addresses
   const fetchAddresses = async () => {
@@ -68,31 +73,7 @@ export default function ReviewOrderPage() {
     fetchAddresses();
   }, [user]);
 
-  const mockAddresses = [
-    {
-      _id: 'mock-1',
-      type: 'WORK',
-      name: 'Chirag Jeevanani',
-      pincode: '452001',
-      address: 'Corporate house, South Tukoganj, Jhabua Tower, Indore'
-    },
-    {
-      _id: 'mock-2',
-      type: 'HOME',
-      name: 'Vini',
-      pincode: '452012',
-      address: 'AH-49, Kadambari Nagar, Near Maa Annapurna Ice And Cold Storage, Indore'
-    },
-    {
-      _id: 'mock-3',
-      type: 'OTHER',
-      name: 'Chirag',
-      pincode: '484001',
-      address: 'Near shankar takies, front of ram khilawan oil mill, Shahdol'
-    }
-  ];
-
-  const addressesList = (dbAddresses.length > 0) ? dbAddresses : mockAddresses;
+  const addressesList = dbAddresses;
   
   useEffect(() => {
     if (!selectedAddressId && addressesList.length > 0) {
@@ -100,7 +81,42 @@ export default function ReviewOrderPage() {
     }
   }, [addressesList, selectedAddressId]);
 
-  const selectedAddress = addressesList.find(a => (a._id === selectedAddressId || a.id === selectedAddressId)) || addressesList[0] || mockAddresses[0];
+  const selectedAddress = addressesList.find(a => (a._id === selectedAddressId || a.id === selectedAddressId)) || addressesList[0];
+
+  useEffect(() => {
+    if (selectedAddress && selectedAddress.pincode && cart.length > 0) {
+      const estimateShipping = async () => {
+        setIsEstimatingDelivery(true);
+        try {
+          const totalWeight = cart.reduce((total, item) => total + ((item.weight || 0.5) * item.quantity), 0);
+          const res = await fetch(`${API_BASE}/api/shiprocket/estimate`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              deliveryPincode: selectedAddress.pincode, 
+              weight: totalWeight, 
+              cod: paymentMethod === 'COD' ? 1 : 0 
+            })
+          });
+          const data = await res.json();
+          if (data.success) {
+            setDeliveryCharge(data.deliveryCharge);
+            setEtd(data.etd);
+          } else {
+            setDeliveryCharge(0);
+            setEtd('');
+          }
+        } catch (err) {
+          console.error("Error estimating shipping:", err);
+          setDeliveryCharge(0);
+          setEtd('');
+        } finally {
+          setIsEstimatingDelivery(false);
+        }
+      };
+      estimateShipping();
+    }
+  }, [selectedAddress, paymentMethod, cart, API_BASE]);
 
   const handleAddAddress = async (e) => {
     e.preventDefault();
@@ -215,6 +231,11 @@ export default function ReviewOrderPage() {
       return;
     }
     
+    if (!selectedAddress) {
+      toast.error("Please add a delivery address before placing order");
+      return;
+    }
+    
     setIsPlacingOrder(true);
     
     if (paymentMethod === 'ONLINE') {
@@ -288,7 +309,9 @@ export default function ReviewOrderPage() {
           paymentMethod: method === 'Online' ? 'Online' : 'COD',
           paymentStatus: method === 'Online' ? 'Paid' : 'Pending',
           paymentId: paymentId,
-          couponCode: appliedCoupon ? appliedCoupon.code : undefined
+          couponCode: appliedCoupon ? appliedCoupon.code : undefined,
+          deliveryCharge: deliveryCharge,
+          etd: etd
         })
       });
       
@@ -309,7 +332,9 @@ export default function ReviewOrderPage() {
           total: o.total,
           status: o.status,
           paymentMethod: o.paymentMethod,
-          paymentStatus: o.paymentStatus
+          paymentStatus: o.paymentStatus,
+          deliveryCharge: o.deliveryCharge,
+          etd: o.etd
         };
         
         addOrder(mappedOrder);
@@ -330,10 +355,9 @@ export default function ReviewOrderPage() {
 
   const mockSavings = 2458;
   const platformCommission = 15;
-  const codFee = paymentMethod === 'COD' ? 10 : 0;
   
   const gstAmount = Math.round(Math.max(0, totalCartPrice - discountAmount) * 0.18);
-  const grandTotal = Math.max(0, totalCartPrice - discountAmount + gstAmount + platformCommission + codFee);
+  const grandTotal = Math.max(0, totalCartPrice - discountAmount + gstAmount + platformCommission + deliveryCharge);
   const mockOriginalTotal = totalCartPrice + mockSavings;
 
   const firstItem = cart && cart.length > 0 ? cart[0] : null;
@@ -361,15 +385,32 @@ export default function ReviewOrderPage() {
             <h2 className="text-xs font-black uppercase tracking-wide">Delivery Details</h2>
           </div>
           <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-            <p className="text-[13px] leading-snug text-slate-600 mb-3">
-              <span className="font-bold text-slate-800">{selectedAddress.name}</span> ({selectedAddress.type}) - {selectedAddress.address}, {selectedAddress.pincode}
-            </p>
-            <button 
-              onClick={() => setIsAddressModalOpen(true)}
-              className="text-[#ee4923] text-xs font-bold mb-4"
-            >
-              Change Address <span className="ml-1">›</span>
-            </button>
+            {selectedAddress ? (
+              <>
+                <p className="text-[13px] leading-snug text-slate-600 mb-3">
+                  <span className="font-bold text-slate-800">{selectedAddress.name}</span> ({selectedAddress.type}) - {selectedAddress.address}, {selectedAddress.pincode}
+                </p>
+                <button 
+                  onClick={() => setIsAddressModalOpen(true)}
+                  className="text-[#ee4923] text-xs font-bold mb-4"
+                >
+                  Change Address <span className="ml-1">›</span>
+                </button>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-4 bg-orange-50/50 rounded-lg border border-orange-100 mb-4">
+                <p className="text-sm font-bold text-slate-700 mb-2">Please add shipping info</p>
+                <button 
+                  onClick={() => {
+                    setIsAddingAddress(true);
+                    setIsAddressModalOpen(true);
+                  }}
+                  className="px-4 py-2 bg-[#ee4923] text-white text-xs font-bold rounded-lg shadow-sm hover:scale-105 transition-transform"
+                >
+                  Add New Address
+                </button>
+              </div>
+            )}
             
             <div className="space-y-2 mt-2">
                {cart && cart.map((item, idx) => (
@@ -377,13 +418,18 @@ export default function ReviewOrderPage() {
                   <div className="w-12 h-12 relative flex-shrink-0">
                     <OptimizedImage src={item.image} alt={item.name} type="product" className="absolute inset-0 rounded shadow-sm border border-slate-200" />
                   </div>
-                  <div className="flex-grow flex flex-col">
-                    <span className="text-xs font-bold text-slate-800 line-clamp-1">{item.name}</span>
-                    <span className="text-[10px] text-slate-500 mt-0.5">Qty: {item.quantity} • Size: Standard</span>
-                  </div>
-                  <div className="text-right flex flex-col">
-                    <span className="text-xs font-black text-slate-800">₹{item.price * item.quantity}</span>
-                    <span className="text-[9px] text-emerald-600 font-bold">Delivery Tomorrow</span>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <h3 className="text-xs font-bold text-slate-800 leading-snug line-clamp-2">{item.name}</h3>
+                    <div className="flex items-center justify-between mt-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-black text-[#02006c]">₹{item.price * item.quantity}</span>
+                      </div>
+                      <span className="text-[10px] font-bold text-slate-500">Qty: {item.quantity}</span>
+                    </div>
+                    <div className="mt-1.5 flex items-center gap-1 text-[10px] text-emerald-600 font-bold bg-emerald-50 w-fit px-1.5 py-0.5 rounded">
+                      <CheckCircle2 className="w-3 h-3" />
+                      {etd ? `Estimated Delivery: ${etd}` : 'Delivery Tomorrow'}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -482,8 +528,17 @@ export default function ReviewOrderPage() {
             </div>
            
             <div className="flex justify-between items-center text-[13px]">
-              <span className="text-slate-600">Delivery Charges</span>
-              <span className="text-emerald-600 font-medium">FREE</span>
+              <span className="text-slate-600">
+                {paymentMethod === 'COD' ? 'Delivery Charges (COD)' : 'Delivery Charges (Prepaid)'} 
+                <span className="text-[10px] text-slate-400 ml-1">(Cart Weight: {cart.reduce((total, item) => total + ((item.weight || 0.5) * item.quantity), 0)}kg)</span>
+              </span>
+              {isEstimatingDelivery ? (
+                <span className="text-slate-400 font-medium">Calculating...</span>
+              ) : (
+                <span className={deliveryCharge > 0 ? "text-slate-800" : "text-emerald-600 font-medium"}>
+                  {deliveryCharge > 0 ? `₹${deliveryCharge}` : 'FREE'}
+                </span>
+              )}
             </div>
             
             <div className="border-t border-slate-200 pt-3 mt-1 flex justify-between items-center">

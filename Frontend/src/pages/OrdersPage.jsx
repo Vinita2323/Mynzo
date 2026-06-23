@@ -100,7 +100,7 @@ export default function OrdersPage() {
   // Transform appOrders to match the required UI structure, or use MOCK_ORDERS
   let rawOrders = appOrders && appOrders.length > 0 ? appOrders.map((o, idx) => ({
     id: o.id || `ORD-MOCK-${idx}`,
-    date: o.date || (idx === 0 ? 'Arriving by May 10' : 'Delivered on Apr 13'),
+    date: o.status === 'Delivered' ? `Delivered on ${o.date || 'Apr 13'}` : (o.etd ? `Arriving by ${o.etd}` : 'Processing'),
     status: o.status || (idx === 0 ? 'In Transit' : 'Delivered'),
     name: o.items && o.items[0] ? o.items[0].name : 'Product',
     image: (o.items && o.items[0] && o.items[0].image) ? o.items[0].image : fallbackImages[idx % fallbackImages.length],

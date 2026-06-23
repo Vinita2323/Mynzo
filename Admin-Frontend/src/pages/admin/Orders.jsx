@@ -129,20 +129,23 @@ const Orders = () => {
     }
   };
 
-  const handleAssignAWB = async (shipmentId) => {
-    if (!shipmentId) return toast.error('No shipment ID available for this order');
+  const handleAssignAWB = async (orderId) => {
+    if (!orderId) return toast.error('No order ID available');
     const token = localStorage.getItem('adminToken');
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const res = await fetch(`${apiBase}/admin/shiprocket/assign-awb`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ shipmentId })
+        body: JSON.stringify({ orderId })
       });
       const data = await res.json();
       if (res.ok && data.success) {
         toast.success('AWB Assigned Successfully');
-        fetchOrders(); // Refresh to get updated AWB code
+        fetchOrders();
+        if (selectedOrder && selectedOrder._id === orderId) {
+          setSelectedOrder(prev => ({ ...prev, awbCode: data.order?.awbCode, courierName: data.order?.courierName, shipmentStatus: 'AWB Assigned' }));
+        }
       } else {
         toast.error(data.message || 'Failed to assign AWB');
       }
@@ -151,19 +154,20 @@ const Orders = () => {
     }
   };
 
-  const handleGenerateLabel = async (shipmentId) => {
-    if (!shipmentId) return toast.error('No shipment ID available');
+  const handleGenerateLabel = async (orderId) => {
+    if (!orderId) return toast.error('No order ID available');
     const token = localStorage.getItem('adminToken');
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const res = await fetch(`${apiBase}/admin/shiprocket/generate-label`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ shipmentId })
+        body: JSON.stringify({ orderId })
       });
       const data = await res.json();
       if (res.ok && data.success && data.data.label_created) {
         window.open(data.data.label_url, '_blank');
+        toast.success('Label generated!');
       } else {
         toast.error('Label not ready or failed to generate');
       }
@@ -172,24 +176,116 @@ const Orders = () => {
     }
   };
 
-  const handleRequestPickup = async (shipmentId) => {
-    if (!shipmentId) return toast.error('No shipment ID available');
+  const handleRequestPickup = async (orderId) => {
+    if (!orderId) return toast.error('No order ID available');
     const token = localStorage.getItem('adminToken');
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const res = await fetch(`${apiBase}/admin/shiprocket/request-pickup`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-        body: JSON.stringify({ shipmentId })
+        body: JSON.stringify({ orderId })
       });
       const data = await res.json();
       if (res.ok && data.success) {
         toast.success('Pickup requested successfully');
+        fetchOrders();
       } else {
         toast.error(data.message || 'Failed to request pickup');
       }
     } catch (err) {
       toast.error('Error requesting pickup');
+    }
+  };
+
+  const [processingOrder, setProcessingOrder] = useState(null);
+
+  const handleProcessOrder = async (orderId) => {
+    if (!orderId) return toast.error('No order ID available');
+    const token = localStorage.getItem('adminToken');
+    setProcessingOrder(orderId);
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/admin/shiprocket/process-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ orderId })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Order processed! AWB + Pickup + Label done.');
+        fetchOrders();
+        if (selectedOrder && selectedOrder._id === orderId) {
+          setSelectedOrder(prev => ({
+            ...prev,
+            awbCode: data.order?.awbCode,
+            courierName: data.order?.courierName,
+            shipmentStatus: data.order?.shipmentStatus,
+            pickupScheduled: data.order?.pickupScheduled
+          }));
+        }
+        // Auto-open label if available
+        if (data.results?.label?.label_url) {
+          window.open(data.results.label.label_url, '_blank');
+        }
+      } else {
+        toast.error(data.message || 'Failed to process order');
+      }
+    } catch (err) {
+      toast.error('Error processing order');
+    } finally {
+      setProcessingOrder(null);
+    }
+  };
+
+  const handleCancelOrder = async (orderId) => {
+    if (!orderId) return;
+    if (!window.confirm('Are you sure you want to cancel this order? Stock will be restored.')) return;
+    const token = localStorage.getItem('adminToken');
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/admin/shiprocket/cancel-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ orderId })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Order cancelled successfully');
+        fetchOrders();
+        if (selectedOrder && selectedOrder._id === orderId) {
+          setSelectedOrder(prev => ({ ...prev, status: 'Cancelled', shipmentStatus: 'Cancelled' }));
+        }
+      } else {
+        toast.error(data.message || 'Failed to cancel order');
+      }
+    } catch (err) {
+      toast.error('Error cancelling order');
+    }
+  };
+
+  const handleSyncStatus = async (orderId) => {
+    if (!orderId) return;
+    const token = localStorage.getItem('adminToken');
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/admin/shiprocket/sync-status`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ orderId })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Order synced with Shiprocket');
+        fetchOrders();
+        if (selectedOrder && selectedOrder._id === orderId) {
+          setSelectedOrder(data.order);
+        }
+      } else {
+        toast.error(data.message || 'Sync failed');
+      }
+    } catch (err) {
+      toast.error('Error syncing order status');
     }
   };
 
@@ -519,13 +615,35 @@ const Orders = () => {
                       <span className="text-slate-400 uppercase text-[10px]">Courier:</span> 
                       <p>{selectedOrder.courierName || 'Unassigned'}</p>
                     </div>
+                    <div>
+                      <span className="text-slate-400 uppercase text-[10px]">Shipment Status:</span> 
+                      <p className="text-indigo-600">{selectedOrder.shipmentStatus || 'N/A'}</p>
+                    </div>
+                    {selectedOrder.etd && (
+                      <div>
+                        <span className="text-slate-400 uppercase text-[10px]">Est. Delivery:</span> 
+                        <p className="text-green-600">{selectedOrder.etd}</p>
+                      </div>
+                    )}
                   </div>
 
-                  {selectedOrder.shipmentId && (
-                    <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-100">
+                  {selectedOrder.shipmentId && !['Delivered', 'Cancelled'].includes(selectedOrder.status) && (
+                    <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100">
+                      {/* One-Click Process (AWB + Pickup + Label) */}
                       {!selectedOrder.awbCode && (
                         <button 
-                          onClick={() => handleAssignAWB(selectedOrder.shipmentId)}
+                          onClick={() => handleProcessOrder(selectedOrder._id)}
+                          disabled={processingOrder === selectedOrder._id}
+                          className="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg text-xs font-bold hover:from-blue-600 hover:to-indigo-600 transition-all shadow-sm disabled:opacity-50"
+                        >
+                          {processingOrder === selectedOrder._id ? '⏳ Processing...' : '🚀 Process Order (AWB + Pickup + Label)'}
+                        </button>
+                      )}
+
+                      {/* Individual Steps */}
+                      {!selectedOrder.awbCode && (
+                        <button 
+                          onClick={() => handleAssignAWB(selectedOrder._id)}
                           className="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold hover:bg-blue-100 transition-colors shadow-sm"
                         >
                           Assign AWB
@@ -534,19 +652,54 @@ const Orders = () => {
                       {selectedOrder.awbCode && (
                         <>
                           <button 
-                            onClick={() => handleGenerateLabel(selectedOrder.shipmentId)}
+                            onClick={() => handleGenerateLabel(selectedOrder._id)}
                             className="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-lg text-xs font-bold hover:bg-indigo-100 transition-colors shadow-sm"
                           >
                             Download Label
                           </button>
                           <button 
-                            onClick={() => handleRequestPickup(selectedOrder.shipmentId)}
+                            onClick={() => handleRequestPickup(selectedOrder._id)}
                             className="px-4 py-2 bg-green-50 text-green-600 rounded-lg text-xs font-bold hover:bg-green-100 transition-colors shadow-sm"
                           >
                             Request Pickup
                           </button>
+                          <button 
+                            onClick={() => handleSyncStatus(selectedOrder._id)}
+                            className="px-4 py-2 bg-amber-50 text-amber-600 rounded-lg text-xs font-bold hover:bg-amber-100 transition-colors shadow-sm"
+                          >
+                            🔄 Sync Status
+                          </button>
                         </>
                       )}
+
+                      {/* Cancel Order */}
+                      <button 
+                        onClick={() => handleCancelOrder(selectedOrder._id)}
+                        className="px-4 py-2 bg-red-50 text-red-600 rounded-lg text-xs font-bold hover:bg-red-100 transition-colors shadow-sm"
+                      >
+                        ✕ Cancel Order
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Show tracking history if available */}
+                  {selectedOrder.trackingHistory && selectedOrder.trackingHistory.length > 0 && (
+                    <div className="pt-3 border-t border-slate-100">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Tracking History</p>
+                      <div className="space-y-2 max-h-40 overflow-y-auto">
+                        {selectedOrder.trackingHistory.slice().reverse().map((entry, idx) => (
+                          <div key={idx} className="flex items-start gap-2 text-[11px]">
+                            <div className="w-2 h-2 rounded-full bg-blue-400 mt-1 flex-shrink-0"></div>
+                            <div className="flex-1">
+                              <p className="font-bold text-slate-700">{entry.activity || entry.status}</p>
+                              <p className="text-slate-400 text-[10px]">
+                                {entry.location && `${entry.location} · `}
+                                {new Date(entry.timestamp).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>

@@ -121,8 +121,60 @@ export default function ProductDetailsPage() {
 
   const [pincode, setPincode] = useState('');
   const [deliveryCharge, setDeliveryCharge] = useState(null);
+  const [deliveryChargeCOD, setDeliveryChargeCOD] = useState(null);
   const [deliveryEtd, setDeliveryEtd] = useState('');
   const [isCheckingPincode, setIsCheckingPincode] = useState(false);
+
+  // Auto-fetch user's default address pincode and estimate shipping
+  useEffect(() => {
+    if (user && product) {
+      const fetchDefaultAddressAndEstimate = async () => {
+        try {
+          const token = localStorage.getItem('userToken');
+          if (!token) return;
+          const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+          const res = await fetch(`${apiBase}/addresses`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success && data.data && data.data.length > 0) {
+            const defaultAddress = data.data[0];
+            if (defaultAddress.pincode) {
+              setPincode(defaultAddress.pincode);
+              // Calculate automatically
+              const [prepaidRes, codRes] = await Promise.all([
+                fetch(`${apiBase}/api/shiprocket/estimate`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ deliveryPincode: defaultAddress.pincode, weight: product?.shippingSpecs?.weight || 0.5, cod: 0 })
+                }),
+                fetch(`${apiBase}/api/shiprocket/estimate`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ deliveryPincode: defaultAddress.pincode, weight: product?.shippingSpecs?.weight || 0.5, cod: 1 })
+                })
+              ]);
+              const estimateData = await prepaidRes.json();
+              const estimateDataCOD = await codRes.json();
+              
+              if (prepaidRes.ok && estimateData.success) {
+                setDeliveryCharge(estimateData.deliveryCharge);
+                setDeliveryEtd(estimateData.etd);
+                if (codRes.ok && estimateDataCOD.success) {
+                  setDeliveryChargeCOD(estimateDataCOD.deliveryCharge);
+                }
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error auto-fetching pincode:", err);
+        }
+      };
+      // only run once when product is loaded
+      fetchDefaultAddressAndEstimate();
+    }
+  }, [user, product?.id]);
+
 
   const handleCheckPincode = async () => {
     if (!pincode || pincode.length !== 6) {
@@ -132,27 +184,36 @@ export default function ProductDetailsPage() {
     setIsCheckingPincode(true);
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/api/shiprocket/estimate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          deliveryPincode: pincode, 
-          weight: product?.shippingSpecs?.weight || 0.5, 
-          cod: 0 
+      const [prepaidRes, codRes] = await Promise.all([
+        fetch(`${apiBase}/api/shiprocket/estimate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deliveryPincode: pincode, weight: product?.shippingSpecs?.weight || 0.5, cod: 0 })
+        }),
+        fetch(`${apiBase}/api/shiprocket/estimate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ deliveryPincode: pincode, weight: product?.shippingSpecs?.weight || 0.5, cod: 1 })
         })
-      });
-      const data = await res.json();
-      if (res.ok && data.success) {
+      ]);
+      const data = await prepaidRes.json();
+      const dataCOD = await codRes.json();
+      if (prepaidRes.ok && data.success) {
         setDeliveryCharge(data.deliveryCharge);
         setDeliveryEtd(data.etd);
+        if (codRes.ok && dataCOD.success) {
+          setDeliveryChargeCOD(dataCOD.deliveryCharge);
+        }
       } else {
         alert('Could not fetch delivery details for this pincode');
         setDeliveryCharge(null);
+        setDeliveryChargeCOD(null);
         setDeliveryEtd('');
       }
     } catch (err) {
       alert('Error checking serviceability');
       setDeliveryCharge(null);
+      setDeliveryChargeCOD(null);
       setDeliveryEtd('');
     } finally {
       setIsCheckingPincode(false);
@@ -169,6 +230,7 @@ export default function ProductDetailsPage() {
         
         if (res.ok && data.success && data.product) {
           const p = data.product;
+          console.log("=== FRONTEND PRODUCT DATA ===", { id: p._id, weight: p.shippingSpecs?.weight });
           
           let productImages = p.images || [];
           if (productImages.length === 0) {
@@ -191,7 +253,8 @@ export default function ProductDetailsPage() {
             stock: p.stock || 0,
             highlights: p.highlights || {},
             technicalSpecs: p.technicalSpecs || {},
-            manufacturerInfo: p.manufacturerInfo || ''
+            manufacturerInfo: p.manufacturerInfo || '',
+            shippingSpecs: p.shippingSpecs || {}
           };
           
           setProduct(normalised);
@@ -360,8 +423,8 @@ export default function ProductDetailsPage() {
 
 
       {/* Hero Image Section */}
-      <div className="relative bg-white pb-3 border-b border-slate-100">
-        <div className="w-full aspect-[3/4] relative overflow-hidden">
+      <div className="relative bg-white border-b border-slate-100">
+        <div className="w-full aspect-square relative overflow-hidden">
           {/* Main Product Images Slider */}
           <div 
             id="product-image-slider"
@@ -571,9 +634,15 @@ export default function ProductDetailsPage() {
             {deliveryCharge !== null && (
               <div className="pt-2 border-t border-slate-100 flex flex-col gap-1">
                 <div className="flex items-center justify-between text-xs text-slate-700">
-                  <span className="flex items-center gap-1"><Truck className="w-3.5 h-3.5"/> Est. Delivery Charge</span>
-                  <span className="font-bold text-slate-900">₹{deliveryCharge}</span>
+                  <span className="flex items-center gap-1"><Truck className="w-3.5 h-3.5"/> Est. Delivery Charge (Prepaid)</span>
+                  <span className="font-bold text-slate-900">{deliveryCharge > 0 ? `₹${deliveryCharge}` : 'FREE'}</span>
                 </div>
+                {deliveryChargeCOD !== null && (
+                <div className="flex items-center justify-between text-xs text-slate-700">
+                  <span className="flex items-center gap-1"><Truck className="w-3.5 h-3.5 text-slate-400"/> Est. Delivery Charge (COD)</span>
+                  <span className="font-bold text-slate-900">{deliveryChargeCOD > 0 ? `₹${deliveryChargeCOD}` : 'FREE'}</span>
+                </div>
+                )}
                 <div className="flex items-center justify-between text-xs text-slate-700">
                   <span className="flex items-center gap-1"><CheckCircle className="w-3.5 h-3.5 text-emerald-600"/> Est. Delivery Date</span>
                   <span className="font-bold text-emerald-600">{deliveryEtd || '3-5 Days'}</span>
@@ -582,51 +651,10 @@ export default function ProductDetailsPage() {
             )}
           </div>
           
-          {/* Seller Details */}
-          <div className="bg-[#FFE4D6] flex items-start gap-2 py-2.5 px-3.5 rounded-lg mt-3">
-            <Store className="w-4 h-4 text-[#02006c] flex-shrink-0 mt-0.5" />
-            <div className="flex flex-col">
-              <span className="text-xs text-slate-700 font-medium">Fulfilled by {product.brandName || 'Mynzo Retail'}</span>
-              <div className="flex items-center gap-1 mt-0.5">
-                <span className="text-[10px] text-slate-500">{product.rating || '4.3'}</span>
-                <Star className="w-2.5 h-2.5 fill-slate-400 text-slate-400" />
-                <span className="text-[10px] text-slate-400">• Certified Seller</span>
-              </div>
-              <span className="text-[10px] font-bold text-[#02006c] mt-1 cursor-pointer">See other sellers</span>
-            </div>
-          </div>
         </div>
       </div>
 
-      {/* Trust Badges */}
-      <div className="bg-white px-4 pt-1 pb-4 flex justify-around items-center border-b border-slate-100">
-        <div className="flex flex-col items-center gap-1.5">
-          <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center bg-slate-50">
-            <RotateCcw className="w-4 h-4 text-[#02006c]" />
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-[10px] text-slate-600 text-center leading-tight">10-Day<br/>Return</span>
-          </div>
-        </div>
 
-        <div className="flex flex-col items-center gap-1.5">
-          <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center bg-slate-50">
-            <Banknote className="w-4 h-4 text-[#02006c]" />
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-[10px] text-slate-600 text-center leading-tight">Cash on<br/>Delivery</span>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-center gap-1.5">
-          <div className="w-8 h-8 rounded-full border border-slate-200 flex items-center justify-center bg-slate-50">
-            <ShieldCheck className="w-4 h-4 text-[#02006c]" />
-          </div>
-          <div className="flex flex-col items-center">
-            <span className="text-[10px] text-slate-600 text-center leading-tight">Mynzo<br/>Assured</span>
-          </div>
-        </div>
-      </div>
 
       {/* Similar Products */}
       <div className="bg-white py-4 mt-2">

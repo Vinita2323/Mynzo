@@ -5,7 +5,8 @@ const Address = require('../Models/Address');
 // @access  Private
 const getAddresses = async (req, res) => {
   try {
-    const addresses = await Address.find({ userId: req.user._id }).sort({ createdAt: -1 });
+    // Sort so default address comes first, then by date
+    const addresses = await Address.find({ userId: req.user._id }).sort({ isDefault: -1, createdAt: -1 });
     res.status(200).json({ success: true, data: addresses });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
@@ -17,7 +18,7 @@ const getAddresses = async (req, res) => {
 // @access  Private
 const createAddress = async (req, res) => {
   try {
-    const { name, phone, type, address, pincode } = req.body;
+    const { name, phone, type, address, pincode, isDefault } = req.body;
     if (!name || !phone || !address) {
       return res.status(400).json({ success: false, message: 'Please provide name, phone, and address' });
     }
@@ -27,13 +28,25 @@ const createAddress = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Phone number must be exactly 10 digits' });
     }
 
+    // If making this default, unset others
+    if (isDefault) {
+      await Address.updateMany({ userId: req.user._id }, { isDefault: false });
+    } else {
+      // If no addresses exist, make this default automatically
+      const count = await Address.countDocuments({ userId: req.user._id });
+      if (count === 0) {
+        req.body.isDefault = true;
+      }
+    }
+
     const newAddress = await Address.create({
       userId: req.user._id,
       name,
       phone,
       type: type || 'Home',
       address,
-      pincode: pincode || ''
+      pincode: pincode || '',
+      isDefault: isDefault || req.body.isDefault || false
     });
 
     res.status(201).json({ success: true, data: newAddress });
@@ -47,7 +60,7 @@ const createAddress = async (req, res) => {
 // @access  Private
 const updateAddress = async (req, res) => {
   try {
-    const { name, phone, type, address, pincode } = req.body;
+    const { name, phone, type, address, pincode, isDefault } = req.body;
     let existingAddress = await Address.findOne({ _id: req.params.id, userId: req.user._id });
 
     if (!existingAddress) {
@@ -61,11 +74,16 @@ const updateAddress = async (req, res) => {
       }
     }
 
+    if (isDefault) {
+      await Address.updateMany({ userId: req.user._id, _id: { $ne: existingAddress._id } }, { isDefault: false });
+    }
+
     existingAddress.name = name || existingAddress.name;
     existingAddress.phone = phone || existingAddress.phone;
     existingAddress.type = type || existingAddress.type;
     existingAddress.address = address || existingAddress.address;
     if (pincode !== undefined) existingAddress.pincode = pincode;
+    if (isDefault !== undefined) existingAddress.isDefault = isDefault;
 
     const updatedAddress = await existingAddress.save();
     res.status(200).json({ success: true, data: updatedAddress });

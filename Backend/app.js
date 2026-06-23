@@ -127,6 +127,8 @@ app.use('/admin/content/qna', require('./Router/qnaRoutes'));
 app.use('/admin/shiprocket', require('./Router/shiprocketRoutes'));
 app.use('/api/shiprocket', require('./Router/shiprocketRoutes'));
 app.use('/api/logistics', require('./Router/shiprocketRoutes')); // Alias without 'shiprocket' keyword for webhook
+app.use('/shiprocket', require('./Router/shiprocketRoutes'));
+app.use('/logistics', require('./Router/shiprocketRoutes'));
 app.use('/admin/notifications', require('./Router/notificationRoutes'));
 
 // Health check with DB connection check

@@ -68,6 +68,10 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  etd: {
+    type: String,
+    default: ''
+  },
   awbCode: {
     type: String,
     default: null

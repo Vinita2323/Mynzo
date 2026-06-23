@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 
 export default function SavedAddressesPage() {
   const navigate = useNavigate();
-  const { addresses, addressesLoading, addAddress, updateAddress, deleteAddress, user } = useApp();
+  const { addresses, addressesLoading, addAddress, updateAddress, deleteAddress, user, fetchAddresses } = useApp();
   const [activeMenuId, setActiveMenuId] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAddress, setEditingAddress] = useState(null); // full address object
@@ -16,12 +16,14 @@ export default function SavedAddressesPage() {
     name: '',
     phone: '',
     address: '',
+    pincode: '',
     type: 'Home',
+    isDefault: false
   });
 
   const openAddModal = () => {
     setEditingAddress(null);
-    setFormData({ name: '', phone: '', address: '', type: 'Home' });
+    setFormData({ name: '', phone: '', address: '', pincode: '', type: 'Home', isDefault: false });
     setIsModalOpen(true);
   };
 
@@ -32,14 +34,20 @@ export default function SavedAddressesPage() {
       name: addr.name || '',
       phone: addr.phone || '',
       address: addr.address || '',
+      pincode: addr.pincode || '',
       type: addr.type || 'Home',
+      isDefault: addr.isDefault || false
     });
     setIsModalOpen(true);
   };
 
   const handleSaveAddress = async () => {
-    if (!formData.name.trim() || !formData.phone.trim() || !formData.address.trim()) {
-      toast.error('Name, Phone and Address are required!');
+    if (!formData.name.trim() || !formData.phone.trim() || !formData.address.trim() || !formData.pincode.trim()) {
+      toast.error('Name, Phone, Address, and Pincode are required!');
+      return;
+    }
+    if (formData.pincode.trim().length !== 6) {
+      toast.error('Pincode must be exactly 6 digits!');
       return;
     }
     const phoneRegex = /^[0-9]{10}$/;
@@ -55,10 +63,13 @@ export default function SavedAddressesPage() {
           name: formData.name.trim(),
           phone: formData.phone.trim(),
           address: formData.address.trim(),
+          pincode: formData.pincode.trim(),
           type: formData.type,
+          isDefault: formData.isDefault || false
         });
         if (result.success) {
           toast.success('Address updated!');
+          fetchAddresses();
           setIsModalOpen(false);
         } else {
           toast.error(result.message || 'Failed to update address');
@@ -68,10 +79,13 @@ export default function SavedAddressesPage() {
           name: formData.name.trim(),
           phone: formData.phone.trim(),
           address: formData.address.trim(),
+          pincode: formData.pincode.trim(),
           type: formData.type,
+          isDefault: formData.isDefault || false
         });
         if (result.success) {
           toast.success('Address added!');
+          fetchAddresses();
           setIsModalOpen(false);
         } else {
           toast.error(result.message || 'Failed to add address');
@@ -94,6 +108,21 @@ export default function SavedAddressesPage() {
       }
     } finally {
       setDeleting(null);
+    }
+  };
+
+  const handleSetDefaultAddress = async (addr) => {
+    setActiveMenuId(null);
+    try {
+      const result = await updateAddress(addr._id, { ...addr, isDefault: true });
+      if (result.success) {
+        toast.success('Default address updated');
+        fetchAddresses();
+      } else {
+        toast.error(result.message || 'Failed to set default');
+      }
+    } catch (err) {
+      toast.error('Network error');
     }
   };
 
@@ -178,8 +207,16 @@ export default function SavedAddressesPage() {
                     <span className="text-[10px] font-semibold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-full uppercase tracking-wide">
                       {addr.type}
                     </span>
+                    {addr.isDefault && (
+                      <span className="text-[9px] font-black text-white bg-emerald-500 px-1.5 py-0.5 rounded-full uppercase tracking-wider shadow-sm ml-1">
+                        Default
+                      </span>
+                    )}
                   </div>
-                  <p className="text-[12px] text-slate-500 leading-relaxed mb-1.5">{addr.address}</p>
+                  <p className="text-[12px] text-slate-500 leading-relaxed mb-1.5">
+                    {addr.address}
+                    {addr.pincode && <span> - <span className="font-semibold text-slate-700">{addr.pincode}</span></span>}
+                  </p>
                   <p className="text-[12px] font-bold text-slate-600">+91 {addr.phone}</p>
                 </div>
               </div>
@@ -200,7 +237,16 @@ export default function SavedAddressesPage() {
 
               {/* Dropdown menu */}
               {activeMenuId === addr._id && (
-                <div className="absolute top-8 right-2 bg-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-slate-100 py-1.5 min-w-[140px] z-10 animate-fade-in">
+                <div className="absolute top-8 right-2 bg-white rounded-lg shadow-[0_4px_20px_rgba(0,0,0,0.1)] border border-slate-100 py-1.5 min-w-[150px] z-10 animate-fade-in">
+                  {!addr.isDefault && (
+                    <button
+                      onClick={() => handleSetDefaultAddress(addr)}
+                      className="w-full flex items-center gap-2 px-4 py-2 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 hover:text-emerald-600 transition-colors cursor-pointer"
+                    >
+                      <MapPin className="w-3.5 h-3.5" />
+                      Set as Default
+                    </button>
+                  )}
                   <button
                     onClick={() => openEditModal(addr)}
                     className="w-full flex items-center gap-2 px-4 py-2 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 hover:text-[#02006c] transition-colors cursor-pointer"
@@ -282,14 +328,27 @@ export default function SavedAddressesPage() {
                   onChange={e => setFormData({ ...formData, address: e.target.value })}
                   rows={3}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[13px] focus:outline-none focus:border-[#ee4923] focus:ring-1 focus:ring-[#ee4923]/20 transition-all resize-none"
-                  placeholder="House No, Building, Street, City, Pincode"
+                  placeholder="House No, Building, Street, City"
+                />
+              </div>
+
+              {/* Pincode */}
+              <div className="space-y-1.5">
+                <label className="text-[13px] font-bold text-slate-700">Pincode</label>
+                <input
+                  type="text"
+                  value={formData.pincode}
+                  onChange={e => setFormData({ ...formData, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) })}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[13px] focus:outline-none focus:border-[#ee4923] focus:ring-1 focus:ring-[#ee4923]/20 transition-all"
+                  placeholder="6-digit pincode"
+                  maxLength={6}
                 />
               </div>
 
               {/* Address Type */}
               <div className="space-y-2 pt-1">
                 <label className="text-[13px] font-bold text-slate-700 block">Address Type</label>
-                <div className="flex gap-4">
+                <div className="flex gap-4 mb-3">
                   {['Home', 'Work', 'Location'].map((type) => (
                     <label key={type} className="flex items-center gap-2 cursor-pointer group">
                       <input
@@ -306,6 +365,18 @@ export default function SavedAddressesPage() {
                     </label>
                   ))}
                 </div>
+                
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input
+                    type="checkbox"
+                    checked={formData.isDefault}
+                    onChange={e => setFormData({ ...formData, isDefault: e.target.checked })}
+                    className="w-4 h-4 rounded text-[#ee4923] border-slate-300 focus:ring-[#ee4923]"
+                  />
+                  <span className="text-[13px] text-slate-700 group-hover:text-slate-900 font-bold">
+                    Set as default address
+                  </span>
+                </label>
               </div>
             </div>
 
