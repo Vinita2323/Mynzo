@@ -280,10 +280,14 @@ exports.getUserCouponHistory = async (req, res) => {
     const orders = await Order.find({ 
       userId: req.user._id, 
       couponCode: { $ne: null } 
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
 
-    const history = await Promise.all(orders.map(async (order) => {
-      const coupon = await Coupon.findOne({ code: order.couponCode.toUpperCase().trim() });
+    const codes = [...new Set(orders.map(o => o.couponCode.toUpperCase().trim()))];
+    const coupons = await Coupon.find({ code: { $in: codes } }).lean();
+    const couponMap = Object.fromEntries(coupons.map(c => [c.code, c]));
+
+    const history = orders.map((order) => {
+      const coupon = couponMap[order.couponCode.toUpperCase().trim()];
       return {
         orderId: order._id,
         date: order.createdAt,
@@ -292,7 +296,7 @@ exports.getUserCouponHistory = async (req, res) => {
         desc: coupon ? `Applied on order above ₹${coupon.minOrder}` : 'Applied on order',
         total: order.total
       };
-    }));
+    });
 
     res.status(200).json({
       success: true,

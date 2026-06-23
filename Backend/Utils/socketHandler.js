@@ -1,22 +1,44 @@
 const Wishlist = require('../Models/Wishlist');
 const Product = require('../Models/Product');
+const jwt = require('jsonwebtoken');
 
 module.exports = (io) => {
-  io.on('connection', (socket) => {
-    console.log('🔌 Client connected:', socket.id);
+  // Use authorization middleware for socket connections
+  io.use((socket, next) => {
+    const token = socket.handshake.auth?.token || socket.handshake.headers['authorization'];
+    if (!token) {
+      return next(new Error('Authentication error: Token not provided'));
+    }
+    // Remove "Bearer " prefix if present
+    const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
+    try {
+      const decoded = jwt.verify(cleanToken, process.env.JWT_SECRET);
+      socket.userId = decoded.id;
+      next();
+    } catch (err) {
+      return next(new Error('Authentication error: Invalid token'));
+    }
+  });
 
-    // Join user room
+  io.on('connection', (socket) => {
+    console.log('🔌 Client connected:', socket.id, 'User:', socket.userId);
+
+    // Join user room automatically on connection based on verified token
+    socket.join(socket.userId);
+    console.log(`👤 User joined room: ${socket.userId}`);
+
+    // Join user room explicitly if requested (for backward compatibility, but restricts room to user's own room)
     socket.on('join', (userId) => {
-      if (userId) {
-        socket.join(userId);
-        console.log(`👤 User joined room: ${userId}`);
+      if (userId && userId === socket.userId) {
+        socket.join(socket.userId);
+        console.log(`👤 User joined room: ${socket.userId}`);
       }
     });
 
-    // Send initial wishlist
-    socket.on('get_wishlist', async ({ userId }) => {
+    // Send initial wishlist using authenticated socket.userId
+    socket.on('get_wishlist', async () => {
       try {
-        if (!userId) return;
+        const userId = socket.userId;
         const items = await Wishlist.find({ userId }).populate('productId');
         const products = items
           .filter(item => item.productId)
@@ -27,10 +49,11 @@ module.exports = (io) => {
       }
     });
 
-    // Toggle like/unlike
-    socket.on('toggle_like', async ({ userId, productId }) => {
+    // Toggle like/unlike using authenticated socket.userId
+    socket.on('toggle_like', async ({ productId }) => {
       try {
-        if (!userId || !productId) return;
+        const userId = socket.userId;
+        if (!productId) return;
 
         const existing = await Wishlist.findOne({ userId, productId });
         if (existing) {
@@ -54,10 +77,11 @@ module.exports = (io) => {
       }
     });
 
-    // Toggle Reel Like over WebSockets (Saves to DB and broadcasts)
-    socket.on('toggle_reel_like', async ({ userId, reelId }) => {
+    // Toggle Reel Like over WebSockets using authenticated socket.userId
+    socket.on('toggle_reel_like', async ({ reelId }) => {
       try {
-        if (!userId || !reelId) return;
+        const userId = socket.userId;
+        if (!reelId) return;
 
         const Reel = require('../Models/Reel');
         const reel = await Reel.findById(reelId);

@@ -8,10 +8,7 @@ import { onMessage } from 'firebase/messaging';
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  const [cart, setCart] = useState([
-    { ...CRAZY_DEALS[0], quantity: 1 },
-    { ...CRAZY_DEALS[2], quantity: 2 },
-  ]);
+  const [cart, setCart] = useState([]);
   const [wishlist, setWishlist] = useState([]);
   const [orders, setOrders] = useState([]);
   const [addresses, setAddresses] = useState([]);
@@ -174,11 +171,16 @@ export const AppProvider = ({ children }) => {
     if (user && user.id) {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const socketUrl = apiBase.replace('/api', '');
-      const socket = io(socketUrl);
+      const token = localStorage.getItem('userToken');
+      const socket = io(socketUrl, {
+        auth: {
+          token: token
+        }
+      });
       socketRef.current = socket;
 
       socket.emit('join', user.id);
-      socket.emit('get_wishlist', { userId: user.id });
+      socket.emit('get_wishlist');
 
       socket.on('wishlist_data', (products) => {
         const normalised = products.map((p) => ({
@@ -233,8 +235,32 @@ export const AppProvider = ({ children }) => {
   }, [user]);
 
 
+  const prevUserRef = useRef(null);
+
   useEffect(() => {
-    const fetchCart = async () => {
+    const syncAndFetchCart = async () => {
+      // Merge guest cart to DB if user just logged in
+      if (user && user.id && !prevUserRef.current) {
+        const token = localStorage.getItem('userToken');
+        if (token && cart.length > 0) {
+          try {
+            await Promise.all(cart.map(item =>
+              fetch(`${API_BASE}/cart`, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ productId: item.id, quantity: item.quantity })
+              })
+            ));
+          } catch (syncErr) {
+            console.error("Error merging guest cart on login:", syncErr);
+          }
+        }
+      }
+      prevUserRef.current = user;
+
       if (!user || !user.id) {
         return;
       }
@@ -275,7 +301,7 @@ export const AppProvider = ({ children }) => {
       }
     };
 
-    fetchCart();
+    syncAndFetchCart();
   }, [user]);
 
   useEffect(() => {

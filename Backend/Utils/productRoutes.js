@@ -7,13 +7,15 @@ const {
   updateProduct,
   deleteProduct,
   getTopBuys,
-  getTrendingBrands
+  getTrendingBrands,
+  getCombinedCatalog
 } = require('../Controllers/productController');
 const { protectAdmin } = require('../Middlewares/authMiddleware');
 const { uploadImages, processImages, handleUploadError } = require('../Middlewares/uploadMiddleware');
 
 // Public routes to list products/brands
 router.get('/', getProducts);
+router.get('/combined', getCombinedCatalog);
 router.get('/top-buys', getTopBuys);
 router.get('/trending-brands', getTrendingBrands);
 router.get('/:id', getProductById);

@@ -86,4 +86,10 @@ const orderSchema = new mongoose.Schema({
   ]
 }, { timestamps: true });
 
+orderSchema.index({ userId: 1, createdAt: -1 }); // User order history
+orderSchema.index({ status: 1, createdAt: -1 });  // Admin status filter
+orderSchema.index({ paymentStatus: 1 });           // Payment reconciliation
+orderSchema.index({ shiprocketOrderId: 1 }, { sparse: true }); // Webhook lookup
+orderSchema.index({ couponCode: 1 }, { sparse: true }); // Coupon usage
+
 module.exports = mongoose.model('Order', orderSchema);

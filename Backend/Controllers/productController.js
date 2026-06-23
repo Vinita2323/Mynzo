@@ -27,14 +27,15 @@ const getProducts = async (req, res) => {
 
     if (search) {
       filter.$or = [
-        { name: { $regex: search, $options: 'i' } },
+        { $text: { $search: search } },
         { sku: { $regex: search, $options: 'i' } }
       ];
     }
 
     const products = await Product.find(filter)
       .select('-highlights -technicalSpecs -description -variations -shippingSpecs')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
     res.status(200).json({ success: true, products });
   } catch (error) {
     console.error('Get Products Error:', error);
@@ -209,7 +210,8 @@ const getTopBuys = async (req, res) => {
   try {
     const products = await Product.find({ status: 'Approved' })
       .sort({ sales: -1 })
-      .limit(10);
+      .limit(10)
+      .lean();
     res.status(200).json({ success: true, products });
   } catch (error) {
     console.error('Get Top Buys Error:', error);
@@ -242,6 +244,32 @@ const getTrendingBrands = async (req, res) => {
   }
 };
 
+const getCombinedCatalog = async (req, res) => {
+  try {
+    const CategoryChip = require('../Models/CategoryChip');
+    const SubCategoryChip = require('../Models/SubCategoryChip');
+
+    const [chips, subchips, products] = await Promise.all([
+      CategoryChip.find({}).sort({ order: 1 }).lean(),
+      SubCategoryChip.find({}).lean(),
+      Product.find({ status: 'Approved' })
+        .select('-highlights -technicalSpecs -description -variations -shippingSpecs')
+        .sort({ createdAt: -1 })
+        .lean()
+    ]);
+
+    res.status(200).json({
+      success: true,
+      chips,
+      subchips,
+      products
+    });
+  } catch (error) {
+    console.error('Get Combined Catalog Error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   getProducts,
   getProductById,
@@ -249,5 +277,6 @@ module.exports = {
   updateProduct,
   deleteProduct,
   getTopBuys,
-  getTrendingBrands
+  getTrendingBrands,
+  getCombinedCatalog
 };

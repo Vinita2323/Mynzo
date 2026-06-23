@@ -1,0 +1,1220 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "Anthropic Sans", sans-serif; background: var(--color-background-tertiary, #f5f5f3); color: var(--color-text-primary, #1a1a18); font-size: 14px; line-height: 1.6; }
+.page { max-width: 900px; margin: 0 auto; padding: 24px 16px; }
+.header { background: var(--color-background-primary, #fff); border: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.12)); border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+.header h1 { font-size: 20px; font-weight: 500; margin-bottom: 4px; }
+.header p { font-size: 13px; color: var(--color-text-secondary, #666); }
+.verdict { border-radius: 10px; padding: 16px 20px; margin-bottom: 20px; border: 0.5px solid; display: flex; align-items: center; gap: 12px; }
+.verdict.warn { background: #FFF8E7; border-color: #E9A825; }
+.verdict .v-icon { font-size: 28px; }
+.verdict h2 { font-size: 16px; font-weight: 500; }
+.verdict p { font-size: 13px; color: #555; margin-top: 2px; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; }
+.tab { padding: 7px 14px; border-radius: 8px; border: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.12)); background: var(--color-background-primary, #fff); font-size: 13px; cursor: pointer; font-weight: 400; color: var(--color-text-secondary, #666); transition: all .15s; }
+.tab:hover { background: var(--color-background-secondary, #f0f0ee); }
+.tab.active { background: #1a1a18; color: #fff; border-color: transparent; font-weight: 500; }
+.section { display: none; }
+.section.active { display: block; }
+.card { background: var(--color-background-primary, #fff); border: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.12)); border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+.card-header { padding: 14px 16px; display: flex; align-items: flex-start; gap: 12px; cursor: pointer; }
+.card-header:hover { background: var(--color-background-secondary, #f8f8f6); }
+.badge { font-size: 11px; font-weight: 500; padding: 2px 8px; border-radius: 20px; white-space: nowrap; flex-shrink: 0; margin-top: 2px; }
+.high { background: #FDE8E8; color: #A32D2D; }
+.medium { background: #FFF0D4; color: #7A4B0A; }
+.low { background: #E6F5ED; color: #1A5C35; }
+.card-title { font-size: 14px; font-weight: 500; flex: 1; }
+.card-sub { font-size: 12px; color: var(--color-text-secondary, #666); margin-top: 2px; }
+.arrow { font-size: 14px; color: var(--color-text-tertiary, #999); transition: transform .2s; flex-shrink: 0; }
+.arrow.open { transform: rotate(90deg); }
+.card-body { display: none; padding: 0 16px 16px; border-top: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.12)); }
+.card-body.open { display: block; }
+.card-body p { font-size: 13px; color: var(--color-text-secondary, #555); margin: 12px 0 8px; }
+.code { background: var(--color-background-secondary, #f5f5f3); border: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.12)); border-radius: 6px; padding: 10px 12px; font-family: monospace; font-size: 12px; line-height: 1.6; white-space: pre-wrap; overflow-x: auto; color: var(--color-text-primary, #1a1a18); margin: 8px 0; }
+.fix-label { font-size: 11px; font-weight: 500; color: #1A5C35; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 12px; margin-bottom: 4px; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 20px; }
+.stat { background: var(--color-background-primary, #fff); border: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.12)); border-radius: 8px; padding: 12px 14px; }
+.stat .num { font-size: 24px; font-weight: 500; }
+.stat .lbl { font-size: 11px; color: var(--color-text-secondary, #666); margin-top: 2px; }
+.num.red { color: #A32D2D; }
+.num.orange { color: #7A4B0A; }
+.num.green { color: #1A5C35; }
+.arch { background: var(--color-background-primary, #fff); border: 0.5px solid var(--color-border-tertiary, rgba(0,0,0,0.12)); border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+.arch h3 { font-size: 14px; font-weight: 500; margin-bottom: 10px; }
+.arch-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; font-size: 13px; flex-wrap: wrap; }
+.box { border: 0.5px solid; border-radius: 6px; padding: 4px 10px; font-size: 12px; font-weight: 500; }
+.box.blue { background: #E6F1FB; border-color: #378ADD; color: #0C447C; }
+.box.green { background: #EAF3DE; border-color: #639922; color: #27500A; }
+.box.amber { background: #FAEEDA; border-color: #BA7517; color: #633806; }
+.box.red { background: #FCEBEB; border-color: #E24B4A; color: #A32D2D; }
+.box.gray { background: #F1EFE8; border-color: #888780; color: #444441; }
+.box.purple { background: #EEEDFE; border-color: #7F77DD; color: #3C3489; }
+.arrow-r { color: var(--color-text-secondary, #888); }
+section-title { display: block; font-size: 13px; font-weight: 500; color: var(--color-text-secondary, #666); margin: 0 0 10px; text-transform: uppercase; letter-spacing: .05em; }
+.tag { display: inline-block; background: var(--color-background-secondary, #f0f0ee); border-radius: 4px; padding: 1px 6px; font-size: 11px; margin-right: 4px; color: var(--color-text-secondary, #555); }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="header">
+    <h1>Mynzo — Full-Stack Production Audit</h1>
+    <p>Analyzed: Backend (Node/Express/MongoDB) · Frontend (React/Vite) · Admin Frontend · Infrastructure · Security</p>
+  </div>
+
+  <div class="verdict warn">
+    <div class="v-icon">⚠️</div>
+    <div>
+      <h2>Verdict: NOT production-ready — 7 critical issues require immediate fixes before launch</h2>
+      <p>Found 7 High · 11 Medium · 6 Low severity issues. Core architecture is solid (modular MVC, lazy loading, WebP assets), but critical security gaps, race conditions, and zero rate-limiting make the system exploitable and fragile under real traffic.</p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="num red">7</div><div class="lbl">High severity</div></div>
+    <div class="stat"><div class="num orange">11</div><div class="lbl">Medium severity</div></div>
+    <div class="stat"><div class="num green">6</div><div class="lbl">Low severity</div></div>
+    <div class="stat"><div class="num">24</div><div class="lbl">Total issues</div></div>
+    <div class="stat"><div class="num orange">~3x</div><div class="lbl">Max safe traffic</div></div>
+    <div class="stat"><div class="num red">0</div><div class="lbl">Rate limiters</div></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" onclick="show('security')">🔒 Security</div>
+    <div class="tab" onclick="show('backend')">⚙️ Backend</div>
+    <div class="tab" onclick="show('frontend')">🖥️ Frontend</div>
+    <div class="tab" onclick="show('database')">🗄️ Database</div>
+    <div class="tab" onclick="show('assets')">🖼️ Assets</div>
+    <div class="tab" onclick="show('infra')">🏗️ Infrastructure</div>
+    <div class="tab" onclick="show('arch')">📐 Architecture</div>
+  </div>
+
+  <!-- SECURITY -->
+  <div id="security" class="section active">
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge high">HIGH</span>
+        <div><div class="card-title">Firebase API keys hardcoded in source code</div><div class="card-sub">firebase.js — shipped to every client browser</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Your Firebase config (apiKey, projectId, messagingSenderId, appId, VAPID key) is hardcoded in <code>Frontend/src/firebase.js</code>. This file is bundled into the public JS output and is visible to anyone who opens DevTools. While Firebase web keys are designed to be public, the VAPID private key and direct database rules exposure can be abused.</p>
+        <div class="fix-label">Fix</div>
+        <div class="code">// .env.local (never commit)
+VITE_FIREBASE_API_KEY=AIzaSy...
+VITE_FIREBASE_APP_ID=1:483350...
+VITE_VAPID_KEY=BBtui-cRa...
+
+// firebase.js
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+};</div>
+        <p>Also enforce strict Firebase Security Rules so your Firestore/Storage cannot be read/written without proper auth.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge high">HIGH</span>
+        <div><div class="card-title">No rate limiting on any endpoint — OTP brute-force possible</div><div class="card-sub">app.js — zero rate-limit middleware</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>There is no <code>express-rate-limit</code> or any throttling anywhere. An attacker can: (1) enumerate any phone number with unlimited OTP guesses, (2) flood your SMS provider with costs, (3) DDoS the entire API, (4) abuse the coupon validation endpoint to enumerate valid codes.</p>
+        <div class="fix-label">Install & apply immediately</div>
+        <div class="code">npm install express-rate-limit
+
+// app.js
+const rateLimit = require('express-rate-limit');
+
+// Global: 100 req/15min per IP
+app.use(rateLimit({ windowMs: 15*60*1000, max: 100 }));
+
+// OTP: 5 attempts per 10 minutes
+const otpLimiter = rateLimit({
+  windowMs: 10*60*1000, max: 5,
+  message: { success: false, message: 'Too many OTP requests' }
+});
+app.use('/auth/send-otp', otpLimiter);
+app.use('/auth/verify-otp', otpLimiter);
+
+// Admin login: 10 attempts per 15 min
+const adminLimiter = rateLimit({ windowMs: 15*60*1000, max: 10 });
+app.use('/admin/auth/login', adminLimiter);</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge high">HIGH</span>
+        <div><div class="card-title">CORS is fully open — origin: "*"</div><div class="card-sub">app.js line 11 and socket.io initialization</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p><code>origin: "*"</code> allows any website on the internet to make credentialed requests to your API. This is a critical CSRF/data-exfiltration vulnerability when combined with auth tokens.</p>
+        <div class="fix-label">Fix</div>
+        <div class="code">// app.js
+const ALLOWED_ORIGINS = [
+  'https://mynzo.com',
+  'https://admin.mynzo.com',
+  process.env.NODE_ENV !== 'production' && 'http://localhost:5173',
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) cb(null, true);
+    else cb(new Error('Not allowed by CORS'));
+  },
+  credentials: true
+}));
+
+// socket.io in index.js — same fix
+const io = socketIo(server, {
+  cors: { origin: ALLOWED_ORIGINS, methods: ['GET','POST'] }
+});</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge high">HIGH</span>
+        <div><div class="card-title">OTP stored in plaintext in MongoDB</div><div class="card-sub">User.js model — otp field unencrypted</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>The OTP is stored raw as a string in the User document. If your MongoDB is breached, every active OTP is readable. Also: the OTP is logged to console in production (<code>console.log(`📱 OTP for ${phone}: ${otp}`)</code>) — this is a serious leak if logs are stored or forwarded.</p>
+        <div class="fix-label">Fix — hash before storing</div>
+        <div class="code">// userAuthController.js
+const crypto = require('crypto');
+
+// Store hash, not raw OTP
+const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+user.otp = otpHash;
+
+// On verify:
+const inputHash = crypto.createHash('sha256').update(otp).digest('hex');
+if (user.otp !== inputHash) { /* invalid */ }
+
+// ALSO remove this line from production:
+// console.log(`📱 OTP for ${phone}: ${otp}`); // DELETE in prod</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge high">HIGH</span>
+        <div><div class="card-title">No Helmet.js — missing all HTTP security headers</div><div class="card-sub">app.js — no security headers set</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Without <code>helmet</code>, your API responses have no Content-Security-Policy, X-Frame-Options, X-XSS-Protection, HSTS, or referrer policy headers. This opens the app to clickjacking, XSS, and MIME-sniffing attacks.</p>
+        <div class="fix-label">One-line fix</div>
+        <div class="code">npm install helmet compression
+
+// app.js — add before routes
+const helmet = require('helmet');
+const compression = require('compression');
+
+app.use(helmet());         // 11 security headers in one shot
+app.use(compression());    // gzip all responses (30-70% smaller)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge high">HIGH</span>
+        <div><div class="card-title">Default admin credentials in source code</div><div class="card-sub">index.js — admin@gmail.com / "123"</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>The auto-admin creation in <code>index.js</code> defaults to <code>admin@gmail.com</code> / <code>123</code> if env vars are not set. This is a trivially guessable credential that will be attempted by every bot scanner. There is also no account lockout after failed login attempts.</p>
+        <div class="fix-label">Fix</div>
+        <div class="code">// index.js — add validation
+const ensureAdmin = async () => {
+  const email = process.env.ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD;
+
+  if (!email || !password) {
+    throw new Error('ADMIN_EMAIL and ADMIN_PASSWORD must be set in .env');
+  }
+  if (password.length < 12) {
+    throw new Error('Admin password must be at least 12 characters');
+  }
+  // rest of creation logic...
+};
+
+// Also add login attempt tracking in adminAuthController:
+// Use a Map or Redis to count failed attempts per email</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge high">HIGH</span>
+        <div><div class="card-title">Socket.io wishlist has no authentication</div><div class="card-sub">socketHandler.js — userId accepted from client without verification</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>The socket handler accepts <code>userId</code> directly from the client payload (<code>socket.on('toggle_like', {'{'} userId, productId {'}'} )</code>). Any connected client can pass any userId and manipulate another user's wishlist or trigger events on their behalf. There is no JWT validation on socket connections.</p>
+        <div class="fix-label">Fix — authenticate the socket handshake</div>
+        <div class="code">// socketHandler.js
+const jwt = require('jsonwebtoken');
+
+module.exports = (io) => {
+  // Authenticate on connection
+  io.use((socket, next) => {
+    const token = socket.handshake.auth.token;
+    if (!token) return next(new Error('Unauthorized'));
+    try {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      socket.userId = decoded.id; // attach verified userId
+      next();
+    } catch { next(new Error('Invalid token')); }
+  });
+
+  io.on('connection', (socket) => {
+    // Use socket.userId — never trust client-provided userId
+    socket.join(socket.userId);
+
+    socket.on('toggle_like', async ({ productId }) => {
+      // Use socket.userId, not data.userId
+      const userId = socket.userId;
+      ...
+    });
+  });
+};</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">No input sanitization against NoSQL injection</div><div class="card-sub">All controllers — req.body used directly in queries</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>MongoDB queries use unsanitized user input. An attacker can send <code>{"$gt": ""}</code> as a field value to bypass query conditions. Install <code>mongo-sanitize</code> or <code>express-mongo-sanitize</code>.</p>
+        <div class="fix-label">Fix</div>
+        <div class="code">npm install express-mongo-sanitize
+
+// app.js
+const mongoSanitize = require('express-mongo-sanitize');
+app.use(mongoSanitize()); // strips $-prefixed keys from req.body/params/query</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">JWT secret has no minimum length validation</div><div class="card-sub">generateToken — will work with weak secrets</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>If <code>JWT_SECRET</code> is not set or is weak, all user sessions are trivially forgeable. Add validation at startup.</p>
+        <div class="fix-label">Fix in index.js startup</div>
+        <div class="code">if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+  throw new Error('JWT_SECRET must be at least 32 chars — generate with: openssl rand -hex 32');
+}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BACKEND -->
+  <div id="backend" class="section">
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge high">HIGH</span>
+        <div><div class="card-title">Stock race condition — overselling possible under concurrent orders</div><div class="card-sub">orderController.js — non-atomic stock decrement</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Current flow: (1) Create order, (2) loop through items and update stock. Two concurrent requests for the last item in stock will both succeed, then both decrement — allowing stock to go to -1. This is a textbook race condition and a real-money bug.</p>
+        <div class="fix-label">Fix — atomic conditional update</div>
+        <div class="code">// In createOrder, BEFORE creating the order:
+for (const item of items) {
+  const result = await Product.findOneAndUpdate(
+    { 
+      _id: item.productId, 
+      stock: { $gte: item.quantity } // Only if enough stock exists
+    },
+    { $inc: { stock: -item.quantity, sales: item.quantity } },
+    { new: true }
+  );
+  if (!result) {
+    return res.status(400).json({ 
+      success: false, 
+      message: `"${item.name}" is out of stock` 
+    });
+  }
+}
+// Then create the order (stock is already reserved)</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge high">HIGH</span>
+        <div><div class="card-title">Coupon double-spend race condition</div><div class="card-sub">orderController + couponController — validate and increment are not atomic</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Coupon validation (<code>validateCoupon</code>) and increment (<code>usage++</code> in <code>createOrder</code>) are two separate operations. Two concurrent orders with the same coupon will both pass validation, then both increment — allowing a single-use coupon to be used twice.</p>
+        <div class="fix-label">Fix — atomic findOneAndUpdate</div>
+        <div class="code">// In createOrder, validate AND increment in one atomic operation:
+if (couponCode) {
+  const coupon = await Coupon.findOneAndUpdate(
+    {
+      code: couponCode.toUpperCase().trim(),
+      status: 'Active',
+      expiry: { $gt: new Date() },
+      $expr: { $lt: ['$usage', '$usageLimit'] }
+    },
+    { $inc: { usage: 1 } },
+    { new: true }
+  );
+  if (!coupon) {
+    return res.status(400).json({ 
+      success: false, message: 'Invalid or expired coupon' 
+    });
+  }
+}
+// Then remove the separate usage increment below</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge high">HIGH</span>
+        <div><div class="card-title">No global error handler — unhandled rejections crash the process</div><div class="card-sub">app.js — missing error middleware</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>app.js has a 404 handler but no 500 error middleware. An unhandled promise rejection in any async route will crash the Node.js process in older versions or silently swallow errors in newer ones. There is also no <code>process.on('unhandledRejection')</code> handler.</p>
+        <div class="fix-label">Add to app.js after all routes</div>
+        <div class="code">// Global error handler (4 arguments = Express error middleware)
+app.use((err, req, res, next) => {
+  console.error({
+    message: err.message,
+    stack: process.env.NODE_ENV === 'production' ? undefined : err.stack,
+    path: req.path,
+    method: req.method,
+    timestamp: new Date().toISOString()
+  });
+
+  const status = err.status || err.statusCode || 500;
+  res.status(status).json({
+    success: false,
+    message: process.env.NODE_ENV === 'production' 
+      ? 'Something went wrong' 
+      : err.message
+  });
+});
+
+// index.js — process-level safety net
+process.on('unhandledRejection', (reason) => {
+  console.error('Unhandled Rejection:', reason);
+  // Optionally: graceful shutdown
+});
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught Exception:', err);
+  process.exit(1); // Always exit on uncaught exception
+});</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">Orders fetched without pagination — will break at scale</div><div class="card-sub">getAllOrders — loads entire collection into memory</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p><code>Order.find({}).populate(...)</code> with no limit will load every order ever created. At 10,000 orders this causes memory spikes and timeouts. Same issue in <code>getUserOrders</code> and <code>getUsers</code>.</p>
+        <div class="fix-label">Fix</div>
+        <div class="code">exports.getAllOrders = async (req, res) => {
+  const page = Math.max(1, parseInt(req.query.page) || 1);
+  const limit = Math.min(100, parseInt(req.query.limit) || 20);
+  const skip = (page - 1) * limit;
+
+  const [orders, total] = await Promise.all([
+    Order.find({})
+      .populate('userId', 'name email phone')
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(), // lean() returns plain objects, 40% faster
+    Order.countDocuments({})
+  ]);
+
+  res.json({ success: true, orders, total, page, pages: Math.ceil(total/limit) });
+};</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">No request body size limit — potential DoS via large payloads</div><div class="card-sub">app.js — default Express JSON limit is 100kb</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Express default is 100kb. Combined with no rate limiting, someone can flood your server with large JSON bodies (product creation, cart updates) to exhaust memory.</p>
+        <div class="fix-label">Fix</div>
+        <div class="code">app.use(express.json({ limit: '10kb' }));
+app.use(express.urlencoded({ extended: true, limit: '10kb' }));</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">Shiprocket token cached in module-level variable — lost on restart</div><div class="card-sub">shiprocketService.js — in-process memory only</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>The Shiprocket auth token is stored in <code>let shiprocketToken = null</code>. On every server restart or crash, the token is lost and a new login call is made. This is fine now, but with horizontal scaling (multiple instances), each instance holds its own token, leading to redundant logins and rate limit issues with Shiprocket.</p>
+        <div class="fix-label">Future fix — cache in Redis</div>
+        <div class="code">// When you add Redis:
+const getShiprocketToken = async () => {
+  const cached = await redis.get('shiprocket:token');
+  if (cached) return cached;
+  
+  const { data } = await axios.post('/auth/login', { email, password });
+  await redis.setex('shiprocket:token', 8*24*3600, data.token); // 8 days
+  return data.token;
+};</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">getUserCouponHistory has N+1 query problem</div><div class="card-sub">couponController.js — Coupon.findOne inside Promise.all loop</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>For every order with a coupon, a separate Coupon query is fired. For a user with 50 coupon orders, that's 51 database queries. Use a single $in query instead.</p>
+        <div class="fix-label">Fix</div>
+        <div class="code">const orders = await Order.find({ userId: req.user._id, couponCode: { $ne: null } })
+  .lean();
+
+const codes = [...new Set(orders.map(o => o.couponCode.toUpperCase()))];
+const coupons = await Coupon.find({ code: { $in: codes } }).lean();
+const couponMap = Object.fromEntries(coupons.map(c => [c.code, c]));
+
+const history = orders.map(order => {
+  const coupon = couponMap[order.couponCode?.toUpperCase()];
+  return { /* map fields */ };
+});</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge low">LOW</span>
+        <div><div class="card-title">No structured logging — console.log/error only</div><div class="card-sub">All controllers</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Using <code>console.log</code> throughout means no log levels, no JSON format, no request IDs, no timestamps — making production debugging very difficult.</p>
+        <div class="fix-label">Add Winston or Pino</div>
+        <div class="code">npm install pino pino-pretty
+
+// utils/logger.js
+const pino = require('pino');
+module.exports = pino({ level: process.env.LOG_LEVEL || 'info' });
+
+// Replace: console.error('Send OTP Error:', error)
+// With:    logger.error({ err: error, phone }, 'Send OTP failed')</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FRONTEND -->
+  <div id="frontend" class="section">
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">AppContext initializes cart with hardcoded mock data</div><div class="card-sub">AppContext.jsx lines 10-13 — ships with CRAZY_DEALS in cart</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>The cart is initialized with <code>[CRAZY_DEALS[0], CRAZY_DEALS[2]]</code>. A logged-out user visiting the app will see items already in their cart — confusing UX and incorrect behavior in production.</p>
+        <div class="fix-label">Fix</div>
+        <div class="code">// AppContext.jsx — change this:
+const [cart, setCart] = useState([
+  { ...CRAZY_DEALS[0], quantity: 1 },
+  { ...CRAZY_DEALS[2], quantity: 2 },
+]);
+
+// To this:
+const [cart, setCart] = useState([]);</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">AppContext is a monolith — causes full re-render on any state change</div><div class="card-sub">AppContext.jsx — 20+ state values in one provider</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>The AppContext holds cart, wishlist, orders, addresses, user, coins, location, activeGame, userReels, and more in a single context. Any state update (e.g. cart badge count changes) triggers a re-render of every component subscribed to the context. This is a major performance bottleneck.</p>
+        <div class="fix-label">Split into domain contexts</div>
+        <div class="code">// Separate contexts prevent cross-domain re-renders:
+// contexts/AuthContext.jsx    → user, login, logout
+// contexts/CartContext.jsx    → cart, addToCart, removeFromCart
+// contexts/WishlistContext.jsx → wishlist, toggleWishlist
+// contexts/UIContext.jsx      → activeTab, searchQuery, location modal
+
+// Components subscribe only to what they need:
+const { user } = useAuth();    // doesn't re-render on cart changes
+const { cart } = useCart();    // doesn't re-render on user changes</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">Home.jsx is a massive 52KB component — slow to parse & render</div><div class="card-sub">Frontend/src/pages/Home.jsx</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>The home page is a single 52KB JSX file. Even with lazy loading, this chunk is large and contains too much logic in one place. Multiple useEffect calls, multiple state variables, and inline section components all compound render time.</p>
+        <div class="fix-label">Split into section components</div>
+        <div class="code">// pages/Home.jsx (thin shell)
+import HeroBanner    from '../components/home/HeroBanner';
+import CategoryStrip from '../components/home/CategoryStrip';
+import CrazyDeals    from '../components/home/CrazyDeals';
+import FlashSale     from '../components/home/FlashSale';
+import ProductGrid   from '../components/home/ProductGrid';
+
+// Each fetches its own data with React Query or SWR
+// Enables independent loading states & error boundaries</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">No React Error Boundaries — one component crash = white screen</div><div class="card-sub">App.jsx — no error boundary wrapping</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>If any lazily-loaded page throws a runtime error, the entire app unmounts and the user sees a blank white screen with no recovery path.</p>
+        <div class="fix-label">Add error boundary</div>
+        <div class="code">// components/ErrorBoundary.jsx
+import { Component } from 'react';
+
+export class ErrorBoundary extends Component {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  componentDidCatch(err, info) { console.error('Boundary caught:', err, info); }
+  render() {
+    if (this.state.hasError)
+      return (
+        &lt;div className="flex flex-col items-center p-8 gap-4"&gt;
+          &lt;p&gt;Something went wrong. &lt;button onClick={() =&gt; location.reload()}&gt;Reload&lt;/button&gt;&lt;/p&gt;
+        &lt;/div&gt;
+      );
+    return this.props.children;
+  }
+}
+
+// App.jsx
+&lt;ErrorBoundary&gt;
+  &lt;Suspense fallback={&lt;PageSkeleton /&gt;}&gt;
+    &lt;Routes&gt;...&lt;/Routes&gt;
+  &lt;/Suspense&gt;
+&lt;/ErrorBoundary&gt;</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">Splash screen video is 1.1MB — blocks first render on slow connections</div><div class="card-sub">public/FinalSpalshScreen.mp4</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>The 1.1MB splash screen video loads before any content renders. On a 3G connection (~1 Mbps), this alone takes 9 seconds. The 12-second safety timer means users wait up to 12 seconds seeing nothing before the app loads.</p>
+        <div class="fix-label">Fix options</div>
+        <div class="code">// Option 1: Reduce video to under 300KB (compress with ffmpeg)
+ffmpeg -i FinalSpalshScreen.mp4 -vf "scale=390:-1" -crf 32 -preset fast splash-small.mp4
+
+// Option 2: Only show splash once per session
+const hasSeenSplash = sessionStorage.getItem('splashSeen');
+const [showSplash, setShowSplash] = useState(!hasSeenSplash && isRootPath);
+// On end: sessionStorage.setItem('splashSeen', '1');
+
+// Option 3: Show immediately, load video lazily, skip if slow
+// Reduce safety timer from 12s → 4s minimum</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge low">LOW</span>
+        <div><div class="card-title">vite.config.js missing build optimizations</div><div class="card-sub">Frontend/vite.config.js — no chunk splitting config</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>No manual chunk splitting, no minification options, no image optimization plugin. The default Vite config works but leaves performance on the table.</p>
+        <div class="fix-label">Optimized config</div>
+        <div class="code">// vite.config.js
+import { defineConfig } from 'vite';
+import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
+
+export default defineConfig({
+  plugins: [react(), tailwindcss()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-motion': ['framer-motion'],
+          'vendor-firebase': ['firebase'],
+          'vendor-lottie': ['lottie-react'],
+        }
+      }
+    },
+    chunkSizeWarningLimit: 500,
+  }
+});</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge low">LOW</span>
+        <div><div class="card-title">Cart state inconsistency — guest cart lost on login</div><div class="card-sub">AppContext.jsx — no cart merge on login</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>If a guest user adds items to cart (stored in component state) and then logs in, the guest cart is discarded and replaced by the server cart (which is empty). Items vanish.</p>
+        <div class="fix-label">Merge carts on login</div>
+        <div class="code">// After successful login (in LoginPage or AppContext):
+const mergeCartsOnLogin = async (guestCart, token) => {
+  if (guestCart.length === 0) return;
+  
+  await Promise.all(guestCart.map(item =>
+    fetch(`${API_BASE}/cart`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ productId: item.id, quantity: item.quantity })
+    })
+  ));
+};</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DATABASE -->
+  <div id="database" class="section">
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge high">HIGH</span>
+        <div><div class="card-title">Order model has no index on userId — O(n) scan for every user's orders</div><div class="card-sub">Models/Order.js — missing compound indexes</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Every call to <code>Order.find({ userId })</code> does a full collection scan. With 100,000 orders, this will take seconds and consume significant CPU. Same for querying by status and createdAt.</p>
+        <div class="fix-label">Add indexes to Order model</div>
+        <div class="code">// Models/Order.js — add before module.exports
+orderSchema.index({ userId: 1, createdAt: -1 }); // User order history
+orderSchema.index({ status: 1, createdAt: -1 });  // Admin status filter
+orderSchema.index({ paymentStatus: 1 });           // Payment reconciliation
+orderSchema.index({ shiprocketOrderId: 1 }, { sparse: true }); // Webhook lookup
+orderSchema.index({ couponCode: 1 }, { sparse: true }); // Coupon usage</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">Product search uses unindexed regex — slow at scale</div><div class="card-sub">productController.js — $regex on name/sku</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>The search query uses <code>$regex: search, $options: 'i'</code> on name and sku. Regex queries without anchoring cannot use indexes. With 10,000 products, every search scans the full collection.</p>
+        <div class="fix-label">Add text index for search</div>
+        <div class="code">// Models/Product.js
+productSchema.index({ name: 'text', brandName: 'text', tags: 'text' });
+productSchema.index({ sku: 1 }); // Exact SKU lookup
+
+// productController.js — use text search
+if (search) {
+  filter.$text = { $search: search }; // Uses the text index
+  // For exact SKU: filter.sku = search.toUpperCase()
+}</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">MongoDB connection has no pool size, timeout, or retry config</div><div class="card-sub">Config/db.js — bare mongoose.connect()</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Default Mongoose connection pool is 5 connections. Under moderate traffic, this exhausts quickly. No connection timeout means hung queries block indefinitely.</p>
+        <div class="fix-label">Production MongoDB config</div>
+        <div class="code">const connectDB = async () => {
+  await mongoose.connect(process.env.MONGODB_URL, {
+    maxPoolSize: 20,           // Up from default 5
+    minPoolSize: 5,
+    serverSelectionTimeoutMS: 5000, // Fail fast
+    socketTimeoutMS: 45000,
+    heartbeatFrequencyMS: 10000,
+    retryWrites: true,
+    w: 'majority',             // Write safety
+  });
+};</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">No caching layer — every page load hits MongoDB</div><div class="card-sub">All product/banner/chip queries — cacheable data refreshed on every request</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Banners, category chips, and product listings change rarely but are queried on every page load. The frontend has a good client-side cache (apiCache.js), but the backend has none — all 100 concurrent users still hit MongoDB 100 times for the same data.</p>
+        <div class="fix-label">Add Redis or in-memory cache on backend</div>
+        <div class="code">npm install ioredis
+
+// utils/cache.js
+const Redis = require('ioredis');
+const redis = new Redis(process.env.REDIS_URL);
+
+const cache = {
+  get: (key) => redis.get(key).then(v => v ? JSON.parse(v) : null),
+  set: (key, val, ttl=300) => redis.setex(key, ttl, JSON.stringify(val)),
+  del: (key) => redis.del(key),
+};
+
+// bannerController.js
+const getBanners = async (req, res) => {
+  const cached = await cache.get('banners');
+  if (cached) return res.json({ success: true, banners: cached });
+
+  const banners = await Banner.find({ active: true }).lean();
+  await cache.set('banners', banners, 600); // 10 min TTL
+  res.json({ success: true, banners });
+};</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">User model stores FCM tokens as unbounded array</div><div class="card-sub">Models/User.js — fcmWebTokens / fcmMobileTokens</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>A user who logs in from many devices, or whose tokens become stale, accumulates an ever-growing array of FCM tokens in their User document. Sending notifications iterates all of them. FCM tokens should be capped and pruned.</p>
+        <div class="fix-label">Cap at 10 tokens per platform</div>
+        <div class="code">// userAuthController.js — updateFcmToken
+if (!user[targetField].includes(token)) {
+  user[targetField].push(token);
+  // Cap to most recent 10 tokens (oldest first = least used)
+  if (user[targetField].length > 10) {
+    user[targetField] = user[targetField].slice(-10);
+  }
+  await user.save();
+}
+
+// Also prune invalid tokens after send failures in notification service</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge low">LOW</span>
+        <div><div class="card-title">Missing .lean() on read-only queries — full Mongoose documents loaded</div><div class="card-sub">Multiple controllers</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Mongoose documents include change tracking, virtual fields, and prototype methods. For read-only API responses, <code>.lean()</code> returns plain JS objects — 2-3x faster and uses less memory.</p>
+        <div class="fix-label">Add .lean() to read queries</div>
+        <div class="code">// Before (heavy Mongoose document):
+const products = await Product.find(filter).sort({ createdAt: -1 });
+
+// After (plain JS object, 2-3x faster):
+const products = await Product.find(filter).sort({ createdAt: -1 }).lean();</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ASSETS -->
+  <div id="assets" class="section">
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge high">HIGH</span>
+        <div><div class="card-title">16MB+ of assets bundled into Admin frontend source</div><div class="card-sub">Admin-Frontend/src/assets — product02.webp is 1.2MB, product14.webp is 2.4MB</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Product images up to 2.4MB are in the Admin frontend's <code>src/assets</code> folder — they get bundled by Vite into the JS/CSS output. The 2.1MB <code>Banner.webp</code> and 1.5MB <code>product13.webp</code> alone make the admin panel extremely heavy. Admin users on corporate WiFi won't notice, but this is wasteful and indicates the images should come from the backend/CDN.</p>
+        <div class="fix-label">Move to CDN + serve from backend</div>
+        <div class="code">// These admin assets should NOT be in src/assets.
+// Product images should be served from the backend /uploads URL
+// or from a CDN (Cloudflare R2, AWS S3 + CloudFront).
+
+// Compress any remaining bundled assets:
+// ffmpeg or sharp CLI:
+// npx sharp-cli -i Banner.webp -o Banner.webp --quality 70 --width 1200
+
+// Target: no single bundled image > 100KB
+// Hero/banner: aim for < 80KB at 1200px wide</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">5 large PNG files in Admin carousel — not converted to WebP</div><div class="card-sub">Admin-Frontend/src/assets/Carousel/*.png — 181KB–294KB each</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>PNG carousel images (181–294KB each, total ~1.1MB) should be converted to WebP. WebP gives 25-35% smaller files for photos and up to 60% for PNG with transparency.</p>
+        <div class="fix-label">Convert to WebP</div>
+        <div class="code">// Convert all PNGs in the project:
+npx sharp-cli --input "Admin-Frontend/src/assets/Carousel/*.png" \\
+  --output "Admin-Frontend/src/assets/Carousel/" \\
+  --format webp --quality 80
+
+// Or with cwebp:
+for f in *.png; do cwebp -q 80 "$f" -o "${f%.png}.webp"; done</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">Videos embedded in src/assets are bundled — not streamed</div><div class="card-sub">Frontend/src/assets/videos/fashion_reel.mp4 — 4.4MB</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>A 4.4MB MP4 and 788KB MP4 inside <code>src/assets</code> get treated as static imports. Videos should never be bundled — they should be served from the backend with <code>Accept-Ranges</code> support for streaming, or from a CDN.</p>
+        <div class="fix-label">Move to public/ or CDN</div>
+        <div class="code">// Move videos from src/assets/videos/ to public/videos/
+// (public/ is served as-is, not bundled)
+
+// Or serve from backend with range support:
+// Express already does this via express.static, but ensure:
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
+  setHeaders: (res, path) => {
+    if (path.endsWith('.mp4')) {
+      res.set('Accept-Ranges', 'bytes');
+      res.set('Cache-Control', 'public, max-age=86400');
+    }
+  }
+}));</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">PWA icons are 320KB each — identical files duplicated</div><div class="card-sub">public/icons/icon-192.png and icon-512.png are the same file</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Both PWA icons are 320KB PNG files and appear to be identical (same file size: 320,370 bytes). They should be properly sized — icon-192 should be 192×192px and icon-512 should be 512×512px — and should be compressed.</p>
+        <div class="fix-label">Generate proper sizes</div>
+        <div class="code">// Using sharp to generate correct sizes:
+const sharp = require('sharp');
+await sharp('icon-source.png').resize(192,192).png({ compressionLevel: 9 }).toFile('icon-192.png');
+await sharp('icon-source.png').resize(512,512).png({ compressionLevel: 9 }).toFile('icon-512.png');
+// Target sizes: ~10-20KB for 192, ~30-50KB for 512</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge low">LOW</span>
+        <div><div class="card-title">Lottie animation files are very large — 273KB and 87KB</div><div class="card-sub">Frontend/src/assets/Lotties/AddToCart.json — 273KB</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>The AddToCart Lottie animation is 273KB — unusually large for an icon-level animation. Run it through LottieFiles optimizer or use the dotLottie format (.lottie) which compresses ~60-70%.</p>
+        <div class="fix-label">Optimize Lottie files</div>
+        <div class="code">// Option 1: Use LottieFiles.com optimizer (web UI)
+// Option 2: Convert to .lottie format (60-70% smaller)
+npm install @dotlottie/react-player
+
+// Option 3: Use CSS animation instead for simple animations
+// The cart add animation could be a 5-frame CSS keyframe</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INFRASTRUCTURE -->
+  <div id="infra" class="section">
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge high">HIGH</span>
+        <div><div class="card-title">Backend uploads files to local disk — will not work with multiple instances</div><div class="card-sub">uploadMiddleware.js + /uploads static serving</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Images are saved to <code>Backend/uploads/</code> on the local filesystem. If you deploy to multiple server instances (load balancing), each instance has its own disk — images uploaded to Instance A are not accessible from Instance B. Local disk also means images are lost on container restarts (if using Docker/Kubernetes).</p>
+        <div class="fix-label">Migrate to S3-compatible object storage</div>
+        <div class="code">npm install @aws-sdk/client-s3 multer-s3
+
+// uploadMiddleware.js — S3 storage instead of disk
+const { S3Client } = require('@aws-sdk/client-s3');
+const multerS3 = require('multer-s3');
+
+const s3 = new S3Client({ region: process.env.AWS_REGION });
+
+const upload = multer({
+  storage: multerS3({
+    s3,
+    bucket: process.env.S3_BUCKET,
+    contentType: multerS3.AUTO_CONTENT_TYPE,
+    key: (req, file, cb) => {
+      cb(null, `uploads/img-${Date.now()}-${Math.random().toString(36).slice(2)}.webp`);
+    }
+  }),
+  limits: { fileSize: 10 * 1024 * 1024 }
+});
+// Image URL: https://cdn.mynzo.com/uploads/img-xxx.webp</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">No health check endpoint for load balancer / monitoring</div><div class="card-sub">app.js — root "/" returns generic message, not structured health</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Load balancers and monitoring tools need a proper health check that verifies both the server AND the database are healthy. The current <code>/</code> endpoint doesn't check MongoDB connectivity.</p>
+        <div class="fix-label">Add proper health check</div>
+        <div class="code">// app.js
+app.get('/health', async (req, res) => {
+  try {
+    await mongoose.connection.db.admin().ping();
+    res.json({ 
+      status: 'ok', 
+      db: 'connected',
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(503).json({ status: 'error', db: 'disconnected' });
+  }
+});</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">No graceful shutdown — in-flight requests killed on deploy</div><div class="card-sub">index.js — no SIGTERM handler</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>When the server restarts (deploy, crash), active connections are killed immediately. Orders being placed mid-request can be left in an inconsistent state.</p>
+        <div class="fix-label">Graceful shutdown</div>
+        <div class="code">// index.js
+const shutdown = async (signal) => {
+  console.log(`Received ${signal}, shutting down gracefully...`);
+  server.close(async () => {
+    await mongoose.connection.close();
+    console.log('Server and DB connections closed');
+    process.exit(0);
+  });
+  // Force exit after 10s
+  setTimeout(() => process.exit(1), 10000);
+};
+process.on('SIGTERM', () => shutdown('SIGTERM'));
+process.on('SIGINT', () => shutdown('SIGINT'));</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge medium">MEDIUM</span>
+        <div><div class="card-title">No CDN for static assets — all traffic hits the Node.js server</div><div class="card-sub">Backend serves /uploads — Node.js is not optimized for static file serving</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Node.js/Express is not an efficient static file server. Images served from <code>/uploads</code> consume Node.js event loop threads. All product images, banners, and videos should be served from a CDN (Cloudflare, AWS CloudFront).</p>
+        <div class="fix-label">CDN + Cache-Control headers</div>
+        <div class="code">// Short term: add aggressive cache headers
+app.use('/uploads', express.static('uploads', {
+  maxAge: '7d',              // 7-day browser cache
+  etag: true,
+  lastModified: true,
+  setHeaders: (res) => {
+    res.set('Cache-Control', 'public, max-age=604800, immutable');
+  }
+}));
+
+// Long term: Cloudflare R2 + CDN
+// Store to R2, serve via cdn.mynzo.com
+// Node.js handles only API, never static files</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header" onclick="toggle(this)">
+        <span class="badge low">LOW</span>
+        <div><div class="card-title">No PM2 / process manager configured — single Node process</div><div class="card-sub">package.json — start script is just "node index.js"</div></div>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="card-body">
+        <p>Running a bare <code>node index.js</code> in production means: one crash = down. No clustering to use all CPU cores. No automatic restart. No log file management.</p>
+        <div class="fix-label">Add PM2</div>
+        <div class="code">npm install -g pm2
+
+# ecosystem.config.js
+module.exports = {
+  apps: [{
+    name: 'mynzo-api',
+    script: 'index.js',
+    instances: 'max',   // Use all CPU cores
+    exec_mode: 'cluster',
+    watch: false,
+    max_memory_restart: '500M',
+    env_production: { NODE_ENV: 'production' }
+  }]
+};
+
+pm2 start ecosystem.config.js --env production
+pm2 save
+pm2 startup  # Auto-start on reboot</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCHITECTURE -->
+  <div id="arch" class="section">
+    <div class="arch">
+      <h3>Current architecture</h3>
+      <div class="arch-row">
+        <span class="box blue">React Frontend (PWA)</span>
+        <span class="arrow-r">→</span>
+        <span class="box amber">Express API</span>
+        <span class="arrow-r">→</span>
+        <span class="box purple">MongoDB Atlas</span>
+      </div>
+      <div class="arch-row">
+        <span class="box blue">Admin React SPA</span>
+        <span class="arrow-r">→</span>
+        <span class="box amber">Express API</span>
+        <span class="arrow-r">→</span>
+        <span class="box gray">Local disk /uploads</span>
+      </div>
+      <div class="arch-row">
+        <span class="box blue">Frontend (Socket.io)</span>
+        <span class="arrow-r">→</span>
+        <span class="box amber">Socket.io (same server)</span>
+        <span class="arrow-r">→</span>
+        <span class="box red">No auth on socket</span>
+      </div>
+    </div>
+
+    <div class="arch">
+      <h3>Recommended production architecture (handles 10-100x traffic)</h3>
+      <div class="arch-row">
+        <span class="box blue">Frontend (Vercel/CDN)</span>
+        <span class="arrow-r">→</span>
+        <span class="box green">Cloudflare CDN</span>
+        <span class="arrow-r">→</span>
+        <span class="box amber">NGINX / Load Balancer</span>
+        <span class="arrow-r">→</span>
+        <span class="box amber">Express API (PM2 cluster)</span>
+      </div>
+      <div class="arch-row" style="margin-top:8px">
+        <span class="box amber">Express API</span>
+        <span class="arrow-r">→</span>
+        <span class="box green">Redis (cache + sessions)</span>
+        <span style="margin: 0 8px; color:#888">+</span>
+        <span class="box purple">MongoDB Atlas (with indexes)</span>
+      </div>
+      <div class="arch-row" style="margin-top:8px">
+        <span class="box amber">Express API</span>
+        <span class="arrow-r">→</span>
+        <span class="box green">AWS S3 / Cloudflare R2</span>
+        <span style="margin: 0 8px; color:#888">(images/videos via CDN URL)</span>
+      </div>
+      <div class="arch-row" style="margin-top:8px">
+        <span class="box amber">Socket.io</span>
+        <span class="arrow-r">→</span>
+        <span class="box green">Redis Adapter</span>
+        <span style="margin: 0 8px; color:#888">(required for multi-instance socket sync)</span>
+      </div>
+    </div>
+
+    <div class="arch">
+      <h3>Scalability projection</h3>
+      <div style="font-size: 13px; color: var(--color-text-secondary, #666); line-height: 1.8;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1px; background: var(--color-border-tertiary, rgba(0,0,0,.12)); border-radius: 8px; overflow: hidden; margin-top: 8px;">
+          <div style="background: var(--color-background-secondary, #f8f8f6); padding: 8px 12px; font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .04em;">Scenario</div>
+          <div style="background: var(--color-background-secondary, #f8f8f6); padding: 8px 12px; font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .04em;">Current</div>
+          <div style="background: var(--color-background-secondary, #f8f8f6); padding: 8px 12px; font-weight: 500; font-size: 12px; text-transform: uppercase; letter-spacing: .04em;">After fixes</div>
+          <div style="background: var(--color-background-primary,#fff); padding: 8px 12px;">100 concurrent users</div>
+          <div style="background: var(--color-background-primary,#fff); padding: 8px 12px; color: #BA7517;">⚠️ Possible (tight)</div>
+          <div style="background: var(--color-background-primary,#fff); padding: 8px 12px; color: #27500A;">✅ Comfortable</div>
+          <div style="background: var(--color-background-secondary,#f8f8f6); padding: 8px 12px;">1,000 concurrent users</div>
+          <div style="background: var(--color-background-secondary,#f8f8f6); padding: 8px 12px; color: #A32D2D;">❌ Will fail</div>
+          <div style="background: var(--color-background-secondary,#f8f8f6); padding: 8px 12px; color: #BA7517;">⚠️ Needs Redis + clustering</div>
+          <div style="background: var(--color-background-primary,#fff); padding: 8px 12px;">10,000 concurrent users</div>
+          <div style="background: var(--color-background-primary,#fff); padding: 8px 12px; color: #A32D2D;">❌ Crashes immediately</div>
+          <div style="background: var(--color-background-primary,#fff); padding: 8px 12px; color: #27500A;">✅ With CDN + Redis + sharding</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arch">
+      <h3>Priority fix order (do these first)</h3>
+      <div style="counter-reset: fix; font-size: 13px; line-height: 2.2;">
+        <div style="display: flex; gap: 10px; align-items: baseline;"><span style="background:#FDE8E8;color:#A32D2D;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;">1</span> Add express-rate-limit (30 min)</div>
+        <div style="display: flex; gap: 10px; align-items: baseline;"><span style="background:#FDE8E8;color:#A32D2D;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;">2</span> Fix stock + coupon race conditions (1-2 hours)</div>
+        <div style="display: flex; gap: 10px; align-items: baseline;"><span style="background:#FDE8E8;color:#A32D2D;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;">3</span> Restrict CORS to your domains (15 min)</div>
+        <div style="display: flex; gap: 10px; align-items: baseline;"><span style="background:#FDE8E8;color:#A32D2D;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;">4</span> Add helmet + compression (5 min)</div>
+        <div style="display: flex; gap: 10px; align-items: baseline;"><span style="background:#FDE8E8;color:#A32D2D;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;">5</span> Add global error handler to app.js (30 min)</div>
+        <div style="display: flex; gap: 10px; align-items: baseline;"><span style="background:#FDE8E8;color:#A32D2D;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;">6</span> Add Order model indexes (15 min)</div>
+        <div style="display: flex; gap: 10px; align-items: baseline;"><span style="background:#FDE8E8;color:#A32D2D;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;">7</span> Authenticate socket.io connections (1 hour)</div>
+        <div style="display: flex; gap: 10px; align-items: baseline;"><span style="background:#FFF0D4;color:#7A4B0A;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;">8</span> Move Firebase config to env vars (30 min)</div>
+        <div style="display: flex; gap: 10px; align-items: baseline;"><span style="background:#FFF0D4;color:#7A4B0A;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;">9</span> Fix hardcoded mock cart in AppContext (5 min)</div>
+        <div style="display: flex; gap: 10px; align-items: baseline;"><span style="background:#FFF0D4;color:#7A4B0A;border-radius:50%;width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;">10</span> Migrate uploads to S3/R2 (2-4 hours)</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+function show(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+function toggle(header) {
+  const body = header.nextElementSibling;
+  const arrow = header.querySelector('.arrow');
+  body.classList.toggle('open');
+  arrow.classList.toggle('open');
+}
+</script>
+</body>
+</html>

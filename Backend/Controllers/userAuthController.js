@@ -42,11 +42,16 @@ const sendOtp = async (req, res) => {
     const otp = getOtp();
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    user.otp = otp;
+    // Store hash, not raw OTP
+    const crypto = require('crypto');
+    const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+    user.otp = otpHash;
     user.otpExpiry = otpExpiry;
     await user.save();
 
-    console.log(`📱 OTP for ${phone}: ${otp} [ENV: ${process.env.ENV}]`);
+    if (process.env.ENV !== 'production') {
+      console.log(`📱 OTP for ${phone}: ${otp} [ENV: ${process.env.ENV}]`);
+    }
 
     // In production, send SMS using SMS India Hub//
     if (process.env.ENV === 'production') {
@@ -110,7 +115,9 @@ const verifyOtp = async (req, res) => {
       // Staging bypass - accept static OTP
     } else {
       // Check OTP validity
-      if (!user.otp || user.otp !== otp) {
+      const crypto = require('crypto');
+      const inputHash = crypto.createHash('sha256').update(otp).digest('hex');
+      if (!user.otp || user.otp !== inputHash) {
         return res.status(401).json({ success: false, message: 'Invalid OTP' });
       }
 
@@ -327,6 +334,10 @@ const updateFcmToken = async (req, res) => {
     const targetField = (platform === 'app' || platform === 'mobile') ? 'fcmMobileTokens' : 'fcmWebTokens';
     if (!user[targetField].includes(token)) {
       user[targetField].push(token);
+      // Cap to most recent 10 tokens (oldest first = least used)
+      if (user[targetField].length > 10) {
+        user[targetField] = user[targetField].slice(-10);
+      }
       await user.save();
     }
 

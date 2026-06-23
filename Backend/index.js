@@ -4,6 +4,7 @@ dotenv.config();
 const app = require('./app');
 const connectDB = require('./Config/db');
 const Admin = require('./Models/Admin');
+const mongoose = require('mongoose');
 
 const http = require('http');
 const socketIo = require('socket.io');
@@ -11,17 +12,40 @@ const socketHandler = require('./Utils/socketHandler');
 
 const PORT = process.env.PORT || 5000;
 
-// Auto-create admin if not exists (har baar server start hone par check)
-const ensureAdmin = async () => {
-  const email = process.env.ADMIN_EMAIL || 'admin@gmail.com';
-  const password = process.env.ADMIN_PASSWORD || '123';
+// Process-level safety handlers
+process.on('unhandledRejection', (reason) => {
+  console.error('💥 Unhandled Rejection at Promise:', reason);
+});
 
-  const existing = await Admin.findOne({ email });
+process.on('uncaughtException', (err) => {
+  console.error('💥 Uncaught Exception thrown:', err);
+  process.exit(1);
+});
+
+// Auto-create admin if not exists
+const ensureAdmin = async () => {
+  const email = process.env.ADMIN_EMAIL;
+  const password = process.env.ADMIN_PASSWORD;
+  const env = process.env.ENV || process.env.NODE_ENV || 'development';
+
+  if (env === 'production') {
+    if (!email || !password) {
+      throw new Error('CRITICAL SECURITY ERROR: ADMIN_EMAIL and ADMIN_PASSWORD must be explicitly set in environment variables for production.');
+    }
+    if (password === '123' || password.length < 12) {
+      throw new Error('CRITICAL SECURITY ERROR: Admin password is too weak. It must be at least 12 characters and not the default "123".');
+    }
+  }
+
+  const adminEmail = email || 'admin@gmail.com';
+  const adminPassword = password || '123';
+
+  const existing = await Admin.findOne({ email: adminEmail });
   if (!existing) {
-    await Admin.create({ name: 'Super Admin', email, password, role: 'super_admin' });
-    console.log(`✅ Admin auto-created: ${email}`);
+    await Admin.create({ name: 'Super Admin', email: adminEmail, password: adminPassword, role: 'super_admin' });
+    console.log(`✅ Admin auto-created: ${adminEmail}`);
   } else {
-    console.log(`👤 Admin already exists: ${email}`);
+    console.log(`👤 Admin already exists: ${adminEmail}`);
   }
 };
 
@@ -32,7 +56,7 @@ connectDB().then(async () => {
   const server = http.createServer(app);
   const io = socketIo(server, {
     cors: {
-      origin: '*',
+      origin: app.ALLOWED_ORIGINS || '*',
       methods: ['GET', 'POST']
     }
   });
@@ -42,4 +66,23 @@ connectDB().then(async () => {
   server.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
   });
+
+  // Graceful shutdown
+  const shutdown = async (signal) => {
+    console.log(`Received ${signal}, shutting down gracefully...`);
+    server.close(async () => {
+      await mongoose.connection.close();
+      console.log('Server and DB connections closed');
+      process.exit(0);
+    });
+    // Force exit after 10 seconds
+    setTimeout(() => {
+      console.error('Could not close connections in time, forcefully shutting down');
+      process.exit(1);
+    }, 10000);
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 });
+

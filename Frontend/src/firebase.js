@@ -2,12 +2,12 @@ import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDqQfly14F7Z4YHv6i1UVPyxuNMNYLSEuM",
-  authDomain: "mynzo-814fe.firebaseapp.com",
-  projectId: "mynzo-814fe",
-  storageBucket: "mynzo-814fe.firebasestorage.app",
-  messagingSenderId: "483350764702",
-  appId: "1:483350764702:web:fdce822d002adcd3012f8f"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
 // Initialize Firebase
@@ -23,7 +23,7 @@ export const requestFcmToken = async () => {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       const token = await getToken(messaging, {
-        vapidKey: "BBtui-cRa__fy8b1X9vohUGOB2VkPZ5VXvwIb64WbRIlY9DROpn871PGCiuQo12-DJqhrlH4WtepMc15xpnoJns"
+        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY
       });
       return token;
     } else {

@@ -15,6 +15,61 @@ exports.createOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Please provide all required fields' });
     }
 
+    // Verify and decrement stock atomically BEFORE creating the order
+    const decrementedProducts = [];
+    try {
+      for (const item of items) {
+        if (item.productId) {
+          const qty = item.quantity || 1;
+          const result = await Product.findOneAndUpdate(
+            { 
+              _id: item.productId, 
+              stock: { $gte: qty } // only if enough stock exists
+            },
+            { 
+              $inc: { 
+                stock: -qty, 
+                sales: qty 
+              } 
+            },
+            { new: true }
+          );
+          if (!result) {
+            throw new Error(`"${item.name}" is out of stock or does not have enough quantity.`);
+          }
+          decrementedProducts.push({ productId: item.productId, quantity: qty });
+        }
+      }
+
+      // If coupon was used, validate and increment usage count atomically
+      if (couponCode) {
+        const coupon = await Coupon.findOneAndUpdate(
+          {
+            code: couponCode.toUpperCase().trim(),
+            status: 'Active',
+            expiry: { $gt: new Date() },
+            $expr: { $lt: ['$usage', '$usageLimit'] }
+          },
+          { $inc: { usage: 1 } },
+          { new: true }
+        );
+        if (!coupon) {
+          throw new Error('Invalid, expired, or fully used coupon.');
+        }
+      }
+    } catch (err) {
+      // Rollback stock decrement for completed items in this loop
+      for (const rolledBack of decrementedProducts) {
+        await Product.findByIdAndUpdate(rolledBack.productId, {
+          $inc: { 
+            stock: rolledBack.quantity, 
+            sales: -rolledBack.quantity 
+          }
+        });
+      }
+      return res.status(400).json({ success: false, message: err.message });
+    }
+
     const order = await Order.create({
       userId: req.user._id,
       items,
@@ -72,26 +127,6 @@ exports.createOrder = async (req, res) => {
       console.error('Shiprocket order creation failed, will need manual sync:', srError.message);
     }
 
-    // Update product sales and stock
-    for (const item of items) {
-      if (item.productId) {
-        await Product.findByIdAndUpdate(item.productId, {
-          $inc: {
-            sales: item.quantity || 1,
-            stock: -(item.quantity || 1)
-          }
-        });
-      }
-    }
-
-    // If coupon was used, increment usage count
-    if (couponCode) {
-      await Coupon.findOneAndUpdate(
-        { code: couponCode.toUpperCase().trim() },
-        { $inc: { usage: 1 } }
-      );
-    }
-
     // Clear user cart
     const cart = await Cart.findOne({ userId: req.user._id });
     if (cart) {
@@ -106,28 +141,65 @@ exports.createOrder = async (req, res) => {
   }
 };
 
-// @desc    Get logged in user's orders
+// @desc    Get logged in user's orders (with pagination)
 // @route   GET /api/orders
 // @access  Private
 exports.getUserOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.user._id }).sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: orders.length, orders });
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, parseInt(req.query.limit) || 20);
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      Order.find({ userId: req.user._id })
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Order.countDocuments({ userId: req.user._id })
+    ]);
+
+    res.status(200).json({ 
+      success: true, 
+      count: orders.length, 
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      orders 
+    });
   } catch (error) {
     console.error("Error fetching orders:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-// @desc    Get all orders (Admin only)
+// @desc    Get all orders (Admin only, with pagination)
 // @route   GET /api/orders/admin/all
 // @access  Private/Admin
 exports.getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find({})
-      .populate('userId', 'name email phone')
-      .sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: orders.length, orders });
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, parseInt(req.query.limit) || 20);
+    const skip = (page - 1) * limit;
+
+    const [orders, total] = await Promise.all([
+      Order.find({})
+        .populate('userId', 'name email phone')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      Order.countDocuments({})
+    ]);
+
+    res.status(200).json({ 
+      success: true, 
+      count: orders.length, 
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      orders 
+    });
   } catch (error) {
     console.error("Error fetching all orders for admin:", error);
     res.status(500).json({ success: false, message: error.message });

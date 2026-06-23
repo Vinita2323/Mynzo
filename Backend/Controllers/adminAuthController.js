@@ -91,8 +91,27 @@ const adminLogout = (req, res) => {
 const getUsers = async (req, res) => {
   try {
     const User = require('../Models/User');
-    const users = await User.find({}).sort({ createdAt: -1 });
-    res.status(200).json({ success: true, users });
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(100, parseInt(req.query.limit) || 20);
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      User.find({})
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      User.countDocuments({})
+    ]);
+
+    res.status(200).json({ 
+      success: true, 
+      count: users.length, 
+      total,
+      page,
+      pages: Math.ceil(total / limit),
+      users 
+    });
   } catch (error) {
     console.error('Get Users Error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });

@@ -17,12 +17,8 @@ import cat5 from '../assets/CategorySection/Category5-removebg-preview.webp';
 import cat6 from '../assets/CategorySection/Category6-removebg-preview.webp';
 import cat7 from '../assets/CategorySection/Category7-removebg-preview.webp';
 
-let globalRawProducts = null;
-let globalCategories = null;
-let globalSubCategories = null;
-let globalProductsPromise = null;
-let globalCategoriesPromise = null;
-let globalSubCategoriesPromise = null;
+let globalCombinedData = null;
+let globalCombinedPromise = null;
 
 export default function CategoriesPage() {
   const navigate = useNavigate();
@@ -43,98 +39,56 @@ export default function CategoriesPage() {
     let active = true;
     const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-    const fetchCategoryChips = async () => {
-      if (globalCategories) {
-        if (active) setCategories(globalCategories);
-        return;
-      }
-      if (!globalCategoriesPromise) {
-        globalCategoriesPromise = (async () => {
-          try {
-            const res = await fetch(`${apiBase}/admin/catalog/chips`);
-            const data = await res.json();
-            if (res.ok && data.success && data.chips && data.chips.length > 0) {
-              const activeChips = data.chips.filter(c => c.active && c.id !== 'for-you');
-              const forYouChip = CATEGORIES.find(c => c.id === 'for-you');
-              globalCategories = [forYouChip, ...activeChips];
-              return globalCategories;
-            }
-          } catch (err) {
-            console.error('Error fetching categories:', err);
-          }
-          return null;
-        })();
-      }
-      const result = await globalCategoriesPromise;
-      if (active && result) {
-        setCategories(result);
-      }
-    };
-
-    const fetchSubCategoryChips = async () => {
-      if (globalSubCategories) {
-        if (active) setSubCategories(globalSubCategories);
-        return;
-      }
-      if (!globalSubCategoriesPromise) {
-        globalSubCategoriesPromise = (async () => {
-          try {
-            const res = await fetch(`${apiBase}/admin/catalog/subchips`);
-            const data = await res.json();
-            if (res.ok && data.success && data.subchips) {
-              globalSubCategories = data.subchips.filter(sc => sc.active);
-              return globalSubCategories;
-            }
-          } catch (err) {
-            console.error('Error fetching subcategories:', err);
-          }
-          return null;
-        })();
-      }
-      const result = await globalSubCategoriesPromise;
-      if (active && result) {
-        setSubCategories(result);
-      }
-    };
-
-    const fetchProducts = async () => {
-      if (globalRawProducts) {
+    const loadAll = async () => {
+      if (globalCombinedData) {
         if (active) {
-          setRawProducts(globalRawProducts);
+          setCategories(globalCombinedData.categories);
+          setSubCategories(globalCombinedData.subCategories);
+          setRawProducts(globalCombinedData.products);
           setLoading(false);
         }
         return;
       }
+
       setLoading(true);
-      if (!globalProductsPromise) {
-        globalProductsPromise = (async () => {
+
+      if (!globalCombinedPromise) {
+        globalCombinedPromise = (async () => {
           try {
-            const res = await fetch(`${apiBase}/admin/catalog/products?status=Approved`);
+            const res = await fetch(`${apiBase}/admin/catalog/products/combined`);
             const data = await res.json();
-            if (res.ok && data.success && data.products) {
-              globalRawProducts = data.products;
-              return globalRawProducts;
+            if (res.ok && data.success) {
+              const activeChips = (data.chips || []).filter(c => c.active && c.id !== 'for-you');
+              const forYouChip = CATEGORIES.find(c => c.id === 'for-you');
+              const finalCategories = [forYouChip, ...activeChips];
+              const finalSubCategories = (data.subchips || []).filter(sc => sc.active);
+              const finalProducts = data.products || [];
+
+              globalCombinedData = {
+                categories: finalCategories,
+                subCategories: finalSubCategories,
+                products: finalProducts
+              };
+              return globalCombinedData;
             }
           } catch (err) {
-            console.error('Error fetching products (CategoriesPage):', err);
+            console.error('Error fetching combined catalog:', err);
           }
           return null;
         })();
       }
-      const result = await globalProductsPromise;
+
+      const result = await globalCombinedPromise;
+      if (active && result) {
+        setCategories(result.categories);
+        setSubCategories(result.subCategories);
+        setRawProducts(result.products);
+      }
       if (active) {
-        if (result) setRawProducts(result);
         setLoading(false);
       }
     };
 
-    const loadAll = async () => {
-      await fetchProducts();
-      if (active) {
-        fetchCategoryChips();
-        fetchSubCategoryChips();
-      }
-    };
     loadAll();
 
     return () => {
