@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getImageUrl } from '../../utils/imageHelper';
 
 /**
  * OptimizedImage – A reusable image component with:
@@ -15,24 +16,6 @@ const FALLBACK_GRADIENTS = {
   product:    'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)',
   subcategory:'linear-gradient(135deg, #10b981 0%, #059669 100%)',
   default:    'linear-gradient(135deg, #64748b 0%, #94a3b8 100%)',
-};
-
-const getImageUrl = (imagePath) => {
-  if (!imagePath) return '';
-  if (
-    imagePath.startsWith('http://') ||
-    imagePath.startsWith('https://') ||
-    imagePath.startsWith('data:') ||
-    imagePath.startsWith('blob:') ||
-    imagePath.startsWith('/src/') ||
-    imagePath.startsWith('/assets/') ||
-    imagePath.includes('categoryForU') ||
-    imagePath.includes('Category')
-  ) {
-    return imagePath;
-  }
-  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  return `${apiBase}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
 };
 
 export default function OptimizedImage({

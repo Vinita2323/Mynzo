@@ -5,6 +5,7 @@ import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { useApp } from '../context/AppContext';
 import { CRAZY_DEALS } from '../data/mockData';
 import OptimizedImage from '../components/ui/OptimizedImage';
+import { getImageUrl } from '../utils/imageHelper';
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
@@ -113,25 +114,6 @@ export default function ProductDetailsPage() {
   const [selectedReviewMedia, setSelectedReviewMedia] = useState(null);
   const videoRef = useRef(null);
 
-  useEffect(() => {
-    if (selectedReviewMedia?.type === 'video' && videoRef.current) {
-      videoRef.current.play().catch(e => console.error("Autoplay prevented:", e));
-    }
-  }, [selectedReviewMedia]);
-
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return '';
-    if (imagePath.startsWith('http://') || imagePath.startsWith('https://') || imagePath.startsWith('data:')) {
-      return imagePath;
-    }
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    return `${apiBase}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
-  };
-
-  useEffect(() => {
-    const fetchProduct = async () => {
-      setIsLoading(true);
-      try {
         const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
         const res = await fetch(`${apiBase}/admin/catalog/products/${id}`);
         const data = await res.json();

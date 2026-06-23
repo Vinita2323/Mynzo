@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Filter, Search, ChevronLeft, LayoutGrid } from 'lucide-react';
@@ -6,6 +6,7 @@ import { CATEGORIES, CRAZY_DEALS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 import ProductCard from '../components/ui/ProductCard';
 import OptimizedImage from '../components/ui/OptimizedImage';
+import { getImageUrl } from '../utils/imageHelper';
 
 // Category Images
 import catForYou from '../assets/CategorySection/categoryForU-removebg-preview.webp';
@@ -100,22 +101,7 @@ export default function CategoriesPage() {
     setSelectedSubCategory('all');
   }, [selectedCategory]);
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return '';
-    if (
-      imagePath.startsWith('http://') ||
-      imagePath.startsWith('https://') ||
-      imagePath.startsWith('data:') ||
-      imagePath.startsWith('/src/') ||
-      imagePath.startsWith('/assets/') ||
-      imagePath.includes('categoryForU') ||
-      imagePath.includes('Category')
-    ) {
-      return imagePath;
-    }
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    return `${apiBase}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
-  };
+
 
   // Sync with URL parameter (e.g. when navigated from Home category capsule)
   useEffect(() => {

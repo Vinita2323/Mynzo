@@ -6,6 +6,7 @@ import { useApp } from '../context/AppContext';
 import ProductCard from '../components/ui/ProductCard';
 import OptimizedImage from '../components/ui/OptimizedImage';
 import { cachedFetch } from '../utils/apiCache';
+import { getImageUrl } from '../utils/imageHelper';
 
 import CrazyDeals2 from '../assets/CrazyDeals/CrazyDeals2.webp';
 import CrazyDeals3 from '../assets/CrazyDeals/CrazyDeals3.webp';
@@ -124,22 +125,7 @@ export default function Home() {
     return () => controller.abort(); // cleanup on unmount
   }, []);
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return '';
-    if (
-      imagePath.startsWith('http://') || 
-      imagePath.startsWith('https://') || 
-      imagePath.startsWith('data:') ||
-      imagePath.startsWith('/src/') ||
-      imagePath.startsWith('/assets/') ||
-      imagePath.includes('categoryForU') ||
-      imagePath.includes('Category')
-    ) {
-      return imagePath;
-    }
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    return `${apiBase}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
-  };
+
 
   // Reset subcategory selection when the main category selection changes
   useEffect(() => {
