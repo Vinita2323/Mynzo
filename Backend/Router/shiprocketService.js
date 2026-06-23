@@ -144,6 +144,25 @@ const trackAWB = async (awbCode) => {
     }
 };
 
+const parseCityState = (address) => {
+    let city = 'City';
+    let state = 'State';
+    if (address && typeof address === 'string') {
+        const cleanAddress = address.replace(/[-\s,]*\d{6}\s*$/, '').trim();
+        const parts = cleanAddress.split(',').map(p => p.trim()).filter(Boolean);
+        if (parts.length >= 2) {
+            state = parts[parts.length - 1];
+            city = parts[parts.length - 2];
+        } else if (parts.length === 1) {
+            city = parts[0];
+        }
+    }
+    return {
+        city: city.substring(0, 30) || 'City',
+        state: state.substring(0, 30) || 'State'
+    };
+};
+
 module.exports = {
     getShiprocketToken,
     createShiprocketOrder,
@@ -151,5 +170,6 @@ module.exports = {
     assignAWB,
     requestPickup,
     generateLabel,
-    trackAWB
+    trackAWB,
+    parseCityState
 };

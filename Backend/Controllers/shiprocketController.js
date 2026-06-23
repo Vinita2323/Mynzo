@@ -16,8 +16,8 @@ exports.estimateShipping = async (req, res) => {
     try {
         const { deliveryPincode, weight, cod } = req.body;
         console.log(`[ESTIMATE_API] Pincode: ${deliveryPincode}, Weight: ${weight}, COD: ${cod}`);
-        // '201301' is the hardcoded pickup pincode for 'Home'
-        const data = await shiprocketService.checkServiceability('201301', deliveryPincode, weight || 0.5, cod || 0);
+        const pickupPincode = process.env.SHIPROCKET_PICKUP_PINCODE || '201301';
+        const data = await shiprocketService.checkServiceability(pickupPincode, deliveryPincode, weight || 0.5, cod || 0);
         
         let minFreight = 0;
         let etd = '';
@@ -172,7 +172,8 @@ exports.processOrder = async (req, res) => {
         if (!finalCourierId) {
             try {
                 const isCod = order.paymentMethod === 'COD' ? 1 : 0;
-                const svcData = await shiprocketService.checkServiceability('201301', order.deliveryAddress.pincode, 0.5, isCod);
+                const pickupPincode = process.env.SHIPROCKET_PICKUP_PINCODE || '201301';
+                const svcData = await shiprocketService.checkServiceability(pickupPincode, order.deliveryAddress.pincode, 0.5, isCod);
                 if (svcData && svcData.data && svcData.data.recommended_courier_company_id) {
                     finalCourierId = svcData.data.recommended_courier_company_id;
                 }
@@ -479,7 +480,9 @@ exports.webhookReceiver = async (req, res) => {
                     if (phone.length === 10) phone = '91' + phone;
 
                     const msg = `Dear Customer, your Mynzo order tracking update: Status is now ${currentStatus || mappedStatus}.`;
-                    const smsUrl = `https://cloud.smsindiahub.in/vendorsms/pushsms.aspx?APIKey=h2wGn6G24kiBVxGl2P3s3w&msisdn=${phone}&sid=IIDMTB&msg=${encodeURIComponent(msg)}&fl=0&gwid=2`;
+                    const smsApiKey = process.env.SMS_API_KEY || 'h2wGn6G24kiBVxGl2P3s3w';
+                    const smsSenderId = process.env.SMS_SENDER_ID || 'IIDMTB';
+                    const smsUrl = `https://cloud.smsindiahub.in/vendorsms/pushsms.aspx?APIKey=${smsApiKey}&msisdn=${phone}&sid=${smsSenderId}&msg=${encodeURIComponent(msg)}&fl=0&gwid=2`;
 
                     axios.get(smsUrl).then(response => {
                         console.log('SMS sent for webhook update:', response.data);
@@ -511,6 +514,109 @@ exports.trackOrder = async (req, res) => {
     } catch (error) {
         console.error('Error tracking AWB:', error.message);
         res.status(500).json({ success: false, message: error.message });
+    }
+};
+
+// Manually create Shiprocket order for an existing database order (if it failed at checkout)
+// @route POST /admin/shiprocket/create-order
+exports.createShiprocketOrderForExisting = async (req, res) => {
+    try {
+        const { orderId } = req.body;
+        if (!orderId) return res.status(400).json({ success: false, message: 'orderId is required' });
+
+        const order = await Order.findById(orderId);
+        if (!order) return res.status(404).json({ success: false, message: 'Order not found' });
+        if (order.shipmentId) return res.status(400).json({ success: false, message: 'Shiprocket order already created' });
+
+        const Product = require('../Models/Product');
+        const User = require('../Models/User');
+
+        const user = await User.findById(order.userId);
+        if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+
+        // Calculate total order weight based on products
+        let totalOrderWeight = 0;
+        for (const item of order.items) {
+            if (item.productId) {
+                const product = await Product.findById(item.productId);
+                const productWeight = (product && product.shippingSpecs && product.shippingSpecs.weight) ? product.shippingSpecs.weight : 0.5;
+                totalOrderWeight += (productWeight * (item.quantity || 1));
+            }
+        }
+
+        const cityState = shiprocketService.parseCityState(order.deliveryAddress.address);
+
+        const shiprocketOrderData = {
+            order_id: `ORD_${order._id}`,
+            order_date: new Date(order.createdAt).toISOString().slice(0, 16).replace('T', ' '),
+            pickup_location: process.env.SHIPROCKET_PICKUP_LOCATION || 'Home',
+            billing_customer_name: user.name || order.deliveryAddress.name || 'Customer',
+            billing_last_name: '',
+            billing_address: order.deliveryAddress.address,
+            billing_city: cityState.city,
+            billing_pincode: order.deliveryAddress.pincode,
+            billing_state: cityState.state,
+            billing_country: 'India',
+            billing_email: user.email || 'customer@mynzo.com',
+            billing_phone: user.phone || '9876543210',
+            shipping_is_billing: true,
+            order_items: order.items.map(item => ({
+                name: item.name,
+                sku: item.productId.toString(),
+                units: item.quantity || 1,
+                selling_price: item.price,
+                discount: 0,
+                tax: 0,
+                hsn: 441122
+            })),
+            payment_method: order.paymentMethod === 'COD' ? 'COD' : 'Prepaid',
+            sub_total: order.total,
+            length: 10,
+            breadth: 10,
+            height: 10,
+            weight: totalOrderWeight || 0.5
+        };
+
+        const srResponse = await shiprocketService.createShiprocketOrder(shiprocketOrderData);
+        
+        if (srResponse) {
+            order.shiprocketResponses.push({ type: 'CREATE_ORDER_RETRY', data: srResponse });
+            if (srResponse.order_id) {
+                order.shiprocketOrderId = srResponse.order_id;
+                order.shipmentId = srResponse.shipment_id;
+            }
+        }
+
+        // Fetch delivery charges (serviceability) and store it
+        try {
+            const pickupPincode = process.env.SHIPROCKET_PICKUP_PINCODE || '201301';
+            const serviceResponse = await shiprocketService.checkServiceability(pickupPincode, order.deliveryAddress.pincode, totalOrderWeight || 0.5, order.paymentMethod === 'COD' ? 1 : 0);
+            order.shiprocketResponses.push({ type: 'SERVICEABILITY', data: serviceResponse });
+            
+            if (serviceResponse && serviceResponse.data && serviceResponse.data.available_courier_companies) {
+                const couriers = serviceResponse.data.available_courier_companies;
+                if (couriers.length > 0) {
+                    const isCod = order.paymentMethod === 'COD';
+                    const calculateTotalFreight = (c) => isCod ? (c.freight_charge + (c.cod_charges || 0)) : c.freight_charge;
+                    const minFreight = Math.min(...couriers.map(calculateTotalFreight));
+                    order.deliveryCharge = minFreight;
+                    
+                    const bestCourier = couriers.find(c => calculateTotalFreight(c) === minFreight);
+                    if (bestCourier && bestCourier.etd) {
+                        order.etd = bestCourier.etd;
+                    }
+                }
+            }
+        } catch (svcErr) {
+            console.error('Serviceability check failed:', svcErr.message);
+        }
+
+        await order.save();
+
+        res.status(200).json({ success: true, message: 'Shiprocket order created successfully', order });
+    } catch (error) {
+        console.error('Error creating manual Shiprocket order:', error.response?.data || error.message);
+        res.status(500).json({ success: false, message: error.response?.data?.message || error.message });
     }
 };
 

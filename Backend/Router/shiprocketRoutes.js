@@ -13,6 +13,7 @@ router.post('/request-pickup', protectAdmin, shiprocketController.requestPickup)
 router.post('/generate-label', protectAdmin, shiprocketController.generateLabel);
 
 // Admin APIs - Lifecycle management
+router.post('/create-order', protectAdmin, shiprocketController.createShiprocketOrderForExisting); // Manual create order on Shiprocket
 router.post('/process-order', protectAdmin, shiprocketController.processOrder);       // One-click: AWB + Pickup + Label
 router.post('/cancel-order', protectAdmin, shiprocketController.cancelShiprocketOrder); // Cancel order on Shiprocket + DB
 router.post('/sync-status', protectAdmin, shiprocketController.syncOrderStatus);       // Manual pull status from Shiprocket

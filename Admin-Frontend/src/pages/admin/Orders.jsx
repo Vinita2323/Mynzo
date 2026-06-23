@@ -199,6 +199,35 @@ const Orders = () => {
   };
 
   const [processingOrder, setProcessingOrder] = useState(null);
+  const [creatingShiprocket, setCreatingShiprocket] = useState(null);
+
+  const handleCreateShiprocketOrder = async (orderId) => {
+    if (!orderId) return toast.error('No order ID available');
+    const token = localStorage.getItem('adminToken');
+    setCreatingShiprocket(orderId);
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/admin/shiprocket/create-order`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ orderId })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Shiprocket order created successfully!');
+        fetchOrders();
+        if (selectedOrder && selectedOrder._id === orderId) {
+          setSelectedOrder(data.order);
+        }
+      } else {
+        toast.error(data.message || 'Failed to create Shiprocket order');
+      }
+    } catch (err) {
+      toast.error('Error creating Shiprocket order');
+    } finally {
+      setCreatingShiprocket(null);
+    }
+  };
 
   const handleProcessOrder = async (orderId) => {
     if (!orderId) return toast.error('No order ID available');
@@ -626,6 +655,18 @@ const Orders = () => {
                       </div>
                     )}
                   </div>
+
+                  {!selectedOrder.shipmentId && !['Delivered', 'Cancelled'].includes(selectedOrder.status) && (
+                    <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100">
+                      <button 
+                        onClick={() => handleCreateShiprocketOrder(selectedOrder._id)}
+                        disabled={creatingShiprocket === selectedOrder._id}
+                        className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-lg text-xs font-bold hover:from-amber-600 hover:to-orange-600 transition-all shadow-sm disabled:opacity-50 active:scale-95"
+                      >
+                        {creatingShiprocket === selectedOrder._id ? '⏳ Creating...' : '📦 Create Shiprocket Order'}
+                      </button>
+                    </div>
+                  )}
 
                   {selectedOrder.shipmentId && !['Delivered', 'Cancelled'].includes(selectedOrder.status) && (
                     <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100">

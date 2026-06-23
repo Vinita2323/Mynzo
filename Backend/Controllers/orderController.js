@@ -92,16 +92,18 @@ exports.createOrder = async (req, res) => {
     try {
       const user = await User.findById(req.user._id);
       
+      const cityState = shiprocketService.parseCityState(deliveryAddress.address);
+
       const shiprocketOrderData = {
         order_id: `ORD_${order._id}`,
         order_date: new Date().toISOString().slice(0, 16).replace('T', ' '),
-        pickup_location: 'Home', // Must be configured in Shiprocket dashboard
+        pickup_location: process.env.SHIPROCKET_PICKUP_LOCATION || 'Home',
         billing_customer_name: user.name || deliveryAddress.name || 'Customer',
         billing_last_name: '',
         billing_address: deliveryAddress.address,
-        billing_city: 'City', // Consider adding city/state to deliveryAddress in future
+        billing_city: cityState.city,
         billing_pincode: deliveryAddress.pincode,
-        billing_state: 'State',
+        billing_state: cityState.state,
         billing_country: 'India',
         billing_email: user.email || 'customer@mynzo.com',
         billing_phone: user.phone || '9876543210',
@@ -135,7 +137,8 @@ exports.createOrder = async (req, res) => {
 
       // Fetch delivery charges (serviceability) and store it
       try {
-        const serviceResponse = await shiprocketService.checkServiceability('201301', deliveryAddress.pincode, totalOrderWeight || 0.5, paymentMethod === 'COD' ? 1 : 0);
+        const pickupPincode = process.env.SHIPROCKET_PICKUP_PINCODE || '201301';
+        const serviceResponse = await shiprocketService.checkServiceability(pickupPincode, deliveryAddress.pincode, totalOrderWeight || 0.5, paymentMethod === 'COD' ? 1 : 0);
         order.shiprocketResponses.push({ type: 'SERVICEABILITY', data: serviceResponse });
         
         if (serviceResponse && serviceResponse.data && serviceResponse.data.available_courier_companies) {
