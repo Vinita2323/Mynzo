@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Lock, ChevronDown, ChevronUp, CreditCard, Banknote, Gift, CalendarOff, ArrowRight, CheckCircle2, Smile, Loader2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { getImageUrl } from '../utils/imageHelper';
+import analytics from '../utils/analytics';
 import Lottie from 'lottie-react';
 import orderProcessingAnimation from '../assets/Lotties/OrderProcessing.json';
 import paytmLogo from '../assets/UPI/Paytm-removebg-preview.webp';
@@ -19,6 +20,18 @@ export default function CheckoutPage() {
       navigate('/login');
     }
   }, [user, navigate]);
+
+  React.useEffect(() => {
+    if (cart.length > 0) {
+      analytics.trackCheckoutStarted(cart, totalCartPrice);
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (expandedSection && ['UPI', 'CARDS', 'COD'].includes(expandedSection)) {
+      analytics.trackPaymentSelected(expandedSection);
+    }
+  }, [expandedSection]);
   
   // Calculate total with static GST/delivery matching CartPage
   const deliveryFee = 0;

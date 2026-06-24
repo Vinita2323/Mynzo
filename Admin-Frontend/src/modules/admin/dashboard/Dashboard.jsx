@@ -1,8 +1,8 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import { 
-  TrendingUp, Users, ShoppingBag, DollarSign, 
-  ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, AlertCircle 
+  TrendingUp, Users, ShoppingBag, DollarSign, Coins,
+  ArrowUpRight, ArrowDownRight, Clock, CheckCircle2, AlertCircle, Package 
 } from 'lucide-react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -10,17 +10,101 @@ import {
 } from 'recharts';
 import { motion } from 'framer-motion';
 
+const iconMap = {
+  DollarSign: DollarSign,
+  ShoppingBag: ShoppingBag,
+  AlertCircle: AlertCircle,
+  CheckCircle2: CheckCircle2,
+  Users: Users,
+  TrendingUp: TrendingUp,
+  Package: Package,
+  Coins: Coins
+};
+
 const Dashboard = () => {
-  const { systemStats, pendingVendors } = useSelector(state => state.admin);
+  const navigate = useNavigate();
+  const [stats, setStats] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
 
+  const fetchDashboardData = async () => {
+    const token = localStorage.getItem('adminToken');
+    try {
+      setLoading(true);
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/admin/analytics/overview`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const json = await res.json();
+      if (res.ok && json.success) {
+        setStats(json.data);
+      }
+    } catch (err) {
+      console.error('Error fetching dashboard stats:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDownloadReport = () => {
+    if (!stats) return;
+
+    let csvContent = "\uFEFF"; // Add BOM for Excel UTF-8 support
+    
+    // Header
+    csvContent += "Mynzo Admin System Report\n";
+    csvContent += `Generated At,${new Date().toLocaleString()}\n\n`;
+    
+    // Overview Metrics
+    csvContent += "Metric,Value\n";
+    csvContent += `Total Revenue,₹${stats.totalRevenue || 0}\n`;
+    csvContent += `Total Orders,${stats.totalOrders || 0}\n`;
+    csvContent += `Total Customers,${stats.totalCustomers || 0}\n`;
+    csvContent += `Active Products,${stats.totalProducts || 0}\n`;
+    csvContent += `Coins Distributed,${stats.totalCoinsEarned || 0}\n\n`;
+    
+    // Daily Sales
+    csvContent += "Daily Sales Trend (Last 7 Days)\n";
+    csvContent += "Day,Sales (₹)\n";
+    const salesData = stats.salesData || [];
+    salesData.forEach(item => {
+      csvContent += `${item.name},${item.sales}\n`;
+    });
+    csvContent += "\n";
+    
+    // Category Share
+    csvContent += "Category Share\n";
+    csvContent += "Category,Percentage (%)\n";
+    const categoryData = stats.categoryData || [];
+    categoryData.forEach(item => {
+      csvContent += `${item.name},${item.value}\n`;
+    });
+    csvContent += "\n";
+
+    // Recent Customers
+    csvContent += "Recent Customers\n";
+    csvContent += "Name,Email,Joined Date\n";
+    const recentCusts = stats.recentCustomers || [];
+    recentCusts.forEach(cust => {
+      csvContent += `"${cust.name || 'Anonymous'}",${cust.email || 'N/A'},${new Date(cust.createdAt).toLocaleDateString()}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `mynzo_admin_report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   React.useEffect(() => {
-    // Simulate loading for the dashboard
-    const timer = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(timer);
+    fetchDashboardData();
   }, []);
 
-  const salesData = [
+  const salesData = stats?.salesData || [
     { name: 'Mon', sales: 4000 },
     { name: 'Tue', sales: 3000 },
     { name: 'Wed', sales: 5000 },
@@ -30,7 +114,7 @@ const Dashboard = () => {
     { name: 'Sun', sales: 3490 },
   ];
 
-  const categoryData = [
+  const categoryData = stats?.categoryData || [
     { name: 'Electronics', value: 45 },
     { name: 'Fashion', value: 25 },
     { name: 'Home', value: 20 },
@@ -82,19 +166,26 @@ const Dashboard = () => {
           <p className="text-slate-500 font-medium mt-1 font-raleway">Real-time performance metrics and platform health.</p>
         </div>
         <div className="flex gap-3">
-          <button className="px-5 py-2.5 bg-white border border-blue-100 rounded-xl text-sm font-bold text-blue-600 hover:bg-blue-50 transition-all">
+          <button 
+            onClick={handleDownloadReport}
+            className="px-5 py-2.5 bg-white border border-blue-100 rounded-xl text-sm font-bold text-blue-600 hover:bg-blue-50 transition-all"
+          >
             Download Report
           </button>
-          <button className="px-5 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-200 hover:scale-105 active:scale-95 transition-all">
+          <button 
+            onClick={fetchDashboardData}
+            className="px-5 py-2.5 bg-blue-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-blue-200 hover:scale-105 active:scale-95 transition-all"
+          >
             Refresh Data
           </button>
         </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         {loading ? (
           <>
+            <StatCardSkeleton />
             <StatCardSkeleton />
             <StatCardSkeleton />
             <StatCardSkeleton />
@@ -102,10 +193,11 @@ const Dashboard = () => {
           </>
         ) : (
           <>
-            <StatCard title="Total Revenue" value={`₹${systemStats.totalRevenue.toLocaleString()}`} change="+12.5%" icon={DollarSign} isPositive={true} />
-            <StatCard title="Total Orders" value={systemStats.totalOrders.toLocaleString()} change="+5.2%" icon={ShoppingBag} isPositive={true} />
-            <StatCard title="Active Vendors" value={systemStats.activeVendors} change="+8.1%" icon={Users} isPositive={true} />
-            <StatCard title="Platform Comm." value={`₹${systemStats.platformCommission.toLocaleString()}`} change="-2.4%" icon={TrendingUp} isPositive={false} />
+            <StatCard title="Total Revenue" value={`₹${(stats?.totalRevenue || 0).toLocaleString()}`} change="+12.5%" icon={DollarSign} isPositive={true} />
+            <StatCard title="Total Orders" value={(stats?.totalOrders || 0).toLocaleString()} change="+5.2%" icon={ShoppingBag} isPositive={true} />
+            <StatCard title="Total Customers" value={stats?.totalCustomers || 0} change="+8.1%" icon={Users} isPositive={true} />
+            <StatCard title="Active Products" value={stats?.totalProducts || 0} change="+14.2%" icon={Package} isPositive={true} />
+            <StatCard title="Coins Distributed" value={(stats?.totalCoinsEarned || 0).toLocaleString()} change="+18.7%" icon={Coins} isPositive={true} />
           </>
         )}
       </div>
@@ -196,12 +288,12 @@ const Dashboard = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Pending Approvals */}
+        {/* Recent Customers */}
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-bold text-slate-900 uppercase tracking-tight font-montserrat">Pending Approvals</h3>
-            <span className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-widest">
-              {loading ? '-' : pendingVendors.length} New Requests
+            <h3 className="text-lg font-bold text-slate-900 uppercase tracking-tight font-montserrat">Recent Customers</h3>
+            <span className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest">
+              {loading ? '-' : (stats?.recentCustomers || []).length} Joined
             </span>
           </div>
           <div className="space-y-4">
@@ -219,31 +311,29 @@ const Dashboard = () => {
                 </div>
               ))
             ) : (
-              pendingVendors.map((vendor) => (
-                <div key={vendor.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-100 transition-colors">
+              (stats?.recentCustomers || []).map((customer) => (
+                <div key={customer._id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100 hover:border-blue-100 transition-colors">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center font-black text-slate-900 shadow-sm border border-slate-100">
-                      {vendor.name.charAt(0)}
+                      {customer.name ? customer.name.charAt(0).toUpperCase() : 'C'}
                     </div>
                     <div>
-                      <h4 className="font-black text-slate-900 text-sm">{vendor.name}</h4>
-                      <p className="text-xs text-slate-400 font-medium">{vendor.email}</p>
+                      <h4 className="font-black text-slate-900 text-sm">{customer.name || 'Anonymous Customer'}</h4>
+                      <p className="text-xs text-slate-400 font-medium">{customer.email}</p>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
-                      <AlertCircle size={20} />
-                    </button>
-                    <button className="p-2 text-green-500 hover:bg-green-50 rounded-lg transition-colors">
-                      <CheckCircle2 size={20} />
-                    </button>
+                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    {new Date(customer.createdAt).toLocaleDateString()}
                   </div>
                 </div>
               ))
             )}
           </div>
-          <button className="w-full mt-6 py-4 bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg shadow-blue-100">
-            View All Requests
+          <button 
+            onClick={() => navigate('/admin/users')}
+            className="w-full mt-6 py-4 bg-blue-500 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg shadow-blue-100"
+          >
+            View All Customers
           </button>
         </div>
 
@@ -263,26 +353,29 @@ const Dashboard = () => {
                 </div>
               ))
             ) : (
-              [
-                { title: 'New Payout Request', desc: 'Elite Electronics requested ₹50,000', time: '2 mins ago', icon: DollarSign, color: 'text-blue-500', bg: 'bg-blue-50' },
-                { title: 'New Product Upload', desc: 'Fashion Hub added "Summer Dress"', time: '15 mins ago', icon: ShoppingBag, color: 'text-green-500', bg: 'bg-green-50' },
-                { title: 'Order Disputed', desc: 'Order #OD1234 by Customer ID #542', time: '1 hour ago', icon: AlertCircle, color: 'text-red-500', bg: 'bg-red-50' },
-                { title: 'Vendor Verified', desc: 'Global Tech verification completed', time: '2 hours ago', icon: CheckCircle2, color: 'text-indigo-500', bg: 'bg-indigo-50' },
-              ].map((activity, i) => (
-                <div key={i} className="relative flex gap-6">
-                  <div className={`z-10 w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${activity.bg} ${activity.color} shadow-sm border border-white`}>
-                    <activity.icon size={18} />
-                  </div>
-                  <div>
-                    <h4 className="font-black text-slate-900 text-sm leading-none">{activity.title}</h4>
-                    <p className="text-xs text-slate-400 font-medium mt-1.5">{activity.desc}</p>
-                    <div className="flex items-center gap-2 mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                      <Clock size={10} />
-                      {activity.time}
+              (stats?.recentActivities || [
+                { title: 'New Order Placed', desc: 'Order of ₹1,499 placed by Rohan Sharma', time: '5 mins ago', icon: 'ShoppingBag', color: 'text-blue-500', bg: 'bg-blue-50' },
+                { title: 'New Customer Signup', desc: 'Sneha Patel registered on the platform', time: '15 mins ago', icon: 'Users', color: 'text-green-500', bg: 'bg-green-50' },
+                { title: 'Game Played', desc: 'Amit Kumar won 150 coins in Spin the Wheel', time: '1 hour ago', icon: 'TrendingUp', color: 'text-amber-500', bg: 'bg-amber-50' },
+                { title: 'Order Delivered', desc: 'Order #ORD10243 successfully delivered', time: '2 hours ago', icon: 'CheckCircle2', color: 'text-emerald-500', bg: 'bg-emerald-50' },
+              ]).map((activity, i) => {
+                const IconComponent = iconMap[activity.icon] || Clock;
+                return (
+                  <div key={i} className="relative flex gap-6">
+                    <div className={`z-10 w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${activity.bg} ${activity.color} shadow-sm border border-white`}>
+                      <IconComponent size={18} />
+                    </div>
+                    <div>
+                      <h4 className="font-black text-slate-900 text-sm leading-none">{activity.title}</h4>
+                      <p className="text-xs text-slate-400 font-medium mt-1.5">{activity.desc}</p>
+                      <div className="flex items-center gap-2 mt-2 text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                        <Clock size={10} />
+                        {activity.time}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

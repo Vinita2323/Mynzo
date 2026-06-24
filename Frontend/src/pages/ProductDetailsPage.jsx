@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, ShoppingCart, Heart, Send, Star, ChevronRight, Home, Truck, Store, RotateCcw, Banknote, ShieldCheck, ArrowRight, ChevronDown, ChevronUp, CheckCircle2, CheckCircle, X, Play, MapPin } from 'lucide-react';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { useApp } from '../context/AppContext';
+import analytics from '../utils/analytics';
 import { CRAZY_DEALS } from '../data/mockData';
 import OptimizedImage from '../components/ui/OptimizedImage';
 import { getImageUrl } from '../utils/imageHelper';
@@ -310,6 +311,12 @@ export default function ProductDetailsPage() {
 
     fetchProduct();
   }, [id]);
+
+  useEffect(() => {
+    if (product && product.id !== 'fallback') {
+      analytics.trackProductView(product.id, product.name, product.type);
+    }
+  }, [product]);
 
   if (isLoading || !product) {
     return (

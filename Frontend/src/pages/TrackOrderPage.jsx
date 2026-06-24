@@ -96,8 +96,8 @@ export default function TrackOrderPage() {
     steps = [
       { id: 1, title: 'Order Placed', desc: 'We have received your order', date: new Date(order.createdAt).toLocaleString(), icon: CheckCircle2, status: 'completed' },
       { id: 2, title: 'Order Processed', desc: 'Your order is being prepared', date: '', icon: Package, status: order.status !== 'Pending' ? 'completed' : 'pending' },
-      { id: 3, title: 'Shipped', desc: 'Your item has been shipped', date: '', icon: Truck, status: ['Shipped', 'Delivered'].includes(order.status) ? 'completed' : (order.status === 'Processing' ? 'active' : 'pending') },
-      { id: 4, title: 'Out for Delivery', desc: 'Delivery partner is on the way', date: '', icon: MapPin, status: isDelivered ? 'completed' : 'pending' },
+      { id: 3, title: 'Shipped', desc: 'Your item has been shipped', date: '', icon: Truck, status: ['Shipped', 'Out for Delivery', 'Delivered'].includes(order.status) ? 'completed' : (order.status === 'Processing' ? 'active' : 'pending') },
+      { id: 4, title: 'Out for Delivery', desc: 'Delivery partner is on the way', date: '', icon: MapPin, status: isDelivered ? 'completed' : (order.status === 'Out for Delivery' ? 'active' : 'pending') },
       { id: 5, title: 'Delivered', desc: 'Package arrived', date: '', icon: Home, status: isDelivered ? 'completed' : 'pending' },
     ];
   }

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Heart, MessageCircle, Share2, ShoppingBag, Gift, ArrowLeft, CheckCircle2, Play, Edit2, Trash2, X, Copy, Volume2, VolumeX } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import OptimizedImage from '../components/ui/OptimizedImage';
+import analytics from '../utils/analytics';
 
 // Optimized Video component with preloading and unmuting control
 const ReelVideo = ({ src, onVisible, isMuted, toggleMute, active, onDoubleTap }) => {
@@ -224,6 +225,7 @@ export default function StudioPage() {
 
   // WebSocket Reel Like Trigger
   const handleLike = (postId) => {
+    analytics.trackStudioAction('greeting_liked', { reelId: postId });
     if (!user) {
       navigate('/login');
       return;
@@ -375,6 +377,7 @@ export default function StudioPage() {
   };
 
   const handleVisible = async (postId) => {
+    analytics.trackStudioAction('greeting_viewed', { reelId: postId });
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       await fetch(`${apiBase}/reels/${postId}/view`, {
@@ -391,6 +394,7 @@ export default function StudioPage() {
   };
 
   const handleCopyLink = async (postId) => {
+    analytics.trackStudioAction('greeting_shared', { reelId: postId });
     try {
       const shareUrl = `${window.location.origin}/studio?reelId=${postId}`;
       await navigator.clipboard.writeText(shareUrl);
@@ -402,6 +406,7 @@ export default function StudioPage() {
   };
 
   const handleAddToCart = (product) => {
+    analytics.trackStudioAction('greeting_product_cart_add', { productId: product.id || product._id });
     if (!user) {
       navigate('/login');
       return;

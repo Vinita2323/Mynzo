@@ -360,8 +360,10 @@ exports.syncOrderStatus = async (req, res) => {
                 let mappedStatus = order.status;
                 const srStatus = currentStatus ? String(currentStatus).toUpperCase().trim() : '';
 
-                if (['SHIPPED', 'IN TRANSIT', 'OUT FOR DELIVERY', 'DISPATCHED'].includes(srStatus)) {
+                if (['SHIPPED', 'IN TRANSIT', 'DISPATCHED'].includes(srStatus)) {
                     mappedStatus = 'Shipped';
+                } else if (['OUT FOR DELIVERY', 'OUT_FOR_DELIVERY'].includes(srStatus)) {
+                    mappedStatus = 'Out for Delivery';
                 } else if (srStatus === 'DELIVERED') {
                     mappedStatus = 'Delivered';
                 } else if (['CANCELLED', 'RTO INITIATED', 'RTO DELIVERED'].includes(srStatus)) {
@@ -440,8 +442,10 @@ exports.webhookReceiver = async (req, res) => {
             let mappedStatus = order.status;
             const srStatus = currentStatus ? String(currentStatus).toUpperCase().trim() : '';
 
-            if (['SHIPPED', 'IN TRANSIT', 'OUT FOR DELIVERY', 'DISPATCHED', 'OUT_FOR_DELIVERY', 'IN_TRANSIT'].includes(srStatus)) {
+            if (['SHIPPED', 'IN TRANSIT', 'DISPATCHED', 'IN_TRANSIT'].includes(srStatus)) {
                 mappedStatus = 'Shipped';
+            } else if (['OUT FOR DELIVERY', 'OUT_FOR_DELIVERY'].includes(srStatus)) {
+                mappedStatus = 'Out for Delivery';
             } else if (srStatus === 'DELIVERED') {
                 mappedStatus = 'Delivered';
                 // Mark COD payment as Paid on delivery

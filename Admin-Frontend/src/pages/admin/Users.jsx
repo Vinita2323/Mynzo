@@ -4,7 +4,8 @@ import {
   Users as UsersIcon, Search, Filter, Mail, 
   Phone, MapPin, Calendar, MoreVertical,
   CheckCircle2, XCircle, Clock, ShieldCheck,
-  Download, UserPlus, Star, Edit2, ShieldAlert, Eye, LogOut
+  Download, UserPlus, Star, Edit2, ShieldAlert, Eye, LogOut,
+  ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -31,32 +32,44 @@ const Users = () => {
     phone: '',
     status: 'Active'
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const limit = 10;
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (page = 1, search = '', status = 'All') => {
     const token = localStorage.getItem('adminToken');
     if (!token) return;
 
     setLoading(true);
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/admin/auth/users`, {
+      const queryParams = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+        search: search,
+        status: status
+      });
+      const res = await fetch(`${apiBase}/admin/auth/users?${queryParams.toString()}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        const formattedUsers = data.users.map((u, index) => ({
+        const formattedUsers = data.users.map((u) => ({
           id: u._id,
           name: u.name || 'Anonymous User',
           email: u.email || 'N/A',
           phone: u.phone || 'N/A',
           joined: new Date(u.createdAt).toISOString().split('T')[0],
-          totalSpent: '₹0',
-          orders: 0,
-          status: 'Active'
+          totalSpent: `₹${(u.totalSpent || 0).toLocaleString('en-IN')}`,
+          orders: u.ordersCount || 0,
+          status: u.derivedStatus || 'Active'
         }));
         setUsersList(formattedUsers);
+        setTotalPages(data.pages || 1);
+        setTotalUsers(data.total || 0);
       } else {
         toast.error(data.message || 'Failed to load users');
       }
@@ -68,19 +81,19 @@ const Users = () => {
     }
   };
 
+  // Reset page to 1 on search or filter change
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    setCurrentPage(1);
+  }, [searchQuery, filterStatus]);
 
-  const filteredUsers = usersList.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          user.phone.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = filterStatus === 'All' || user.status === filterStatus;
-    
-    return matchesSearch && matchesStatus;
-  });
+  // Fetch data when page, search, or filter status changes
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      fetchUsers(currentPage, searchQuery, filterStatus);
+    }, 300);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [currentPage, searchQuery, filterStatus]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -120,7 +133,10 @@ const Users = () => {
       const data = await res.json();
       if (res.ok && data.success) {
         toast.success(data.message || 'Customer added successfully');
-        fetchUsers();
+        setCurrentPage(1);
+        setSearchQuery('');
+        setFilterStatus('All');
+        fetchUsers(1, '', 'All');
         setIsAddModalOpen(false);
         setFormData({ name: '', email: '', phone: '', status: 'Active' });
       } else {
@@ -167,26 +183,59 @@ const Users = () => {
     }
   };
 
-  const handleExport = () => {
-    const headers = ['ID', 'Name', 'Email', 'Phone', 'Joined', 'Spent', 'Orders', 'Status'];
-    const csvContent = [
-      headers.join(','),
-      ...usersList.map(u => `${u.id},"${u.name}",${u.email},${u.phone},${u.joined},"${u.totalSpent}",${u.orders},${u.status}`)
-    ].join('\n');
+  const handleExport = async () => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) return;
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    link.setAttribute('download', `customers_export_${new Date().toISOString().split('T')[0]}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const toastId = toast.loading('Preparing export...');
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const queryParams = new URLSearchParams({
+        page: '1',
+        limit: '100000',
+        search: searchQuery,
+        status: filterStatus
+      });
+      const res = await fetch(`${apiBase}/admin/auth/users?${queryParams.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        const headers = ['ID', 'Name', 'Email', 'Phone', 'Joined', 'Spent', 'Orders', 'Status'];
+        const csvContent = [
+          headers.join(','),
+          ...data.users.map(u => {
+            const joined = new Date(u.createdAt).toISOString().split('T')[0];
+            const spent = `₹${(u.totalSpent || 0).toLocaleString('en-IN')}`;
+            const orders = u.ordersCount || 0;
+            const status = u.derivedStatus || 'Active';
+            return `${u._id},"${u.name || 'Anonymous'}",${u.email || 'N/A'},${u.phone || 'N/A'},${joined},"${spent}",${orders},${status}`;
+          })
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `customers_export_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        toast.success('Export downloaded successfully', { id: toastId });
+      } else {
+        toast.error('Failed to export data', { id: toastId });
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Could not connect to backend server', { id: toastId });
+    }
   };
 
   const handleForceLogoutAll = async () => {
-    const confirmLogout = window.confirm(`⚠️ WARNING: Are you sure you want to FORCE LOGOUT ALL ${usersList.length} CUSTOMERS? This will invalidate every user session across the platform immediately.`);
+    const confirmLogout = window.confirm(`⚠️ WARNING: Are you sure you want to FORCE LOGOUT ALL ${totalUsers} CUSTOMERS? This will invalidate every user session across the platform immediately.`);
     if (!confirmLogout) return;
 
     const token = localStorage.getItem('adminToken');
@@ -244,7 +293,7 @@ const Users = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Buyers', value: usersList.length.toLocaleString(), icon: UsersIcon, color: 'text-blue-500', bg: 'bg-blue-50' },
+          { label: 'Total Buyers', value: totalUsers.toLocaleString(), icon: UsersIcon, color: 'text-blue-500', bg: 'bg-blue-50' },
           { label: 'Active Now', value: '182', icon: Clock, color: 'text-green-500', bg: 'bg-green-50' },
           { label: 'Avg LTV', value: '₹12,400', icon: Star, color: 'text-amber-500', bg: 'bg-amber-50' },
           { label: 'New This Week', value: '+45', icon: UserPlus, color: 'text-indigo-500', bg: 'bg-indigo-50' },
@@ -347,8 +396,7 @@ const Users = () => {
                     <td className="px-6 py-5"><div className="w-16 h-6 bg-slate-200 rounded-full"></div></td>
                     <td className="px-6 py-5"><div className="w-8 h-8 bg-slate-200 rounded-lg ml-auto"></div></td>
                   </tr>
-                ))
-              ) : filteredUsers.length > 0 ? filteredUsers.map((user, i) => (
+                ))) : usersList.length > 0 ? usersList.map((user, i) => (
                 <tr 
                   key={user.id} 
                   onClick={() => navigate(`/admin/users/${user.id}`)}
@@ -388,7 +436,7 @@ const Users = () => {
                     >
                        <MoreVertical size={16} />
                     </button>
-
+ 
                     <AnimatePresence>
                       {activeMenu === user.id && (
                         <>
@@ -398,7 +446,7 @@ const Users = () => {
                             animate={{ opacity: 1, scale: 1, y: 0 }}
                             exit={{ opacity: 0, scale: 0.95, y: -10 }}
                             className={`absolute right-6 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 z-20 py-2 overflow-hidden ${
-                              i >= filteredUsers.length - 2 && filteredUsers.length > 2 ? 'bottom-14' : 'top-14'
+                              i >= usersList.length - 2 && usersList.length > 2 ? 'bottom-14' : 'top-14'
                             }`}
                           >
                              <button onClick={(e) => handleAction(e, 'view', user)} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 text-slate-600 transition-colors">
@@ -441,6 +489,99 @@ const Users = () => {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Footer */}
+        {totalPages > 1 && (
+          <div className="px-6 py-4 border-t border-slate-100 flex items-center justify-between bg-white rounded-b-3xl">
+            <p className="text-xs font-bold text-slate-500 font-raleway uppercase tracking-wider">
+              Showing <span className="text-slate-900 font-extrabold">{Math.min(totalUsers, (currentPage - 1) * limit + 1)}</span> to{' '}
+              <span className="text-slate-900 font-extrabold">{Math.min(totalUsers, currentPage * limit)}</span> of{' '}
+              <span className="text-slate-900 font-extrabold">{totalUsers}</span> Customers
+            </p>
+            
+            <div className="flex items-center gap-2">
+              {/* Previous Button */}
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className={`p-2.5 rounded-xl border border-slate-100 transition-all flex items-center justify-center ${
+                  currentPage === 1 
+                    ? 'opacity-40 cursor-not-allowed bg-slate-50 text-slate-400' 
+                    : 'bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm active:scale-95'
+                }`}
+              >
+                <ChevronLeft size={16} />
+              </button>
+
+              {/* Page Numbers */}
+              {(() => {
+                const pages = [];
+                const maxVisiblePages = 5;
+
+                if (totalPages <= maxVisiblePages) {
+                  for (let i = 1; i <= totalPages; i++) {
+                    pages.push(i);
+                  }
+                } else {
+                  pages.push(1);
+
+                  if (currentPage > 3) {
+                    pages.push('ellipsis-prev');
+                  }
+
+                  const start = Math.max(2, currentPage - 1);
+                  const end = Math.min(totalPages - 1, currentPage + 1);
+                  for (let i = start; i <= end; i++) {
+                    pages.push(i);
+                  }
+
+                  if (currentPage < totalPages - 2) {
+                    pages.push('ellipsis-next');
+                  }
+
+                  pages.push(totalPages);
+                }
+
+                return pages.map((page, idx) => {
+                  if (page === 'ellipsis-prev' || page === 'ellipsis-next') {
+                    return (
+                      <span key={`ellipsis-${idx}`} className="text-slate-400 px-2 font-bold select-none">
+                        ...
+                      </span>
+                    );
+                  }
+
+                  return (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-10 h-10 rounded-xl text-xs font-black transition-all flex items-center justify-center ${
+                        currentPage === page
+                          ? 'bg-blue-500 text-white shadow-lg shadow-blue-100'
+                          : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-100 hover:text-slate-900 active:scale-95'
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  );
+                });
+              })()}
+
+              {/* Next Button */}
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className={`p-2.5 rounded-xl border border-slate-100 transition-all flex items-center justify-center ${
+                  currentPage === totalPages 
+                    ? 'opacity-40 cursor-not-allowed bg-slate-50 text-slate-400' 
+                    : 'bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 shadow-sm active:scale-95'
+                }`}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Add Customer Slide-over */}

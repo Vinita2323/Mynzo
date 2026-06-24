@@ -43,12 +43,26 @@ const PageSkeleton = () => (
 );
 
 import './App.css';
+import analytics from './utils/analytics';
 
 
 function AppContent() {
   const { user } = useApp();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Initialize analytics on app mount
+  useEffect(() => {
+    analytics.init();
+  }, []);
+
+  // Track page views on route changes
+  useEffect(() => {
+    analytics.track('page_view', 'engagement', {
+      path: location.pathname,
+      search: location.search
+    });
+  }, [location.pathname, location.search]);
 
   // Only show splash screen when landing on the root path '/'.
   // If the user opens a direct link (e.g. /support), skip it immediately.

@@ -98,15 +98,31 @@ export default function OrdersPage() {
   ];
 
   // Transform appOrders to match the required UI structure, or use MOCK_ORDERS
-  let rawOrders = appOrders && appOrders.length > 0 ? appOrders.map((o, idx) => ({
-    id: o.id || `ORD-MOCK-${idx}`,
-    date: o.status === 'Delivered' ? `Delivered on ${o.date || 'Apr 13'}` : (o.etd ? `Arriving by ${o.etd}` : 'Processing'),
-    status: o.status || (idx === 0 ? 'In Transit' : 'Delivered'),
-    name: o.items && o.items[0] ? o.items[0].name : 'Product',
-    image: (o.items && o.items[0] && o.items[0].image) ? o.items[0].image : fallbackImages[idx % fallbackImages.length],
-    rating: idx === 1 ? 3 : 0,
-    ratingText: idx === 1 ? 'Okay' : (idx === 0 ? '' : 'Rate & Review')
-  })) : [];
+  let rawOrders = appOrders && appOrders.length > 0 ? appOrders.map((o, idx) => {
+    const dateObj = o.createdAt ? new Date(o.createdAt) : null;
+    const formattedDateTime = dateObj 
+      ? `${dateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })} at ${dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`
+      : o.date;
+
+    return {
+      id: o.id || `ORD-MOCK-${idx}`,
+      date: formattedDateTime,
+      status: o.status || (idx === 0 ? 'In Transit' : 'Delivered'),
+      name: o.items && o.items[0] ? o.items[0].name : 'Product',
+      image: (o.items && o.items[0] && o.items[0].image) ? o.items[0].image : fallbackImages[idx % fallbackImages.length],
+      rating: idx === 1 ? 3 : 0,
+      ratingText: idx === 1 ? 'Okay' : (idx === 0 ? '' : 'Rate & Review'),
+      createdAt: o.createdAt || ''
+    };
+  }) : [];
+
+  // Sort: Latest orders top pe (descending order by createdAt)
+  rawOrders.sort((a, b) => {
+    if (a.createdAt && b.createdAt) {
+      return new Date(b.createdAt) - new Date(a.createdAt);
+    }
+    return b.id.localeCompare(a.id);
+  });
 
   // Apply Search
   if (searchQuery.trim() !== '') {

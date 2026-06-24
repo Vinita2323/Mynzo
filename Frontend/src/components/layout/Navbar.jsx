@@ -4,6 +4,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import toast from 'react-hot-toast';
 import { NOTIFICATIONS } from '../../data/mockData';
+import analytics from '../../utils/analytics';
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -113,6 +114,7 @@ export default function Navbar() {
       recognition.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
         setSearchQuery(transcript);
+        analytics.trackSearch(transcript);
         if (window.location.pathname !== '/categories') {
           navigate('/categories');
         }
@@ -141,6 +143,7 @@ export default function Navbar() {
         return;
       }
       setSearchQuery("Camera search result");
+      analytics.trackSearch("Camera visual search");
       if (window.location.pathname !== '/categories') {
         navigate('/categories');
       }
@@ -241,8 +244,13 @@ export default function Navbar() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && window.location.pathname !== '/categories') {
-                    navigate('/categories');
+                  if (e.key === 'Enter') {
+                    if (searchQuery.trim() !== '') {
+                      analytics.trackSearch(searchQuery);
+                    }
+                    if (window.location.pathname !== '/categories') {
+                      navigate('/categories');
+                    }
                   }
                 }}
               />

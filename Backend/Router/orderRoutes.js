@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { createOrder, getUserOrders, getAllOrders, updateOrderStatus, getUserOrderById, trackOrderById, getAdminOrderById } = require('../Controllers/orderController');
+const { createOrder, getUserOrders, getAllOrders, updateOrderStatus, getUserOrderById, trackOrderById, getAdminOrderById, deleteOrder } = require('../Controllers/orderController');
 const { protectUser } = require('../Middlewares/userAuthMiddleware');
 const { protectAdmin } = require('../Middlewares/authMiddleware');
 
@@ -20,7 +20,8 @@ router.route('/admin/all')
   .get(protectAdmin, getAllOrders);
 
 router.route('/admin/:id')
-  .get(protectAdmin, getAdminOrderById);
+  .get(protectAdmin, getAdminOrderById)
+  .delete(protectAdmin, deleteOrder);
 
 router.route('/admin/:id/status')
   .put(protectAdmin, updateOrderStatus);

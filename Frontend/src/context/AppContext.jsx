@@ -4,6 +4,7 @@ import { CRAZY_DEALS } from '../data/mockData';
 import toast from 'react-hot-toast';
 import { requestFcmToken, messaging } from '../firebase';
 import { onMessage } from 'firebase/messaging';
+import analytics from '../utils/analytics';
 
 const AppContext = createContext();
 
@@ -74,6 +75,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    analytics.track('logout', 'auth');
     localStorage.removeItem('userToken');
     localStorage.removeItem('userInfo');
     localStorage.removeItem('fcmToken');
@@ -339,7 +341,8 @@ export const AppProvider = ({ children }) => {
             paymentStatus: o.paymentStatus,
             deliveryAddress: o.deliveryAddress,
             deliveryCharge: o.deliveryCharge,
-            etd: o.etd
+            etd: o.etd,
+            createdAt: o.createdAt
           }));
           setOrders(mappedOrders);
         }
@@ -456,6 +459,7 @@ export const AppProvider = ({ children }) => {
 
   // Cart helper functions
   const addToCart = async (product) => {
+    analytics.trackAddToCart(product);
     if (user && user.id) {
       try {
         const token = localStorage.getItem('userToken');
@@ -507,6 +511,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const removeFromCart = async (productId) => {
+    analytics.trackRemoveFromCart(productId);
     if (user && user.id) {
       try {
         const token = localStorage.getItem('userToken');
@@ -600,6 +605,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const clearCart = async () => {
+    analytics.track('clear_cart', 'commerce');
     if (user && user.id) {
       try {
         const token = localStorage.getItem('userToken');
@@ -630,6 +636,8 @@ export const AppProvider = ({ children }) => {
       toast.error('Please log in first!');
       return;
     }
+    const isAdding = !isInWishlist(product.id);
+    analytics.track(isAdding ? 'wishlist_add' : 'wishlist_remove', 'social', { productId: product.id });
     if (socketRef.current) {
       socketRef.current.emit('toggle_like', { userId: user.id, productId: product.id });
     } else {
@@ -642,6 +650,7 @@ export const AppProvider = ({ children }) => {
   };
 
   const addOrder = (order) => {
+    analytics.trackOrderPlaced(order);
     setOrders((prev) => [order, ...prev]);
   };
 

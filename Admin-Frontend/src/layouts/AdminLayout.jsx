@@ -104,7 +104,6 @@ const AdminLayout = () => {
         },
         { name: 'Orders', path: '/admin/orders', icon: <ShoppingCart size={18} /> },
         { name: 'Returns & Refunds', path: '/admin/operations/returns', icon: <RotateCcw size={18} /> },
-        { name: 'Delivery Services', path: '/admin/delivery/services', icon: <Truck size={18} /> },
       ]
     },
     {
@@ -133,8 +132,6 @@ const AdminLayout = () => {
       title: 'FINANCE',
       items: [
         { name: 'Earnings', path: '/admin/finance/earnings', icon: <DollarSign size={18} /> },
-        // { name: 'Tax & GST Config', path: '/admin/finance/tax', icon: <ShieldCheck size={18} /> },
-        { name: 'Delivery Charges', path: '/admin/finance/delivery-charges', icon: <Truck size={18} /> },
       ]
     },
     {

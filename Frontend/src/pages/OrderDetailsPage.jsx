@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, Copy, CheckCircle2, Star, MapPin, Receipt, Download, ChevronDown, PenLine, X, Package, Image as ImageIcon, Video } from 'lucide-react';
+import { ArrowLeft, Copy, CheckCircle2, Star, MapPin, Receipt, Download, ChevronDown, PenLine, X, Package, Image as ImageIcon, Video, RotateCcw, AlertCircle, Loader2, Check } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import toast from 'react-hot-toast';
@@ -61,6 +61,94 @@ export default function OrderDetailsPage() {
 
   const globalOrder = orders?.find(o => o.id === id);
   const isDelivered = globalOrder ? globalOrder.status === 'Delivered' : id !== 'ORD-8X92-K1';
+
+  // Return request state
+  const [showReturnSheet, setShowReturnSheet] = useState(false);
+  const [returnReason, setReturnReason] = useState('');
+  const [returnReasonDetails, setReturnReasonDetails] = useState('');
+  const [returnSelectedItems, setReturnSelectedItems] = useState([]);
+  const [submittingReturn, setSubmittingReturn] = useState(false);
+  const [existingReturn, setExistingReturn] = useState(null);
+  const [checkingReturn, setCheckingReturn] = useState(false);
+
+  const RETURN_REASONS = ['Damaged Product', 'Wrong Item Sent', 'Defective Unit', 'Not As Described', 'Size/Fit Issue', 'Changed Mind', 'Other'];
+
+  // Check if a return request already exists for this order
+  useEffect(() => {
+    const checkExistingReturn = async () => {
+      if (!globalOrder || globalOrder.status !== 'Delivered' && globalOrder.status !== 'Return Requested') return;
+      const token = localStorage.getItem('userToken');
+      if (!token) return;
+      try {
+        setCheckingReturn(true);
+        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${apiBase}/returns/by-order/${id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok && data.success && data.returnRequest) {
+          setExistingReturn(data.returnRequest);
+        }
+      } catch (err) {
+        console.error('Check existing return error:', err);
+      } finally {
+        setCheckingReturn(false);
+      }
+    };
+    checkExistingReturn();
+  }, [id, globalOrder]);
+
+  const handleReturnToggleItem = (item) => {
+    setReturnSelectedItems(prev => {
+      const exists = prev.find(i => (i.productId || i.id) === (item.productId || item.id));
+      if (exists) return prev.filter(i => (i.productId || i.id) !== (item.productId || item.id));
+      return [...prev, item];
+    });
+  };
+
+  const handleSubmitReturn = async () => {
+    if (returnSelectedItems.length === 0) { toast.error('Select at least one item to return'); return; }
+    if (!returnReason) { toast.error('Select a reason for return'); return; }
+
+    const token = localStorage.getItem('userToken');
+    if (!token) { toast.error('Please login to continue'); return; }
+
+    try {
+      setSubmittingReturn(true);
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/returns`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({
+          orderId: id,
+          items: returnSelectedItems.map(item => ({
+            productId: item.productId || item.id,
+            name: item.name,
+            price: item.price,
+            quantity: item.quantity,
+            image: item.image || ''
+          })),
+          reason: returnReason,
+          reasonDetails: returnReasonDetails
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Return request submitted!');
+        setExistingReturn(data.returnRequest);
+        setShowReturnSheet(false);
+        setReturnReason('');
+        setReturnReasonDetails('');
+        setReturnSelectedItems([]);
+      } else {
+        toast.error(data.message || 'Failed to submit return');
+      }
+    } catch (err) {
+      toast.error('Could not submit return request');
+    } finally {
+      setSubmittingReturn(false);
+    }
+  };
 
   const MOCK_ORDER_DETAILS = {
     'ORD-8X92-K1': {
@@ -227,10 +315,38 @@ Thank you for shopping with Mynzo!
             </div>
             <button 
               onClick={() => navigate(`/track-order/${id}`)}
-              className="w-full py-2.5 text-[13px] font-semibold text-[#ee4923] hover:bg-[#ee4923]/5 active:bg-[#ee4923]/10 transition-colors"
+              className="w-full py-2.5 text-[13px] font-semibold text-[#ee4923] hover:bg-[#ee4923]/5 active:bg-[#ee4923]/10 transition-colors border-b border-slate-100"
             >
               {isDelivered ? 'See all updates' : 'Track your order'}
             </button>
+
+            {/* Return Request Section */}
+            {isDelivered && !existingReturn && !checkingReturn && (
+              <button 
+                onClick={() => setShowReturnSheet(true)}
+                className="w-full py-2.5 text-[13px] font-semibold text-amber-600 hover:bg-amber-50 active:bg-amber-100 transition-colors flex items-center justify-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                Request Return / Refund
+              </button>
+            )}
+
+            {existingReturn && (
+              <div className="px-3 py-2.5 bg-amber-50 border-t border-amber-100">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <RotateCcw className="w-4 h-4 text-amber-600" />
+                    <span className="text-[12px] font-bold text-amber-700">Return {existingReturn.status}</span>
+                  </div>
+                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
+                    existingReturn.status === 'Refunded' ? 'bg-green-50 text-green-600 border-green-100' :
+                    existingReturn.status === 'Rejected' ? 'bg-red-50 text-red-600 border-red-100' :
+                    'bg-amber-50 text-amber-600 border-amber-100'
+                  }`}>{existingReturn.status}</span>
+                </div>
+                <p className="text-[11px] text-amber-600 mt-1">Refund: ₹{existingReturn.refundAmount?.toLocaleString()} • {existingReturn.reason}</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -512,6 +628,121 @@ Thank you for shopping with Mynzo!
            Shop more from Mynzo
          </button>
       </div>
+
+      {/* Return Request Bottom Sheet */}
+      {showReturnSheet && (
+        <div className="fixed inset-0 z-[100] bg-black/50" onClick={() => setShowReturnSheet(false)}>
+          <div 
+            className="absolute bottom-0 left-0 right-0 max-w-md mx-auto bg-white rounded-t-3xl max-h-[85vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Handle bar */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-slate-200 rounded-full"></div>
+            </div>
+
+            <div className="p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-[18px] font-bold text-slate-800">Request Return</h2>
+                <button onClick={() => setShowReturnSheet(false)} className="p-1 hover:bg-slate-100 rounded-full transition-colors">
+                  <X className="w-5 h-5 text-slate-400" />
+                </button>
+              </div>
+
+              {/* Select items */}
+              <div>
+                <p className="text-[14px] font-semibold text-slate-700 mb-2">Select items to return</p>
+                <div className="space-y-2">
+                  {orderItems.map((item, idx) => {
+                    const isSelected = returnSelectedItems.find(i => (i.productId || i.id) === (item.productId || item.id));
+                    return (
+                      <div 
+                        key={idx}
+                        onClick={() => handleReturnToggleItem(item)}
+                        className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
+                          isSelected ? 'border-[#ee4923] bg-orange-50' : 'border-slate-100 bg-slate-50 hover:bg-slate-100'
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
+                          isSelected ? 'border-[#ee4923] bg-[#ee4923]' : 'border-slate-300'
+                        }`}>
+                          {isSelected && <Check className="w-3 h-3 text-white" />}
+                        </div>
+                        {item.image && (
+                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border border-slate-200">
+                            <OptimizedImage src={item.image} alt={item.name} type="product" className="w-full h-full object-cover" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-semibold text-slate-800 truncate">{item.name}</p>
+                          <p className="text-[11px] text-slate-500">Qty: {item.quantity} • ₹{item.price}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Select reason */}
+              <div>
+                <p className="text-[14px] font-semibold text-slate-700 mb-2">Reason for return</p>
+                <div className="grid grid-cols-2 gap-2">
+                  {RETURN_REASONS.map((reason) => (
+                    <button
+                      key={reason}
+                      onClick={() => setReturnReason(reason)}
+                      className={`px-3 py-2.5 rounded-xl text-[12px] font-semibold text-left transition-all border ${
+                        returnReason === reason 
+                          ? 'border-[#ee4923] bg-orange-50 text-[#ee4923]' 
+                          : 'border-slate-100 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                      }`}
+                    >
+                      {reason}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Additional details */}
+              <div>
+                <p className="text-[14px] font-semibold text-slate-700 mb-2">Additional details (optional)</p>
+                <textarea
+                  value={returnReasonDetails}
+                  onChange={(e) => setReturnReasonDetails(e.target.value)}
+                  placeholder="Describe the issue in detail..."
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-[14px] outline-none focus:border-[#ee4923] focus:ring-1 focus:ring-[#ee4923] transition-all resize-none h-[80px]"
+                />
+              </div>
+
+              {/* Refund summary */}
+              {returnSelectedItems.length > 0 && (
+                <div className="bg-green-50 border border-green-100 rounded-xl p-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-[13px] font-semibold text-green-700">Estimated Refund</span>
+                    <span className="text-[16px] font-bold text-green-700">₹{returnSelectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()}</span>
+                  </div>
+                  <p className="text-[11px] text-green-600 mt-1">Refund will be credited to your wallet</p>
+                </div>
+              )}
+
+              {/* Submit */}
+              <button
+                onClick={handleSubmitReturn}
+                disabled={submittingReturn || returnSelectedItems.length === 0 || !returnReason}
+                className="w-full bg-[#ee4923] text-white font-bold text-[14px] py-3.5 rounded-xl hover:bg-[#ff5c3f] active:bg-[#d43d1a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {submittingReturn ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
+                ) : (
+                  <><RotateCcw className="w-4 h-4" /> Submit Return Request</>
+                )}
+              </button>
+
+              <div className="pb-4"></div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Media Lightbox Modal */}
       {selectedMedia && (

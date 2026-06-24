@@ -317,3 +317,59 @@ exports.trackOrderById = async (req, res) => {
   }
 };
 
+// @desc    Delete order (Admin only)
+// @route   DELETE /api/orders/admin/:id
+// @access  Private/Admin
+exports.deleteOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // 1. Restore stock if the order wasn't already cancelled or delivered
+    if (order.status !== 'Cancelled' && order.status !== 'Delivered') {
+      try {
+        for (const item of order.items) {
+          if (item.productId) {
+            await Product.findByIdAndUpdate(item.productId, {
+              $inc: { stock: item.quantity || 1, sales: -(item.quantity || 1) }
+            });
+          }
+        }
+      } catch (stockErr) {
+        console.error('Stock restoration failed during order deletion:', stockErr.message);
+      }
+    }
+
+    // 2. Try to cancel on Shiprocket if shiprocketOrderId exists
+    if (order.shiprocketOrderId && order.shipmentStatus !== 'Cancelled') {
+      try {
+        const token = await shiprocketService.getShiprocketToken();
+        if (token) {
+          const axios = require('axios');
+          const SHIPROCKET_API_BASE = process.env.SHIPROCKET_API_BASE || 'https://apiv2.shiprocket.in';
+          await axios.post(`${SHIPROCKET_API_BASE}/v1/external/orders/cancel`, {
+            ids: [order.shiprocketOrderId]
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          console.log(`Shiprocket order ${order.shiprocketOrderId} cancelled successfully during delete.`);
+        }
+      } catch (srErr) {
+        // Ignore Shiprocket cancellation error as per requirements
+        console.error('Shiprocket cancel failed during order deletion (ignored):', srErr.response?.data || srErr.message);
+      }
+    }
+
+    // 3. Delete order from MongoDB database
+    await Order.findByIdAndDelete(req.params.id);
+
+    res.status(200).json({ success: true, message: 'Order deleted and cancelled on Shiprocket successfully' });
+  } catch (error) {
+    console.error("Error deleting order:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+

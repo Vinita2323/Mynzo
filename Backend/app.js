@@ -114,6 +114,8 @@ app.use('/orders', require('./Router/orderRoutes'));
 app.use('/referral', require('./Router/referralRoutes'));
 app.use('/games', require('./Router/gameRoutes'));
 app.use('/reels', require('./Router/reelRoutes'));
+app.use('/analytics', require('./Router/analyticsRoutes'));
+app.use('/admin/analytics', require('./Router/analyticsRoutes'));
 
 app.use('/admin/catalog/chips', require('./Router/categoryChipRoutes'));
 app.use('/admin/catalog/subchips', require('./Router/subCategoryChipRoutes'));
@@ -130,6 +132,7 @@ app.use('/api/logistics', require('./Router/shiprocketRoutes')); // Alias withou
 app.use('/shiprocket', require('./Router/shiprocketRoutes'));
 app.use('/logistics', require('./Router/shiprocketRoutes'));
 app.use('/admin/notifications', require('./Router/notificationRoutes'));
+app.use('/returns', require('./Router/returnRoutes'));
 
 // Health check with DB connection check
 app.get('/health', async (req, res) => {

@@ -4,7 +4,8 @@ import {
   ArrowLeft, Package, User, MapPin, 
   CreditCard, Truck, Calendar, Clock,
   Download, Printer, AlertCircle, ChevronRight,
-  ShieldCheck, Smartphone, Mail, RefreshCw, XCircle
+  ShieldCheck, Smartphone, Mail, RefreshCw, XCircle,
+  RotateCcw, DollarSign
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -15,8 +16,11 @@ const StatusBadge = ({ status }) => {
     'Pending': 'bg-amber-50 text-amber-600 border-amber-100',
     'Processing': 'bg-blue-50 text-blue-600 border-blue-100',
     'Shipped': 'bg-violet-50 text-violet-600 border-violet-100',
+    'Out for Delivery': 'bg-sky-50 text-sky-600 border-sky-100',
     'Delivered': 'bg-green-50 text-green-600 border-green-100',
     'Cancelled': 'bg-red-50 text-red-600 border-red-100',
+    'Return Requested': 'bg-amber-50 text-amber-600 border-amber-100',
+    'Refunded': 'bg-emerald-50 text-emerald-600 border-emerald-100',
   };
   return (
     <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${styles[status] || 'bg-slate-50 text-slate-600 border-slate-100'}`}>
@@ -34,7 +38,31 @@ const OrderDetail = () => {
   const [processingOrder, setProcessingOrder] = useState(false);
   const [creatingShiprocket, setCreatingShiprocket] = useState(false);
 
-  const tabs = ['All', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+  const tabs = ['All', 'Pending', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled', 'Return Requested'];
+
+  const [returnInfo, setReturnInfo] = useState(null);
+
+  const fetchReturnInfo = async () => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) return;
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/returns/admin/all?search=&status=All&limit=100`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        // Find return for this order
+        const match = data.returns?.find(r => {
+          const rid = r.orderId?._id || r.orderId;
+          return rid && rid.toString() === orderId;
+        });
+        if (match) setReturnInfo(match);
+      }
+    } catch (err) {
+      console.error('Fetch return info error:', err);
+    }
+  };
 
   const fetchOrderDetail = async () => {
     const token = localStorage.getItem('adminToken');
@@ -67,6 +95,7 @@ const OrderDetail = () => {
 
   useEffect(() => {
     fetchOrderDetail();
+    fetchReturnInfo();
   }, [orderId]);
 
   const handleUpdateStatus = async (newStatus) => {
@@ -259,6 +288,28 @@ const OrderDetail = () => {
     }
   };
 
+  const handleDeleteOrder = async () => {
+    if (!order) return;
+    if (!window.confirm('Are you sure you want to delete this order? It will be cancelled in Shiprocket and completely removed from the database.')) return;
+    const token = localStorage.getItem('adminToken');
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/orders/admin/${order._id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Order deleted successfully');
+        navigate('/admin/orders');
+      } else {
+        toast.error(data.message || 'Failed to delete order');
+      }
+    } catch (err) {
+      toast.error('Error deleting order');
+    }
+  };
+
   const handleSyncStatus = async () => {
     const token = localStorage.getItem('adminToken');
     try {
@@ -312,8 +363,9 @@ const OrderDetail = () => {
 
     const steps = [
       { status: 'Pending', date: new Date(order.createdAt).toLocaleString(), desc: 'Order placed by customer', completed: true },
-      { status: 'Processing', date: ['Processing', 'Shipped', 'Delivered'].includes(order.status) ? 'Updated' : 'Pending', desc: 'Order confirmed & is being prepared', completed: ['Processing', 'Shipped', 'Delivered'].includes(order.status) },
-      { status: 'Shipped', date: ['Shipped', 'Delivered'].includes(order.status) ? 'Updated' : 'Pending', desc: 'Awaiting courier scan or shipped', completed: ['Shipped', 'Delivered'].includes(order.status) },
+      { status: 'Processing', date: ['Processing', 'Shipped', 'Out for Delivery', 'Delivered'].includes(order.status) ? 'Updated' : 'Pending', desc: 'Order confirmed & is being prepared', completed: ['Processing', 'Shipped', 'Out for Delivery', 'Delivered'].includes(order.status) },
+      { status: 'Shipped', date: ['Shipped', 'Out for Delivery', 'Delivered'].includes(order.status) ? 'Updated' : 'Pending', desc: 'Awaiting courier scan or shipped', completed: ['Shipped', 'Out for Delivery', 'Delivered'].includes(order.status) },
+      { status: 'Out for Delivery', date: ['Out for Delivery', 'Delivered'].includes(order.status) ? 'Updated' : 'Pending', desc: 'Delivery partner is on the way', completed: ['Out for Delivery', 'Delivered'].includes(order.status) },
       { status: 'Delivered', date: order.status === 'Delivered' ? 'Completed' : 'Pending', desc: 'Package delivered to address', completed: order.status === 'Delivered' }
     ];
 
@@ -532,12 +584,66 @@ const OrderDetail = () => {
                     </button>
                   </>
                 )}
+
+                {/* Delete Order - Always available */}
+                <button 
+                  onClick={handleDeleteOrder}
+                  className="px-4 py-2 bg-rose-50 text-rose-600 border border-rose-100 rounded-xl text-xs font-bold hover:bg-rose-100 transition-colors shadow-sm active:scale-95"
+                >
+                  🗑️ Delete Order
+                </button>
               </div>
             </div>
          </div>
 
          {/* Right Side: Customer & Timeline */}
          <div className="space-y-6">
+            {/* Return & Refund Info */}
+            {(returnInfo || order.status === 'Return Requested') && (
+              <div className="bg-white p-6 rounded-3xl border border-amber-100 shadow-sm space-y-4">
+                <div className="flex items-center gap-3">
+                  <RotateCcw size={18} className="text-amber-500" />
+                  <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-widest">Return & Refund</h3>
+                </div>
+                {returnInfo ? (
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-2 gap-3 text-xs">
+                      <div>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Return ID</p>
+                        <p className="font-bold text-blue-600 font-roboto mt-0.5">RET-{returnInfo._id.substring(returnInfo._id.length - 6).toUpperCase()}</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Status</p>
+                        <span className={`inline-block mt-0.5 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest border ${
+                          returnInfo.status === 'Refunded' ? 'bg-green-50 text-green-600 border-green-100' :
+                          returnInfo.status === 'Rejected' ? 'bg-red-50 text-red-600 border-red-100' :
+                          returnInfo.status === 'Requested' ? 'bg-amber-50 text-amber-600 border-amber-100' :
+                          'bg-blue-50 text-blue-600 border-blue-100'
+                        }`}>{returnInfo.status}</span>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Reason</p>
+                        <p className="font-bold text-slate-900 mt-0.5">{returnInfo.reason}</p>
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Refund Amount</p>
+                        <p className="font-black text-green-600 font-roboto mt-0.5">₹{returnInfo.refundAmount?.toLocaleString()}</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => navigate('/admin/operations/returns')}
+                      className="w-full px-4 py-2.5 bg-amber-50 text-amber-700 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-amber-100 transition-all flex items-center justify-center gap-2"
+                    >
+                      <RotateCcw size={14} />
+                      Manage Return
+                    </button>
+                  </div>
+                ) : (
+                  <p className="text-xs text-amber-600 font-medium">A return has been requested for this order. Check the Returns page for details.</p>
+                )}
+              </div>
+            )}
+
             {/* Customer Info */}
             <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm space-y-6">
                <div className="flex items-center gap-3">

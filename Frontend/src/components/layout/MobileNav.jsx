@@ -2,6 +2,7 @@ import React from 'react';
 import { Home, LayoutGrid, Camera, Gamepad2, ShoppingCart, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
+import { motion } from 'framer-motion';
 
 export default function MobileNav() {
   const { totalCartItems, user } = useApp();
@@ -41,31 +42,35 @@ export default function MobileNav() {
             <button
               key={item.id}
               onClick={() => navigate(item.path)}
-              className={`relative flex flex-col items-center justify-center flex-1 max-w-[64px] h-[54px] rounded-2xl outline-none focus:outline-none [-webkit-tap-highlight-color:transparent] transition-all duration-500 ease-out active:scale-95 ${
-                isActive 
-                  ? 'bg-[#d8421b]/35 backdrop-blur-md border border-white/80 shadow-[0_4px_15px_rgba(216,66,27,0.25)]' 
-                  : 'bg-transparent border border-transparent'
-              }`}
+              className="relative flex flex-col items-center justify-center flex-1 max-w-[64px] h-[54px] rounded-2xl outline-none focus:outline-none [-webkit-tap-highlight-color:transparent] active:scale-95 transition-transform duration-200"
             >
-              <div className={`transition-all duration-500 ${
+              {isActive && (
+                <motion.div
+                  layoutId="active-nav-pill"
+                  className="absolute inset-0 bg-[#FFF0ED] border border-[#EE4923]/20 shadow-[0_4px_12px_rgba(238,73,35,0.08)] rounded-2xl -z-10"
+                  transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                />
+              )}
+
+              <div className={`transition-all duration-300 ${
                 isActive 
-                  ? 'text-[#d8421b] -translate-y-0.5 scale-110' 
+                  ? 'text-[#EE4923] -translate-y-0.5 scale-110' 
                   : 'text-[#64748B] hover:text-[#0F172A]'
               }`}>
-                <Icon className={`w-6 h-6 ${isActive ? 'stroke-[2.5]' : 'stroke-[2]'}`} />
+                <Icon className={`w-5.5 h-5.5 ${isActive ? 'stroke-[2.5]' : 'stroke-[2]'}`} />
               </div>
 
-              <span className={`text-[10px] tracking-wide transition-all duration-500 ${
+              <span className={`text-[10px] tracking-wide transition-all duration-300 ${
                 isActive 
-                  ? 'text-[#d8421b] font-bold mt-0.5' 
-                  : 'text-[#64748B] font-medium mt-1'
+                  ? 'text-[#EE4923] font-black mt-0.5' 
+                  : 'text-[#64748B] font-semibold mt-1'
               }`}>
                 {item.label}
               </span>
 
               {/* Red Badge for Cart */}
               {item.badge && totalCartItems > 0 && (
-                <span className="absolute top-0.5 right-0.5 flex h-[16px] w-[16px] items-center justify-center rounded-full bg-[#d8421b] text-[9px] font-bold text-white ring-2 ring-white shadow-sm">
+                <span className="absolute top-0.5 right-0.5 flex h-[16px] w-[16px] items-center justify-center rounded-full bg-[#EE4923] text-[9px] font-bold text-white ring-2 ring-white shadow-sm">
                   {totalCartItems}
                 </span>
               )}

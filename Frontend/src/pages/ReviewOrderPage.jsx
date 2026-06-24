@@ -4,6 +4,7 @@ import { ArrowLeft, MapPin, Tag, Banknote, ShieldCheck, X, CheckCircle2, Plus } 
 import { useApp } from '../context/AppContext';
 import toast from 'react-hot-toast';
 import OptimizedImage from '../components/ui/OptimizedImage';
+import analytics from '../utils/analytics';
 
 export default function ReviewOrderPage() {
   const navigate = useNavigate();
@@ -72,6 +73,22 @@ export default function ReviewOrderPage() {
   useEffect(() => {
     fetchAddresses();
   }, [user]);
+
+  useEffect(() => {
+    if (cart && cart.length > 0) {
+      analytics.trackCheckoutStarted(cart, totalCartPrice);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (selectedAddress) {
+      analytics.trackShippingAdded(selectedAddress.type, selectedAddress.pincode);
+    }
+  }, [selectedAddressId]);
+
+  useEffect(() => {
+    analytics.trackPaymentSelected(paymentMethod);
+  }, [paymentMethod]);
 
   const addressesList = dbAddresses;
   
@@ -194,10 +211,12 @@ export default function ReviewOrderPage() {
           discount = found.value;
         }
         setDiscountAmount(discount);
+        analytics.trackCouponApplied(found.code, true, discount);
       } else {
         setPromoError(data.message || 'Failed to validate coupon.');
         setAppliedCoupon(null);
         setDiscountAmount(0);
+        analytics.trackCouponApplied(promoInput.trim(), false, 0);
       }
     } catch (err) {
       console.error("Error applying promo:", err);

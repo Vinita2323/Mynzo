@@ -91,18 +91,100 @@ const adminLogout = (req, res) => {
 const getUsers = async (req, res) => {
   try {
     const User = require('../Models/User');
+    const Order = require('../Models/Order');
+    
     const page = Math.max(1, parseInt(req.query.page) || 1);
-    const limit = Math.min(100, parseInt(req.query.limit) || 20);
+    const limit = Math.min(100000, parseInt(req.query.limit) || 10);
     const skip = (page - 1) * limit;
+    const { search, status } = req.query;
 
-    const [users, total] = await Promise.all([
-      User.find({})
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      User.countDocuments({})
-    ]);
+    let matchQuery = {};
+    if (search) {
+      const searchRegex = new RegExp(search, 'i');
+      matchQuery.$or = [
+        { name: searchRegex },
+        { email: searchRegex },
+        { phone: searchRegex }
+      ];
+    }
+
+    const pipeline = [
+      { $match: matchQuery },
+      {
+        $lookup: {
+          from: 'orders',
+          localField: '_id',
+          foreignField: 'userId',
+          as: 'orders'
+        }
+      },
+      {
+        $addFields: {
+          ordersCount: { $size: '$orders' },
+          totalSpent: {
+            $sum: {
+              $map: {
+                input: {
+                  $filter: {
+                    input: '$orders',
+                    as: 'o',
+                    cond: { $eq: ['$$o.paymentStatus', 'Paid'] }
+                  }
+                },
+                as: 'paidOrder',
+                in: '$$paidOrder.total'
+              }
+            }
+          }
+        }
+      },
+      {
+        $addFields: {
+          derivedStatus: {
+            $cond: {
+              if: { $or: [{ $gt: ['$ordersCount', 10] }, { $gt: ['$totalSpent', 15000] }] },
+              then: 'VIP',
+              else: {
+                $cond: {
+                  if: { $eq: ['$ordersCount', 0] },
+                  then: 'Inactive',
+                  else: 'Active'
+                }
+              }
+            }
+          }
+        }
+      }
+    ];
+
+    if (status && status !== 'All') {
+      pipeline.push({ $match: { derivedStatus: status } });
+    }
+
+    pipeline.push({
+      $facet: {
+        metadata: [{ $count: 'total' }],
+        data: [
+          { $sort: { createdAt: -1 } },
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $project: {
+              orders: 0,
+              password: 0,
+              otp: 0,
+              otpExpiry: 0,
+              fcmWebTokens: 0,
+              fcmMobileTokens: 0
+            }
+          }
+        ]
+      }
+    });
+
+    const result = await User.aggregate(pipeline);
+    const users = result[0].data;
+    const total = result[0].metadata[0] ? result[0].metadata[0].total : 0;
 
     res.status(200).json({ 
       success: true, 
@@ -355,4 +437,113 @@ const forceLogoutAllUsers = async (req, res) => {
   }
 };
 
-module.exports = { adminLogin, getMe, adminLogout, getUsers, createUser, updateAdminProfile, changeAdminPassword, forceLogoutUser, forceLogoutAllUsers };
+const getUserDetails = async (req, res) => {
+  try {
+    const User = require('../Models/User');
+    const Order = require('../Models/Order');
+    const Address = require('../Models/Address');
+    const Wishlist = require('../Models/Wishlist');
+    const CoinTransaction = require('../Models/CoinTransaction');
+    
+    const userId = req.params.id;
+
+    // 1. Fetch User details
+    const user = await User.findById(userId).select('-password -otp -otpExpiry').lean();
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    // 2. Fetch primary/default Address
+    const address = await Address.findOne({ userId }).sort({ isDefault: -1, createdAt: -1 }).lean();
+
+    // 3. Fetch Orders details & calculate stats
+    const orders = await Order.find({ userId }).sort({ createdAt: -1 }).lean();
+    const totalOrders = orders.length;
+    const ltv = orders.reduce((sum, o) => o.paymentStatus === 'Paid' ? sum + o.total : sum, 0);
+    const returnsCount = orders.filter(o => o.status === 'Cancelled').length;
+
+    // 4. Fetch Wishlist items populated with Product details
+    const wishlist = await Wishlist.find({ userId })
+      .populate({
+        path: 'productId',
+        select: 'name price images description'
+      })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    // 5. Fetch Wallet/Coin Transactions & calculate balance
+    const coinTransactions = await CoinTransaction.find({ userId }).sort({ createdAt: -1 }).lean();
+    const totalEarned = coinTransactions.filter(t => t.type === 'earned').reduce((sum, t) => sum + t.amount, 0);
+    const totalSpent = coinTransactions.filter(t => t.type === 'spent').reduce((sum, t) => sum + t.amount, 0);
+    const coinsBalance = totalEarned - totalSpent;
+
+    // 5.1. Fetch dynamic average rating if Review model exists
+    const mongoose = require('mongoose');
+    let avgRating = 0;
+    try {
+      if (mongoose.models.Review) {
+        const Review = mongoose.model('Review');
+        const reviews = await Review.find({ userId });
+        if (reviews.length > 0) {
+          const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
+          avgRating = parseFloat((sum / reviews.length).toFixed(1));
+        }
+      }
+    } catch (err) {
+      console.log('Review model query failed:', err.message);
+    }
+
+    // 6. Determine derivedStatus
+    let derivedStatus = 'Active';
+    if (totalOrders > 10 || ltv > 15000) {
+      derivedStatus = 'VIP';
+    } else if (totalOrders === 0) {
+      derivedStatus = 'Inactive';
+    }
+
+    res.status(200).json({
+      success: true,
+      user: {
+        ...user,
+        derivedStatus
+      },
+      address,
+      stats: {
+        totalOrders,
+        ltv,
+        returnsCount,
+        coinsBalance,
+        avgRating
+      },
+      orders: orders.map(o => ({
+        id: o._id,
+        date: new Date(o.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+        total: o.total,
+        status: o.status,
+        itemsCount: o.items.reduce((sum, item) => sum + item.quantity, 0)
+      })),
+      wishlist: wishlist.filter(w => w.productId).map(w => ({
+        id: w._id,
+        productId: w.productId._id,
+        name: w.productId.name,
+        price: w.productId.price,
+        image: w.productId.images && w.productId.images[0] ? w.productId.images[0] : null
+      })),
+      wallet: {
+        balance: coinsBalance,
+        transactions: coinTransactions.map(t => ({
+          id: t._id,
+          title: t.title,
+          amount: t.amount,
+          type: t.type,
+          date: new Date(t.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+        }))
+      }
+    });
+  } catch (error) {
+    console.error('Get User Details Error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+module.exports = { adminLogin, getMe, adminLogout, getUsers, createUser, updateAdminProfile, changeAdminPassword, forceLogoutUser, forceLogoutAllUsers, getUserDetails };

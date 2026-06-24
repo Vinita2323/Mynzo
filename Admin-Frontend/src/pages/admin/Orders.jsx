@@ -4,7 +4,7 @@ import {
   Search, Filter, ChevronRight, Eye, 
   Package, Truck, CheckCircle2, Clock, 
   XCircle, AlertCircle, MoreVertical,
-  Download, Calendar, User, ShoppingBag, CreditCard
+  Download, Calendar, User, ShoppingBag, CreditCard, Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -15,8 +15,11 @@ const StatusBadge = ({ status }) => {
     'Pending': 'bg-amber-50 text-amber-600 border-amber-100',
     'Processing': 'bg-blue-50 text-blue-600 border-blue-100',
     'Shipped': 'bg-violet-50 text-violet-600 border-violet-100',
+    'Out for Delivery': 'bg-sky-50 text-sky-600 border-sky-100',
     'Delivered': 'bg-green-50 text-green-600 border-green-100',
     'Cancelled': 'bg-red-50 text-red-600 border-red-100',
+    'Return Requested': 'bg-amber-50 text-amber-600 border-amber-100',
+    'Refunded': 'bg-emerald-50 text-emerald-600 border-emerald-100',
   };
   return (
     <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${styles[status] || 'bg-slate-50 text-slate-600 border-slate-100'}`}>
@@ -34,7 +37,7 @@ const Orders = () => {
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [statusMenuOpen, setStatusMenuOpen] = useState(null);
 
-  const tabs = ['All', 'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
+  const tabs = ['All', 'Pending', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled', 'Return Requested'];
 
   const fetchOrders = async () => {
     const token = localStorage.getItem('adminToken');
@@ -295,6 +298,29 @@ const Orders = () => {
     }
   };
 
+  const handleDeleteOrder = async (orderId) => {
+    if (!orderId) return;
+    if (!window.confirm('Are you sure you want to delete this order? It will be cancelled in Shiprocket and completely removed from the database.')) return;
+    const token = localStorage.getItem('adminToken');
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/orders/admin/${orderId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Order deleted successfully');
+        setSelectedOrder(null);
+        fetchOrders();
+      } else {
+        toast.error(data.message || 'Failed to delete order');
+      }
+    } catch (err) {
+      toast.error('Error deleting order');
+    }
+  };
+
   const handleSyncStatus = async (orderId) => {
     if (!orderId) return;
     const token = localStorage.getItem('adminToken');
@@ -351,7 +377,7 @@ const Orders = () => {
   // Calculate stats based on loaded orders
   const totalSales = orders.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + o.total, 0);
   const pendingCount = orders.filter(o => o.status === 'Pending').length;
-  const transitCount = orders.filter(o => o.status === 'Shipped').length;
+  const transitCount = orders.filter(o => ['Shipped', 'Out for Delivery'].includes(o.status)).length;
   const cancelledCount = orders.filter(o => o.status === 'Cancelled').length;
 
   return (
@@ -506,8 +532,16 @@ const Orders = () => {
                             <button 
                               onClick={() => navigate(`/admin/orders/${order._id}`)}
                               className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-blue-50 hover:text-blue-500 transition-all"
+                              title="View Details"
                             >
                               <Eye size={16} />
+                            </button>
+                            <button 
+                              onClick={() => handleDeleteOrder(order._id)}
+                              className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-500 transition-all"
+                              title="Delete Order"
+                            >
+                              <Trash2 size={16} />
                             </button>
                             <div className="relative">
                               <button 
@@ -724,6 +758,16 @@ const Orders = () => {
                       </button>
                     </div>
                   )}
+
+                  {/* Delete Order - Always available for any selected order */}
+                  <div className="flex flex-wrap gap-2 pt-3 border-t border-slate-100 mt-2">
+                    <button 
+                      onClick={() => handleDeleteOrder(selectedOrder._id)}
+                      className="px-4 py-2 bg-rose-50 text-rose-600 border border-rose-100 rounded-lg text-xs font-bold hover:bg-rose-100 transition-colors shadow-sm active:scale-95"
+                    >
+                      🗑️ Delete Order
+                    </button>
+                  </div>
 
                   {/* Show tracking history if available */}
                   {selectedOrder.trackingHistory && selectedOrder.trackingHistory.length > 0 && (

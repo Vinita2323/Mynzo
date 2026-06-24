@@ -11,7 +11,6 @@ import SubCategoryChipsManager from '../modules/admin/catalog/SubCategoryChipsMa
 import HomeSectionsManager from '../modules/admin/catalog/HomeSectionsManager';
 import InventoryList from '../pages/admin/inventory/InventoryList';
 import ProductDetails from '../pages/admin/inventory/ProductDetails';
-import ThirdPartyDelivery from '../pages/admin/delivery/ThirdPartyDelivery';
 
 // New Admin Pages
 import Analytics from '../pages/admin/Analytics';
@@ -19,10 +18,8 @@ import StockAlerts from '../pages/admin/inventory/StockAlerts';
 import Orders from '../pages/admin/Orders';
 import AddProduct from '../pages/admin/AddProduct';
 import PlatformEarnings from '../pages/admin/finance/PlatformEarnings';
-import Payouts from '../pages/admin/Payouts';
 import Rules from '../pages/admin/Rules';
 import TaxConfig from '../pages/admin/finance/TaxConfig';
-import DeliveryCharges from '../pages/admin/finance/DeliveryCharges';
 import AllDeliveries from '../pages/admin/delivery/AllDeliveries';
 import DeliveryApproval from '../pages/admin/delivery/DeliveryApproval';
 import Settings from '../pages/admin/Settings';
@@ -103,14 +100,11 @@ const AdminRoutes = () => {
         <Route path="content/legal" element={<LegalPolicies />} />
         
         {/* Delivery */}
-        <Route path="delivery/services" element={<ThirdPartyDelivery />} />
         
         {/* Finance */}
         <Route path="finance/earnings" element={<PlatformEarnings />} />
-        <Route path="payouts" element={<Payouts />} />
         <Route path="finance/rules" element={<Rules />} />
         <Route path="finance/tax" element={<TaxConfig />} />
-        <Route path="finance/delivery-charges" element={<DeliveryCharges />} />
         
         {/* System */}
         <Route path="system/sub-admins" element={<SubAdmins />} />

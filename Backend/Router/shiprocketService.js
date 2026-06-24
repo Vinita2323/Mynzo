@@ -163,6 +163,21 @@ const parseCityState = (address) => {
     };
 };
 
+const createShiprocketReturnOrder = async (returnData) => {
+    try {
+        const token = await getShiprocketToken();
+        if (!token) throw new Error('Shiprocket authentication failed');
+
+        const response = await axios.post(`${SHIPROCKET_API_BASE}/v1/external/orders/create/return`, returnData, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+    } catch (error) {
+        console.error('Error creating Shiprocket return order:', error.response?.data || error.message);
+        throw error;
+    }
+};
+
 module.exports = {
     getShiprocketToken,
     createShiprocketOrder,
@@ -171,5 +186,6 @@ module.exports = {
     requestPickup,
     generateLabel,
     trackAWB,
-    parseCityState
+    parseCityState,
+    createShiprocketReturnOrder
 };

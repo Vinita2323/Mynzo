@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { ArrowLeft, Edit2, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import analytics from '../utils/analytics';
 import dollImage from '../assets/DollMynzo-removebg-preview.webp';
 
 const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/auth`;
@@ -132,6 +133,13 @@ export default function LoginPage() {
       localStorage.setItem('userToken', data.token);
       localStorage.setItem('userInfo', JSON.stringify(data.user));
       localStorage.setItem('isLoggedIn', 'true');
+
+      // Track analytics signup/login
+      if (data.isNewUser) {
+        analytics.track('signup', 'auth', { method: 'phone' });
+      } else {
+        analytics.track('login', 'auth', { method: 'phone' });
+      }
 
       // Update app context
       if (setUser) {

@@ -3,6 +3,7 @@ import { ChevronLeft, Gift, Coins } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import toast from 'react-hot-toast';
+import analytics from '../utils/analytics';
 
 // Import Games Overlays
 import SnakeGame from '../components/games/SnakeGame';
@@ -60,10 +61,12 @@ export default function GamesPage() {
   }, [user]);
 
   const handleOpenGame = (gameKey) => {
+    analytics.trackGamePlay(gameKey, 'start');
     setActiveGame(gameKey);
   };
 
   const handleRecordPlay = async (gameKey, scoreAmount) => {
+    analytics.trackGamePlay(gameKey, 'complete', scoreAmount);
     try {
       const token = localStorage.getItem('userToken');
       if (!token) {
