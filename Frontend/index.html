@@ -6,6 +6,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 
   <!-- Primary Meta -->
+  <script>
+    (function() {
+      if (typeof navigator !== 'undefined' && !navigator.serviceWorker) {
+        try {
+          Object.defineProperty(navigator, 'serviceWorker', {
+            configurable: true,
+            enumerable: true,
+            value: {
+              register: function() { return Promise.reject("Mock SW"); },
+              addEventListener: function() {},
+              removeEventListener: function() {},
+              ready: new Promise(function(res) { res({}); }),
+              getRegistration: function() { return Promise.resolve(null); },
+              getRegistrations: function() { return Promise.resolve([]); }
+            }
+          });
+        } catch (e) { console.warn(e); }
+      }
+    })();
+  </script>
   <title>Mynzo – Shop Smarter</title>
   <meta name="description" content="India's smartest shopping app. Crazy deals, gifting, electronics & more. Shop now on Mynzo!" />
   <meta name="theme-color" content="#ee4923" />

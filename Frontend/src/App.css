@@ -182,3 +182,9 @@
     border-right-color: var(--border);
   }
 }
+
+.app-container {
+  min-height: 100vh;
+  min-height: -webkit-fill-available; /* iOS Safari fix */
+  padding-bottom: env(safe-area-inset-bottom); /* iPhone notch/home bar fix */
+}
