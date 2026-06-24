@@ -267,8 +267,6 @@ exports.updateOrderStatus = async (req, res) => {
 };
 
 // @desc    Get single order by ID
-// @route   GET /api/orders/:id
-// @access  Private
 exports.getUserOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id);
@@ -281,6 +279,23 @@ exports.getUserOrderById = async (req, res) => {
     res.status(200).json({ success: true, order });
   } catch (error) {
     console.error("Error fetching order:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Get single order by ID (Admin)
+// @route   GET /api/orders/admin/:id
+// @access  Private/Admin
+exports.getAdminOrderById = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id)
+      .populate('userId', 'name email phone');
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+    res.status(200).json({ success: true, order });
+  } catch (error) {
+    console.error("Error fetching order for admin:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -301,3 +316,4 @@ exports.trackOrderById = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+

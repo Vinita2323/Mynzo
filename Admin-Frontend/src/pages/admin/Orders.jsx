@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Search, Filter, ChevronRight, Eye, 
   Package, Truck, CheckCircle2, Clock, 
@@ -25,6 +26,7 @@ const StatusBadge = ({ status }) => {
 };
 
 const Orders = () => {
+  const navigate = useNavigate();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('All');
@@ -472,8 +474,8 @@ const Orders = () => {
                         transition={{ delay: Math.min(i * 0.03, 0.3) }}
                         className="group hover:bg-slate-50/50 transition-colors"
                       >
-                        <td className="px-6 py-5">
-                          <span className="text-xs font-black text-blue-600 font-roboto">#{order._id.substring(order._id.length - 8).toUpperCase()}</span>
+                        <td className="px-6 py-5 cursor-pointer" onClick={() => navigate(`/admin/orders/${order._id}`)}>
+                          <span className="text-xs font-black text-blue-600 font-roboto hover:underline">#{order._id.substring(order._id.length - 8).toUpperCase()}</span>
                         </td>
                         <td className="px-6 py-5">
                           <div>
@@ -502,7 +504,7 @@ const Orders = () => {
                         <td className="px-6 py-5 text-right relative">
                           <div className="flex justify-end gap-2">
                             <button 
-                              onClick={() => setSelectedOrder(order)}
+                              onClick={() => navigate(`/admin/orders/${order._id}`)}
                               className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-blue-50 hover:text-blue-500 transition-all"
                             >
                               <Eye size={16} />
