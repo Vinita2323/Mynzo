@@ -61,11 +61,16 @@ const createProduct = async (req, res) => {
       hsnCode,
       brandName,
       manufacturerInfo,
-      status
+      status,
+      subCategory
     } = req.body;
 
     if (!name || !category || !sellingPrice) {
       return res.status(400).json({ success: false, message: 'Name, Category, and Selling Price are required' });
+    }
+
+    if (mrp && Number(mrp) < Number(sellingPrice)) {
+      return res.status(400).json({ success: false, message: 'Actual Price (MRP) cannot be less than Selling Price' });
     }
 
     // Process Images
@@ -84,6 +89,7 @@ const createProduct = async (req, res) => {
     const newProduct = new Product({
       name,
       category,
+      subCategory,
       description,
       sellingPrice: Number(sellingPrice),
       mrp: mrp ? Number(mrp) : undefined,
@@ -125,8 +131,14 @@ const updateProduct = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
 
+    const finalSellingPrice = req.body.sellingPrice !== undefined ? Number(req.body.sellingPrice) : product.sellingPrice;
+    const finalMrp = req.body.mrp !== undefined ? (req.body.mrp ? Number(req.body.mrp) : undefined) : product.mrp;
+    if (finalMrp !== undefined && finalMrp < finalSellingPrice) {
+      return res.status(400).json({ success: false, message: 'Actual Price (MRP) cannot be less than Selling Price' });
+    }
+
     const fields = [
-      'name', 'category', 'description', 'sellingPrice',
+      'name', 'category', 'subCategory', 'description', 'sellingPrice',
       'mrp', 'stock', 'discountLabel', 'sku', 'gstCategory', 'hsnCode',
       'brandName', 'manufacturerInfo', 'status'
     ];
@@ -192,11 +204,50 @@ const deleteProduct = async (req, res) => {
 // @access  Public
 const getProductById = async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const mongoose = require('mongoose');
+    const product = await Product.findById(req.params.id).lean();
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
-    res.status(200).json({ success: true, product });
+
+    const CategoryChip = require('../Models/CategoryChip');
+    const SubCategoryChip = require('../Models/SubCategoryChip');
+
+    let categoryLabel = product.category;
+    if (product.category) {
+      const isObjectId = mongoose.isValidObjectId(product.category);
+      const cat = await CategoryChip.findOne({ 
+        $or: [
+          { id: product.category }, 
+          ...(isObjectId ? [{ _id: product.category }] : [])
+        ] 
+      });
+      if (cat) {
+        categoryLabel = cat.categoryName;
+      }
+    }
+
+    let subCategoryLabel = product.subCategory;
+    if (product.subCategory) {
+      const isObjectId = mongoose.isValidObjectId(product.subCategory);
+      const subcat = await SubCategoryChip.findOne({ 
+        $or: [
+          { id: product.subCategory }, 
+          ...(isObjectId ? [{ _id: product.subCategory }] : [])
+        ] 
+      });
+      if (subcat) {
+        subCategoryLabel = subcat.subCategoryName;
+      }
+    }
+
+    const enrichedProduct = {
+      ...product,
+      categoryName: categoryLabel,
+      subCategoryName: subCategoryLabel
+    };
+
+    res.status(200).json({ success: true, product: enrichedProduct });
   } catch (error) {
     console.error('Get Product By ID Error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });

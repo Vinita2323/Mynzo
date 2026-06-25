@@ -39,6 +39,11 @@ const sendOtp = async (req, res) => {
 
     // Find or create user (auto-register logic)
     let user = await User.findOne({ phone });
+    
+    if (user && user.status === 'Inactive') {
+      return res.status(403).json({ success: false, message: 'Your account has been deactivated by admin. Please contact support.' });
+    }
+
     const isNewUser = !user;
 
     if (!user) {
@@ -128,6 +133,10 @@ const verifyOtp = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found. Please request OTP first.' });
+    }
+
+    if (user.status === 'Inactive') {
+      return res.status(403).json({ success: false, message: 'Your account has been deactivated by admin. Please contact support.' });
     }
 
     // Check OTP validity
@@ -303,6 +312,7 @@ const changePassword = async (req, res) => {
 const getWallet = async (req, res) => {
   try {
     const CoinTransaction = require('../Models/CoinTransaction');
+    const WalletTransaction = require('../Models/WalletTransaction');
     const User = require('../Models/User');
 
     const user = await User.findById(req.user.id);
@@ -310,18 +320,31 @@ const getWallet = async (req, res) => {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
-    const transactions = await CoinTransaction.find({ userId: req.user.id })
+    const coinTransactions = await CoinTransaction.find({ userId: req.user.id })
+      .sort({ createdAt: -1 });
+
+    const walletTransactions = await WalletTransaction.find({ userId: req.user.id })
       .sort({ createdAt: -1 });
 
     res.status(200).json({
       success: true,
       coins: user.referralCoins || 0,
-      transactions: transactions.map(t => ({
+      walletBalance: user.walletBalance || 0,
+      coinTransactions: coinTransactions.map(t => ({
         id: t._id,
         type: t.type,
         title: t.title,
         amount: t.amount,
         createdAt: t.createdAt
+      })),
+      walletTransactions: walletTransactions.map(w => ({
+        id: w._id,
+        type: w.type,
+        amount: w.amount,
+        coinsUsed: w.coinsUsed,
+        status: w.status,
+        description: w.description,
+        createdAt: w.createdAt
       }))
     });
   } catch (error) {
@@ -341,12 +364,16 @@ const updateFcmToken = async (req, res) => {
     }
 
     const User = require('../Models/User');
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user._id || req.user.id);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
     const targetField = (platform === 'app' || platform === 'mobile') ? 'fcmMobileTokens' : 'fcmWebTokens';
+    if (!user[targetField]) {
+      user[targetField] = [];
+    }
+
     if (!user[targetField].includes(token)) {
       user[targetField].push(token);
       // Cap to most recent 10 tokens (oldest first = least used)
@@ -374,12 +401,16 @@ const removeFcmToken = async (req, res) => {
     }
 
     const User = require('../Models/User');
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user._id || req.user.id);
     if (!user) {
       return res.status(404).json({ success: false, message: 'User not found' });
     }
 
     const targetField = (platform === 'app' || platform === 'mobile') ? 'fcmMobileTokens' : 'fcmWebTokens';
+    if (!user[targetField]) {
+      user[targetField] = [];
+    }
+
     user[targetField] = user[targetField].filter(t => t !== token);
     await user.save();
 

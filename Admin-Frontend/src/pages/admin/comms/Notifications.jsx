@@ -3,7 +3,7 @@ import {
   Bell, Send, Search, Filter, 
   MoreVertical, CheckCircle2, Clock, 
   Users, Smartphone, Mail, MessageSquare,
-  AlertCircle, X, Plus, Calendar, Star, Check
+  AlertCircle, X, Plus, Calendar, Star, Check, Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -16,6 +16,8 @@ const Notifications = () => {
   const [allUsers, setAllUsers] = useState([]);
   const [userSearchQuery, setUserSearchQuery] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const [selectedIds, setSelectedIds] = useState([]);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -130,6 +132,71 @@ const Notifications = () => {
     }
   };
 
+  const handleDeleteSingle = async (id) => {
+    if (!confirm('Are you sure you want to delete this notification?')) return;
+    const token = localStorage.getItem('adminToken');
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/admin/notifications/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Notification deleted successfully!');
+        setSelectedIds(prev => prev.filter(item => item !== id));
+        fetchHistory();
+      } else {
+        toast.error(data.message || 'Failed to delete notification');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Network error. Failed to delete.');
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    if (selectedIds.length === 0) return;
+    if (!confirm(`Are you sure you want to delete the ${selectedIds.length} selected notification(s)?`)) return;
+    const token = localStorage.getItem('adminToken');
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/admin/notifications/bulk-delete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ ids: selectedIds })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Selected notifications deleted successfully!');
+        setSelectedIds([]);
+        fetchHistory();
+      } else {
+        toast.error(data.message || 'Failed to delete selected notifications');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Network error. Failed to delete.');
+    }
+  };
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedIds(history.map(n => n._id));
+    } else {
+      setSelectedIds([]);
+    }
+  };
+
+  const handleSelectRow = (id) => {
+    setSelectedIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    );
+  };
+
   // Stats calculation
   const totalSent = history.length;
   const delivered = history.filter(n => n.status === 'Delivered').length;
@@ -178,18 +245,35 @@ const Notifications = () => {
       {/* History Table */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         <div className="p-6 border-b border-slate-50 flex justify-between items-center">
-           <h3 className="text-sm font-black text-slate-900 font-montserrat uppercase tracking-widest">Broadcast History</h3>
-           <div className="flex gap-3">
-              <button className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:text-slate-900 transition-all border border-slate-100">
-                 <Filter size={18} />
-              </button>
-           </div>
+            <h3 className="text-sm font-black text-slate-900 font-montserrat uppercase tracking-widest">Broadcast History</h3>
+            <div className="flex gap-3 items-center">
+               {selectedIds.length > 0 && (
+                  <button 
+                     onClick={handleDeleteSelected}
+                     className="px-4 py-2.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-xl text-xs font-black uppercase tracking-widest transition-all border border-rose-100 flex items-center gap-1.5"
+                  >
+                     <Trash2 size={14} />
+                     Delete Selected ({selectedIds.length})
+                  </button>
+               )}
+               <button className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:text-slate-900 transition-all border border-slate-100">
+                  <Filter size={18} />
+               </button>
+            </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left">
-            <thead>
+             <thead>
               <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <th className="px-6 py-4 w-12">
+                  <input
+                    type="checkbox"
+                    checked={history.length > 0 && selectedIds.length === history.length}
+                    onChange={handleSelectAll}
+                    className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
+                  />
+                </th>
                 <th className="px-6 py-4">Notification Details</th>
                 <th className="px-6 py-4">Target Audience</th>
                 <th className="px-6 py-4">Sent At</th>
@@ -200,6 +284,14 @@ const Notifications = () => {
             <tbody className="divide-y divide-slate-50 text-sm">
               {history.length > 0 ? history.map((item, i) => (
                 <tr key={item._id} className="group hover:bg-slate-50/50 transition-colors">
+                  <td className="px-6 py-5">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.includes(item._id)}
+                      onChange={() => handleSelectRow(item._id)}
+                      className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
+                    />
+                  </td>
                   <td className="px-6 py-5">
                     <div className="flex items-center gap-4">
                        <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 border border-slate-100">
@@ -220,7 +312,7 @@ const Notifications = () => {
                     )}
                   </td>
                   <td className="px-6 py-5 font-bold text-slate-500 font-roboto text-xs uppercase">
-                    {new Date(item.createdAt).toLocaleString()}
+                    {new Date(item.createdAt || item.sentAt).toLocaleString()}
                   </td>
                   <td className="px-6 py-5">
                     <span className={`px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest ${item.status === 'Delivered' ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
@@ -228,14 +320,18 @@ const Notifications = () => {
                     </span>
                   </td>
                   <td className="px-6 py-5 text-right">
-                    <button className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-slate-100 transition-all">
-                       <MoreVertical size={16} />
+                    <button 
+                      onClick={() => handleDeleteSingle(item._id)}
+                      className="p-2 bg-rose-50 text-rose-500 hover:bg-rose-100 rounded-lg transition-all active:scale-95"
+                      title="Delete notification"
+                    >
+                       <Trash2 size={16} />
                     </button>
                   </td>
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan="5" className="text-center py-10 text-slate-400 font-medium">No broadcast history found.</td>
+                  <td colSpan="6" className="text-center py-10 text-slate-400 font-medium">No broadcast history found.</td>
                 </tr>
               )}
             </tbody>

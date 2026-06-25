@@ -14,12 +14,15 @@ export const AppProvider = ({ children }) => {
   const [orders, setOrders] = useState([]);
   const [addresses, setAddresses] = useState([]);
   const [addressesLoading, setAddressesLoading] = useState(false);
-  const [coins, setCoins] = useState(560);
+  const [coins, setCoins] = useState(0);
   const [location, setLocation] = useState("83 Kishan Pura Mataji Mandir, Sector 3, Mathura");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("home");
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [globalToast, setGlobalToast] = useState('');
+
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
   const [userReels, setUserReels] = useState(() => {
     const savedReels = sessionStorage.getItem('userReels');
     return savedReels ? JSON.parse(savedReels) : [];
@@ -55,13 +58,34 @@ export const AppProvider = ({ children }) => {
     return null;
   });
 
+  useEffect(() => {
+    const fetchUserCoins = async () => {
+      if (user && user.id) {
+        try {
+          const token = localStorage.getItem('userToken');
+          if (!token) return;
+          const res = await fetch(`${API_BASE}/auth/wallet`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            setCoins(data.coins || 0);
+          }
+        } catch (err) {
+          console.error("Error fetching user coins on load/login:", err);
+        }
+      } else {
+        setCoins(0);
+      }
+    };
+    fetchUserCoins();
+  }, [user]);
+
   const socketRef = useRef(null);
   const [isForceLoggedOut, setIsForceLoggedOut] = useState(() => {
     return localStorage.getItem('forceLogoutState') === 'true';
   });
   
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-
   const mapCartItems = (items) => {
     if (!items) return [];
     return items.map(item => {

@@ -418,8 +418,8 @@ export default function StudioPage() {
     <div 
       ref={containerRef}
       onScroll={handleScroll}
-      className="bg-black w-full h-[100dvh] overflow-y-scroll snap-y snap-mandatory scrollbar-hide text-white relative select-none scroll-smooth"
-      style={{ WebkitOverflowScrolling: 'touch' }}
+      className="bg-black w-full h-[100dvh] overflow-y-scroll snap-y snap-mandatory scrollbar-hide text-white relative select-none"
+      style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'auto' }}
     >
       {/* Preload Neighboring Videos */}
       {posts[activeIndex + 1] && (
@@ -576,7 +576,7 @@ export default function StudioPage() {
             </div>
 
             {/* Comments List */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 text-slate-800">
+            <div className="flex-1 overflow-y-auto p-4 space-y-4 text-slate-800" style={{ scrollBehavior: 'smooth', overscrollBehavior: 'contain', WebkitOverflowScrolling: 'touch' }}>
               {(posts.find(p => p.id === activeCommentPost)?.rawComments || []).map((comment) => {
                 const isMyComment = user && (user._id === comment.userId || user.id === comment.userId);
                 const isEditingThis = editingCommentId === comment._id;

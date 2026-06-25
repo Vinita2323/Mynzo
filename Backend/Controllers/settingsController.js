@@ -29,13 +29,16 @@ const updateSettings = async (req, res) => {
 
     const fields = [
       'platformName', 'supportEmail', 'helpline', 'currency',
-      'commission', 'gstNo', 'gstPercentage'
+      'commission', 'gstNo', 'gstPercentage',
+      'coinConversionEnabled', 'coinsPerRupee', 'minimumRedeemCoins', 'maximumRedeemPerOrder'
     ];
 
     fields.forEach(f => {
       if (req.body[f] !== undefined) {
-        if (['commission', 'gstPercentage'].includes(f)) {
+        if (['commission', 'gstPercentage', 'coinsPerRupee', 'minimumRedeemCoins', 'maximumRedeemPerOrder'].includes(f)) {
           config[f] = Number(req.body[f]);
+        } else if (f === 'coinConversionEnabled') {
+          config[f] = req.body[f] === true || req.body[f] === 'true';
         } else {
           config[f] = req.body[f];
         }

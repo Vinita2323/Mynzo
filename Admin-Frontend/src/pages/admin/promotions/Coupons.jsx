@@ -40,7 +40,12 @@ const Coupons = () => {
   const fetchCoupons = async () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/admin/promotions/coupons`);
+      const token = localStorage.getItem('adminToken');
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const res = await fetch(`${apiBase}/admin/promotions/coupons`, { headers });
       const data = await res.json();
       if (res.ok && data.success) {
         setCoupons(data.coupons || []);
@@ -373,7 +378,7 @@ const Coupons = () => {
                       <StatusBadge status={coupon.status} />
                     </td>
                     <td className="px-6 py-5 text-right">
-                      <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex justify-end gap-2">
                         <button 
                           onClick={() => handleToggleStatus(coupon._id, coupon.status)}
                           className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-slate-100 hover:text-slate-900 transition-all"

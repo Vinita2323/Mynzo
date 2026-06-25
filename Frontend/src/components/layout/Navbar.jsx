@@ -41,6 +41,8 @@ export default function Navbar() {
 
   const [tempLocation, setTempLocation] = useState(location);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
   const fileInputRef = useRef(null);
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -156,6 +158,58 @@ export default function Navbar() {
     setIsLocationModalOpen(false);
   };
 
+  const fetchNotifications = async () => {
+    if (!user) return;
+    setLoadingNotifications(true);
+    try {
+      const token = localStorage.getItem('userToken');
+      const res = await fetch(`${API_BASE}/notifications/my`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNotifications(data.notifications || []);
+      }
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  const markNotificationsAsRead = async () => {
+    if (!user) return;
+    try {
+      const token = localStorage.getItem('userToken');
+      await fetch(`${API_BASE}/notifications/read-all`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      // Update local read status
+      setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
+    } catch (err) {
+      console.error('Error marking notifications as read:', err);
+    }
+  };
+
+  useEffect(() => {
+    if (user) {
+      fetchNotifications();
+    } else {
+      setNotifications([]);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    if (isNotificationModalOpen) {
+      fetchNotifications();
+      const timer = setTimeout(() => {
+        markNotificationsAsRead();
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [isNotificationModalOpen]);
+
   return (
     <>
       <header className="sticky top-0 z-50 bg-[#EE4923] shadow-sm transition-all duration-300 pb-2">
@@ -187,7 +241,9 @@ export default function Navbar() {
               className="relative p-1 hover:bg-white/20 rounded-full transition-colors"
             >
               <Bell className="w-5.5 h-5.5 stroke-[1.8]" />
-              <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 bg-white border-2 border-[#EE4923] rounded-full"></span>
+              {notifications.some(n => !n.read) && (
+                <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 bg-white border-2 border-[#EE4923] rounded-full"></span>
+              )}
             </button>
             <button 
               onClick={() => navigate('/wishlist')}
@@ -536,16 +592,28 @@ export default function Navbar() {
             </div>
 
             <div className="space-y-3 overflow-y-auto pb-24 scrollbar-none">
-              {NOTIFICATIONS.map((notif) => (
-                <div key={notif.id} className={`p-3 rounded-xl border ${notif.read ? 'bg-white border-slate-100' : 'bg-orange-50/50 border-orange-200'}`}>
-                  <div className="flex items-start justify-between">
-                    <h4 className={`text-sm font-bold nunito-heading ${notif.read ? 'text-slate-700' : 'text-[#02006c]'}`}>{notif.title}</h4>
-                    {!notif.read && <span className="w-2 h-2 rounded-full bg-[#ee4923] flex-shrink-0 mt-1.5"></span>}
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1 leading-relaxed">{notif.message}</p>
-                  <span className="text-[10px] text-slate-400 mt-2 block font-medium">{notif.time}</span>
+              {loadingNotifications ? (
+                <div className="text-center py-8 text-slate-400 text-xs font-medium">
+                  Loading notifications...
                 </div>
-              ))}
+              ) : notifications.length > 0 ? (
+                notifications.map((notif) => (
+                  <div key={notif._id} className={`p-3 rounded-xl border ${notif.read ? 'bg-white border-slate-100' : 'bg-orange-50/50 border-orange-200'}`}>
+                    <div className="flex items-start justify-between">
+                      <h4 className={`text-sm font-bold nunito-heading ${notif.read ? 'text-slate-700' : 'text-[#02006c]'}`}>{notif.title}</h4>
+                      {!notif.read && <span className="w-2 h-2 rounded-full bg-[#ee4923] flex-shrink-0 mt-1.5"></span>}
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1 leading-relaxed">{notif.body}</p>
+                    <span className="text-[10px] text-slate-400 mt-2 block font-medium">
+                      {new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' - ' + new Date(notif.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-8 text-slate-400 text-sm font-medium">
+                  No notifications yet!
+                </div>
+              )}
             </div>
           </div>
         </div>

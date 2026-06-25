@@ -7,6 +7,7 @@ import { useApp } from '../context/AppContext';
 import ProductCard from '../components/ui/ProductCard';
 import OptimizedImage from '../components/ui/OptimizedImage';
 import { getImageUrl } from '../utils/imageHelper';
+import { cachedFetch } from '../utils/apiCache';
 
 // Category Images
 import catForYou from '../assets/CategorySection/categoryForU-removebg-preview.webp';
@@ -17,9 +18,6 @@ import cat4 from '../assets/CategorySection/Category4-removebg-preview.webp';
 import cat5 from '../assets/CategorySection/Category5-removebg-preview.webp';
 import cat6 from '../assets/CategorySection/Category6-removebg-preview.webp';
 import cat7 from '../assets/CategorySection/Category7-removebg-preview.webp';
-
-let globalCombinedData = null;
-let globalCombinedPromise = null;
 
 export default function CategoriesPage() {
   const navigate = useNavigate();
@@ -38,58 +36,32 @@ export default function CategoriesPage() {
 
   useEffect(() => {
     let active = true;
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
     // Clear search query on mount so it doesn't carry over from home search and hide all items
     setSearchQuery('');
 
     const loadAll = async () => {
-      if (globalCombinedData) {
-        if (active) {
-          setCategories(globalCombinedData.categories);
-          setSubCategories(globalCombinedData.subCategories);
-          setRawProducts(globalCombinedData.products);
-          setLoading(false);
-        }
-        return;
-      }
-
       setLoading(true);
 
-      if (!globalCombinedPromise) {
-        globalCombinedPromise = (async () => {
-          try {
-            const res = await fetch(`${apiBase}/admin/catalog/products/combined`);
-            const data = await res.json();
-            if (res.ok && data.success) {
-              const activeChips = (data.chips || []).filter(c => c.active && c.id !== 'for-you');
-              const forYouChip = CATEGORIES.find(c => c.id === 'for-you');
-              const finalCategories = [forYouChip, ...activeChips];
-              const finalSubCategories = (data.subchips || []).filter(sc => sc.active);
-              const finalProducts = data.products || [];
+      try {
+        const data = await cachedFetch('/admin/catalog/products/combined', { ttl: 5 });
+        if (active && data && data.success) {
+          const activeChips = (data.chips || []).filter(c => c.active && c.id !== 'for-you');
+          const forYouChip = CATEGORIES.find(c => c.id === 'for-you');
+          const finalCategories = [forYouChip, ...activeChips];
+          const finalSubCategories = (data.subchips || []).filter(sc => sc.active);
+          const finalProducts = data.products || [];
 
-              globalCombinedData = {
-                categories: finalCategories,
-                subCategories: finalSubCategories,
-                products: finalProducts
-              };
-              return globalCombinedData;
-            }
-          } catch (err) {
-            console.error('Error fetching combined catalog:', err);
-          }
-          return null;
-        })();
-      }
-
-      const result = await globalCombinedPromise;
-      if (active && result) {
-        setCategories(result.categories);
-        setSubCategories(result.subCategories);
-        setRawProducts(result.products);
-      }
-      if (active) {
-        setLoading(false);
+          setCategories(finalCategories);
+          setSubCategories(finalSubCategories);
+          setRawProducts(finalProducts);
+        }
+      } catch (err) {
+        console.error('Error fetching combined catalog:', err);
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
       }
     };
 
@@ -178,15 +150,15 @@ export default function CategoriesPage() {
 
     // Filter by subcategory if one is active
     if (selectedSubCategory !== 'all') {
-      const activeSubChip = subCategories.find(sc => sc.id === selectedSubCategory);
+      const activeSubChip = subCategories.find(sc => sc._id === selectedSubCategory || sc.id === selectedSubCategory);
       if (activeSubChip) {
         const targetName = activeSubChip.subCategoryName.toLowerCase();
         filtered = filtered.filter(
-          (p) => p.subCategory.toLowerCase() === targetName || p.subCategory.toLowerCase() === selectedSubCategory.toLowerCase()
+          (p) => (p.subCategory || '').toLowerCase() === targetName || (p.subCategory || '').toLowerCase() === selectedSubCategory.toLowerCase()
         );
       } else {
         filtered = filtered.filter(
-          (p) => p.subCategory.toLowerCase() === selectedSubCategory.toLowerCase()
+          (p) => (p.subCategory || '').toLowerCase() === selectedSubCategory.toLowerCase()
         );
       }
     }
@@ -238,13 +210,14 @@ export default function CategoriesPage() {
         {/* 1. Vertical Sidebar Category Navigation */}
         <div className="w-[72px] bg-[#02006c]/[0.02] border-r border-slate-100 flex flex-col items-center pt-2 pb-2 overflow-y-auto scrollbar-none gap-3 flex-shrink-0">
           {categories.map((cat) => {
-            const isActive = selectedCategory === cat.id;
+            const catKey = cat._id || cat.id;
+            const isActive = selectedCategory === catKey;
             const labelText = cat.categoryName || cat.name;
 
             return (
               <button
-                key={cat.id}
-                onClick={() => setSelectedCategory(cat.id)}
+                key={catKey}
+                onClick={() => setSelectedCategory(catKey)}
                 className="flex flex-col items-center w-full relative pb-1 group cursor-pointer"
               >
                 <div className="relative w-[52px] h-[52px] flex items-center justify-center">
@@ -301,7 +274,7 @@ export default function CategoriesPage() {
           <div className="flex items-center justify-between border-b border-slate-50 pb-2 relative z-20 px-1">
             <div className="space-y-0.5">
               <h3 className="text-xs font-bold text-[#02006c] uppercase tracking-wider">
-                {categories.find((c) => c.id === selectedCategory)?.categoryName || categories.find((c) => c.id === selectedCategory)?.name || "Catalog"}
+                {categories.find((c) => c.id === selectedCategory || c._id === selectedCategory)?.categoryName || categories.find((c) => c.id === selectedCategory || c._id === selectedCategory)?.name || "Catalog"}
               </h3>
               <p className="text-[8px] text-[#02006c]/60 font-bold uppercase tracking-widest">
                 {filteredProducts.length} items found
@@ -366,11 +339,12 @@ export default function CategoriesPage() {
                 </span>
               </button>
               {subCategories.filter(sc => sc.categoryId.toLowerCase() === selectedCategory.toLowerCase()).map((sub) => {
-                const isSubActive = selectedSubCategory === sub.id;
+                const subKey = sub._id || sub.id;
+                const isSubActive = selectedSubCategory === subKey;
                 return (
                   <button
-                    key={sub.id}
-                    onClick={() => setSelectedSubCategory(sub.id)}
+                    key={subKey}
+                    onClick={() => setSelectedSubCategory(subKey)}
                     className="flex flex-col items-center w-[68px] group cursor-pointer flex-shrink-0 snap-start"
                   >
                     <div className="relative w-[52px] h-[52px] flex items-center justify-center">

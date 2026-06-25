@@ -20,9 +20,11 @@ exports.createOrder = async (req, res) => {
   let transactionActive = false;
   let coinsDeducted = false;
   let coinsRedeemedAmount = 0;
+  let walletDeducted = false;
+  let walletUsedAmount = 0;
 
   try {
-    const { items, total, deliveryAddress, paymentMethod, paymentStatus, paymentId, couponCode, deliveryCharge, etd, redeemCoins } = req.body;
+    const { items, total, deliveryAddress, paymentMethod, paymentStatus, paymentId, couponCode, deliveryCharge, etd, redeemCoins, redeemWallet } = req.body;
 
     if (!items || items.length === 0 || !total || !deliveryAddress || !paymentMethod) {
       return res.status(400).json({ success: false, message: 'Please provide all required fields' });
@@ -234,7 +236,33 @@ exports.createOrder = async (req, res) => {
       }
     }
 
-    const finalPayableTotal = Math.max(0, finalCalculatedTotal - coinsRedeemedAmount);
+    // Wallet Cash Redemption (new flow)
+    walletDeducted = false;
+    walletUsedAmount = 0;
+    if (redeemWallet) {
+      const user = await User.findById(req.user._id, null, sessionOpt);
+      if (user && user.walletBalance > 0) {
+        const remainingToPay = Math.max(0, finalCalculatedTotal - coinsRedeemedAmount);
+        walletUsedAmount = Math.min(user.walletBalance, remainingToPay);
+        walletUsedAmount = Number(walletUsedAmount.toFixed(2));
+        if (walletUsedAmount > 0) {
+          user.walletBalance -= walletUsedAmount;
+          user.walletBalance = Number(user.walletBalance.toFixed(2));
+          await user.save(sessionOpt);
+          walletDeducted = true;
+
+          const WalletTransaction = require('../Models/WalletTransaction');
+          await WalletTransaction.create([{
+            userId: req.user._id,
+            type: 'Payment',
+            amount: walletUsedAmount,
+            description: `Used for Order Checkout`
+          }], sessionOpt);
+        }
+      }
+    }
+
+    const finalPayableTotal = Math.max(0, finalCalculatedTotal - coinsRedeemedAmount - walletUsedAmount);
 
     // 6. Verify Razorpay payment if paymentMethod is Online
     if (paymentMethod === 'Online') {
@@ -287,6 +315,7 @@ exports.createOrder = async (req, res) => {
       items: validatedItems,
       total: finalPayableTotal,
       coinsRedeemed: coinsRedeemedAmount,
+      walletUsed: walletUsedAmount,
       deliveryAddress,
       paymentMethod,
       paymentStatus: paymentMethod === 'Online' ? 'Paid' : 'Pending',
@@ -452,6 +481,19 @@ exports.createOrder = async (req, res) => {
           amount: coinsRedeemedAmount
         });
       }
+
+      if (walletDeducted && walletUsedAmount > 0) {
+        await User.findByIdAndUpdate(req.user._id, {
+          $inc: { walletBalance: walletUsedAmount }
+        });
+        const WalletTransaction = require('../Models/WalletTransaction');
+        await WalletTransaction.create({
+          userId: req.user._id,
+          type: 'Refund',
+          amount: walletUsedAmount,
+          description: 'Refund: Checkout Failure Rollback'
+        });
+      }
     }
 
     res.status(500).json({ success: false, message: error.message });
@@ -559,6 +601,43 @@ exports.updateOrderStatus = async (req, res) => {
 
     if (status === 'Cancelled' && order.status !== 'Cancelled') {
       await handleOrderCancellationStockAndCoupon(order);
+      if (order.walletUsed && order.walletUsed > 0) {
+        await User.findByIdAndUpdate(order.userId, {
+          $inc: { walletBalance: order.walletUsed }
+        });
+        const WalletTransaction = require('../Models/WalletTransaction');
+        await WalletTransaction.create({
+          userId: order.userId,
+          type: 'Order Cancellation',
+          amount: order.walletUsed,
+          description: `Refund for Cancelled Order #${order._id.toString().substring(order._id.toString().length - 6).toUpperCase()}`
+        });
+      }
+    }
+
+    if (status && status !== order.status) {
+      try {
+        const Notification = require('../Models/Notification');
+        const { sendNotificationToUser } = require('../Router/firebaseAdmin');
+
+        const title = `Order Status: ${status}`;
+        const body = `Your order #${order._id.toString().substring(order._id.toString().length - 6).toUpperCase()} is now ${status}.`;
+
+        const newNotification = new Notification({
+          title,
+          body,
+          target: 'Selected Users',
+          targetUserIds: [order.userId],
+          status: 'Delivered',
+          sentAt: new Date()
+        });
+        await newNotification.save();
+
+        // Trigger push notification asynchronously
+        sendNotificationToUser(order.userId, { title, body }).catch(e => console.error('Push notification failed:', e));
+      } catch (notifErr) {
+        console.error('Error creating order notification:', notifErr);
+      }
     }
 
     if (status) order.status = status;

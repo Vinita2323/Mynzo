@@ -48,6 +48,10 @@ const orderSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  walletUsed: {
+    type: Number,
+    default: 0
+  },
   status: {
     type: String,
     enum: ['Pending', 'Processing', 'Shipped', 'Out for Delivery', 'Delivered', 'Cancelled', 'Return Requested', 'Refunded', 'Partially Refunded'],

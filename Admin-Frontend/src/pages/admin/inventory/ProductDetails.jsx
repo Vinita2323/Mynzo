@@ -92,7 +92,7 @@ const ProductDetails = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <DetailItem label="Product Name" value={product.name} />
-              <DetailItem label="Category" value={`${product.category} ${product.subCategory ? `> ${product.subCategory}` : ''}`} />
+              <DetailItem label="Category" value={`${product.categoryName || product.category} ${product.subCategory ? `> ${product.subCategoryName || product.subCategory}` : ''}`} />
               <div className="md:col-span-2">
                 <DetailItem label="Detailed Description" value={product.description} />
               </div>
@@ -144,7 +144,7 @@ const ProductDetails = () => {
                   <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-4">
                     <div className="font-bold text-slate-700 w-1/4">{v.name}</div>
                     <div className="flex flex-wrap gap-2">
-                      {v.values.map((val, vIdx) => (
+                      {(v.values || []).map((val, vIdx) => (
                         <span key={vIdx} className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 font-medium">
                           {val}
                         </span>

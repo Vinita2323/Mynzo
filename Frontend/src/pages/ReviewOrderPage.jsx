@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, MapPin, Tag, Banknote, ShieldCheck, X, CheckCircle2, Plus, Coins } from 'lucide-react';
+import { ArrowLeft, MapPin, Tag, Banknote, ShieldCheck, X, CheckCircle2, Plus, Coins, Landmark } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import toast from 'react-hot-toast';
 import OptimizedImage from '../components/ui/OptimizedImage';
@@ -41,6 +41,12 @@ export default function ReviewOrderPage() {
   // Coins states
   const [redeemCoins, setRedeemCoins] = useState(false);
   const [userCoins, setUserCoins] = useState(0);
+  const [redeemWallet, setRedeemWallet] = useState(false);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [coinsConfig, setCoinsConfig] = useState({
+    coinsPerRupee: 100,
+    maximumRedeemPerOrder: 10000
+  });
   
   // Payment states
   const [paymentMethod, setPaymentMethod] = useState('COD'); // 'COD' | 'ONLINE'
@@ -78,7 +84,7 @@ export default function ReviewOrderPage() {
     fetchAddresses();
   }, [user]);
 
-  // Fetch user coins from wallet
+  // Fetch user coins and wallet balance
   useEffect(() => {
     const fetchUserCoins = async () => {
       if (user && user.id) {
@@ -91,13 +97,28 @@ export default function ReviewOrderPage() {
           const data = await res.json();
           if (data.success) {
             setUserCoins(data.coins || 0);
+            setWalletBalance(data.walletBalance || 0);
           }
         } catch (err) {
           console.error("Error fetching user coins:", err);
         }
       }
     };
+
+    const fetchCoinsConfig = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/admin/settings`);
+        const data = await res.json();
+        if (data.success && data.settings) {
+          setCoinsConfig(data.settings);
+        }
+      } catch (err) {
+        console.error("Error fetching coins settings:", err);
+      }
+    };
+
     fetchUserCoins();
+    fetchCoinsConfig();
   }, [user, API_BASE]);
 
   useEffect(() => {
@@ -365,7 +386,8 @@ export default function ReviewOrderPage() {
           couponCode: appliedCoupon ? appliedCoupon.code : undefined,
           deliveryCharge: deliveryCharge,
           etd: etd,
-          redeemCoins: redeemCoins
+          redeemCoins: false,
+          redeemWallet: redeemWallet
         })
       });
       
@@ -414,8 +436,10 @@ export default function ReviewOrderPage() {
   
   const gstAmount = Math.round(Math.max(0, totalCartPrice - discountAmount) * 0.18);
   const grandTotalBeforeCoins = Math.max(0, totalCartPrice - discountAmount + gstAmount + platformCommission + deliveryCharge);
-  const coinsRedeemedAmount = redeemCoins ? Math.min(userCoins, grandTotalBeforeCoins) : 0;
-  const grandTotal = Math.max(0, grandTotalBeforeCoins - coinsRedeemedAmount);
+  
+  const walletUsedAmount = redeemWallet ? Math.min(walletBalance, grandTotalBeforeCoins) : 0;
+  const grandTotal = Math.max(0, grandTotalBeforeCoins - walletUsedAmount);
+  
   const mockOriginalTotal = totalCartPrice + mockSavings;
 
   const firstItem = cart && cart.length > 0 ? cart[0] : null;
@@ -564,35 +588,35 @@ export default function ReviewOrderPage() {
           </div>
         </div>
 
-        {/* Mynzo Coins Redemption */}
-        {userCoins > 0 && (
+        {/* Mynzo Wallet Cash Redemption */}
+        {walletBalance > 0 && (
           <div>
             <div className="flex items-center gap-2 mb-2 px-1 text-[#02006c]">
-              <Coins className="w-4 h-4 text-amber-500 animate-pulse" />
-              <h2 className="text-xs font-black uppercase tracking-wide">Mynzo Coins</h2>
+              <Landmark className="w-4 h-4 text-emerald-500" />
+              <h2 className="text-xs font-black uppercase tracking-wide">Mynzo Wallet Cash</h2>
             </div>
             <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-xs font-bold text-slate-800">Redeem Mynzo Coins</span>
+                <span className="text-xs font-bold text-slate-800">Use Wallet Balance</span>
                 <span className="text-[10px] text-slate-500 font-medium mt-0.5">
-                  Available Balance: <span className="font-bold text-slate-700">{userCoins} Coins</span> (Worth ₹{userCoins})
+                  Available Balance: <span className="font-bold text-slate-700">₹{walletBalance.toFixed(2)}</span>
                 </span>
-                {redeemCoins && (
+                {redeemWallet && (
                   <span className="text-[10px] text-emerald-600 font-bold mt-1">
-                    Saving extra ₹{coinsRedeemedAmount} on this order!
+                    Paying ₹{walletUsedAmount.toFixed(2)} from wallet!
                   </span>
                 )}
               </div>
               <button
                 type="button"
-                onClick={() => setRedeemCoins(!redeemCoins)}
+                onClick={() => setRedeemWallet(!redeemWallet)}
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  redeemCoins ? 'bg-emerald-500' : 'bg-slate-200'
+                  redeemWallet ? 'bg-emerald-500' : 'bg-slate-200'
                 }`}
               >
                 <span
                   className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    redeemCoins ? 'translate-x-5' : 'translate-x-0'
+                    redeemWallet ? 'translate-x-5' : 'translate-x-0'
                   }`}
                 />
               </button>
@@ -621,10 +645,10 @@ export default function ReviewOrderPage() {
                 <span className="text-emerald-600 font-medium">- ₹{discountAmount}</span>
               </div>
             )}
-            {redeemCoins && coinsRedeemedAmount > 0 && (
+            {redeemWallet && walletUsedAmount > 0 && (
               <div className="flex justify-between items-center text-[13px]">
-                <span className="text-slate-600">Coins Redeemed</span>
-                <span className="text-emerald-600 font-medium">- ₹{coinsRedeemedAmount}</span>
+                <span className="text-slate-600">Wallet Balance Used</span>
+                <span className="text-emerald-600 font-medium">- ₹{walletUsedAmount.toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between items-center text-[13px]">

@@ -60,6 +60,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  walletBalance: {
+    type: Number,
+    default: 0
+  },
   referredBy: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -76,6 +80,11 @@ const userSchema = new mongoose.Schema({
   tokenVersion: {
     type: Number,
     default: 0
+  },
+  status: {
+    type: String,
+    enum: ['Active', 'Inactive'],
+    default: 'Active'
   }
 }, { timestamps: true });
 

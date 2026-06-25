@@ -180,6 +180,43 @@ const AddProduct = () => {
     fetchProduct();
   }, [id, isEditMode]);
 
+  useEffect(() => {
+    const fetchCategoriesAndSubcategories = async () => {
+      try {
+        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        
+        // Fetch Categories
+        const catRes = await fetch(`${apiBase}/admin/catalog/chips`);
+        const catData = await catRes.json();
+        
+        // Fetch Subcategories
+        const subRes = await fetch(`${apiBase}/admin/catalog/subchips`);
+        const subData = await subRes.json();
+        
+        if (catRes.ok && catData.success && subRes.ok && subData.success) {
+          const catsList = (catData.chips || []).filter(c => c.active !== false).map(c => ({
+            id: c._id,
+            name: c.categoryName
+          }));
+          setCategories(catsList);
+          
+          const map = {};
+          (subData.subchips || []).filter(s => s.active !== false).forEach(s => {
+            if (!map[s.categoryId]) map[s.categoryId] = [];
+            map[s.categoryId].push({
+              id: s._id,
+              name: s.subCategoryName
+            });
+          });
+          setSubCategoriesMap(map);
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories/subcategories:', err);
+      }
+    };
+    fetchCategoriesAndSubcategories();
+  }, []);
+
   // Variations state
   const [attributes, setAttributes] = useState([]);
   const [isAddingAttr, setIsAddingAttr] = useState(false);
@@ -263,18 +300,8 @@ const AddProduct = () => {
   const [images, setImages] = useState([]); // holds urls or previews
   const [imageFiles, setImageFiles] = useState([]); // holds files for multipart uploading
 
-  const categories = ['Fashion', 'Electronics', 'Beauty', 'Home Decor', 'Toys', 'Stationery', 'Jewellery', 'Gifting', 'Electrical'];
-  const subCategoriesMap = {
-    'Fashion': ['Men', 'Women', 'Kids', 'Accessories'],
-    'Electronics': ['Mobiles', 'Laptops', 'Audio', 'Accessories'],
-    'Beauty': ['Makeup', 'Skincare', 'Haircare', 'Fragrances'],
-    'Home Decor': ['Furniture', 'Lighting', 'Furnishings', 'Decor'],
-    'Toys': ['Action Figures', 'Board Games', 'Educational', 'Soft Toys'],
-    'Stationery': ['Pens', 'Notebooks', 'Art Supplies', 'Office'],
-    'Jewellery': ['Necklaces', 'Earrings', 'Rings', 'Bracelets'],
-    'Gifting': ['Corporate', 'Personalized', 'Festive', 'Hampers'],
-    'Electrical': ['Appliances', 'Lighting', 'Wiring', 'Tools']
-  };
+  const [categories, setCategories] = useState([]);
+  const [subCategoriesMap, setSubCategoriesMap] = useState({});
 
   const handleAddImageUrl = () => {
     const url = prompt('Enter Image URL');
@@ -305,6 +332,11 @@ const AddProduct = () => {
   const handleSave = async () => {
     if (!name || !category || !sellingPrice) {
       toast.error('Product Name, Category, and Selling Price are required!');
+      return;
+    }
+    
+    if (mrp && Number(mrp) < Number(sellingPrice)) {
+      toast.error('Actual Price (MRP) cannot be less than Selling Price!');
       return;
     }
     
@@ -376,34 +408,7 @@ const AddProduct = () => {
         setSaved(true);
         setTimeout(() => setSaved(false), 2500);
 
-        if (isEditMode) {
-          setTimeout(() => navigate('/admin/inventory/all'), 1000);
-          return;
-        }
-
-        // Reset all states
-        setName('');
-        setCategory('');
-        setSubCategory('');
-        setDescription('');
-        setSellingPrice('');
-        setMrp('');
-        setStock(1);
-        setDiscountLabel('');
-        setSku('');
-        setHighlights({ packOf: '', fabric: '', sleeve: '', pattern: '', collar: '', color: '' });
-        setTechSpecs({ fit: '', fabricCare: '', suitableFor: '', hem: '' });
-        setShippingSpecs({ weight: '', length: '', width: '', height: '' });
-        setFlags({ topSection: false, crazyDeals: false, flashSale: false });
-        setBrandName('');
-        setTags('');
-        setManufacturerInfo('');
-        setImages([]);
-        setImageFiles([]);
-        setHsnCode('');
-        setAttributes([]);
-        setVariations([]);
-        setIsAddingAttr(false);
+        setTimeout(() => navigate('/admin/inventory/all'), 1000);
       } else {
         toast.error(data.message || 'Failed to publish product');
       }
@@ -469,7 +474,7 @@ const AddProduct = () => {
                   className={inputCls}
                 >
                   <option value="">Select Category</option>
-                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
               <div>
@@ -481,7 +486,7 @@ const AddProduct = () => {
                   disabled={!category}
                 >
                   <option value="">Select Sub Category</option>
-                  {category && subCategoriesMap[category]?.map(sc => <option key={sc} value={sc}>{sc}</option>)}
+                  {category && subCategoriesMap[category]?.map(sc => <option key={sc.id} value={sc.id}>{sc.name}</option>)}
                 </select>
               </div>
             </div>

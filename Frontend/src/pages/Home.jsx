@@ -47,10 +47,11 @@ export default function Home() {
 
     const fetchCategoryChips = async () => {
       try {
-        const data = await cachedFetch('/admin/catalog/chips', { ttl: 600, signal: controller.signal });
+        const data = await cachedFetch('/admin/catalog/chips', { ttl: 5, signal: controller.signal });
         if (data.success && data.chips && data.chips.length > 0) {
           const activeChips = data.chips.filter(c => c.active && c.id !== 'for-you');
           const forYouChip = CATEGORIES.find(c => c.id === 'for-you');
+          const forYouChipWithApproved = { ...forYouChip, approved: true };
           setCategories([forYouChip, ...activeChips]);
         }
       } catch (err) {
@@ -60,7 +61,7 @@ export default function Home() {
 
     const fetchBanners = async () => {
       try {
-        const data = await cachedFetch('/admin/catalog/banners', { ttl: 600, signal: controller.signal });
+        const data = await cachedFetch('/admin/catalog/banners', { ttl: 5, signal: controller.signal });
         if (data.success && data.banners) {
           setDynamicBanners(data.banners.filter(b => b.active));
         }
@@ -74,9 +75,9 @@ export default function Home() {
         setProductsLoading(true);
 
         const [dataProducts, dataTopBuys, dataTrending] = await Promise.all([
-          cachedFetch('/admin/catalog/products?status=Approved', { ttl: 300, signal: controller.signal }),
-          cachedFetch('/admin/catalog/products/top-buys', { ttl: 300, signal: controller.signal }),
-          cachedFetch('/admin/catalog/products/trending-brands', { ttl: 300, signal: controller.signal }),
+          cachedFetch('/admin/catalog/products?status=Approved', { ttl: 5, signal: controller.signal }),
+          cachedFetch('/admin/catalog/products/top-buys', { ttl: 5, signal: controller.signal }),
+          cachedFetch('/admin/catalog/products/trending-brands', { ttl: 5, signal: controller.signal }),
         ]);
 
         if (dataProducts.success && dataProducts.products) {
@@ -138,12 +139,16 @@ export default function Home() {
       return [];
     }
     let filtered = rawAllProducts.filter(
-      p => p.category?.toLowerCase() === selectedCategory.toLowerCase()
+      p => (p.category || '').toLowerCase() === selectedCategory.toLowerCase()
     );
     if (selectedSubCategory !== 'all') {
-      filtered = filtered.filter(
-        p => p.subCategory?.toLowerCase() === selectedSubCategory.toLowerCase()
-      );
+      filtered = filtered.filter(p => {
+        const prodSub = (p.subCategory || '').toLowerCase();
+        const targetSub = selectedSubCategory.toLowerCase();
+        const activeSubObj = subCategoryChips.find(sc => (sc._id || sc.id || '').toLowerCase() === targetSub);
+        const subName = activeSubObj ? activeSubObj.subCategoryName.toLowerCase() : '';
+        return prodSub === targetSub || prodSub === subName;
+      });
     }
     return filtered.map(normaliseProduct);
   };
@@ -580,14 +585,15 @@ export default function Home() {
       {/* 1. Ultra-Compact Category strip with minimized gaps and in-place active states */}
       <div className="flex items-center gap-1 overflow-x-auto px-2 py-1.5 bg-white border-b border-slate-50 scrollbar-none scroll-smooth mt-2">
         {categories.map((cat) => {
-          const isActive = selectedCategory === cat.id;
+          const catKey = cat._id || cat.id;
+          const isActive = selectedCategory === catKey;
           const labelText = cat.categoryName || cat.name;
 
           return (
             <button
-              key={cat.id}
+              key={catKey}
               onClick={() => {
-                setSelectedCategory(cat.id);
+                setSelectedCategory(catKey);
               }}
               className="flex flex-col items-center gap-1 flex-shrink-0 cursor-pointer transition-all duration-300 w-[72px]"
             >
@@ -1000,12 +1006,13 @@ export default function Home() {
                 </div>
 
                 {subs.map(sub => {
-                  const isSubActive = selectedSubCategory.toLowerCase() === sub.subCategoryName.toLowerCase();
+                  const subKey = sub._id || sub.id;
+                  const isSubActive = selectedSubCategory.toLowerCase() === subKey.toLowerCase();
                   return (
                     <div 
-                      key={sub._id || sub.id} 
+                      key={subKey} 
                       className="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer w-16 text-center"
-                      onClick={() => setSelectedSubCategory(sub.subCategoryName)}
+                      onClick={() => setSelectedSubCategory(subKey)}
                     >
                       <div className={`w-14 h-14 rounded-xl overflow-hidden border transition-all relative ${isSubActive ? 'border-[#ee4923] ring-2 ring-orange-100 scale-105' : 'border-orange-100 shadow-sm'}`}>
                         <OptimizedImage src={getImageUrl(sub.image)} alt={sub.subCategoryName} type="subcategory" className="absolute inset-0" />
@@ -1019,13 +1026,21 @@ export default function Home() {
               </div>
             );
           })()}
-
+ 
           {/* Category UI: Filtered Product Grid */}
           <div>
             <div className="flex items-center justify-between mb-4 mt-2 px-1">
-              <h3 className="text-[17px] font-bold text-[#02006c] capitalize">
-                {selectedCategory.replace('-', ' ')} {selectedSubCategory !== 'all' ? `> ${selectedSubCategory}` : ''}
-              </h3>
+              {(() => {
+                const selectedCatObj = categories.find(c => c._id === selectedCategory || c.id === selectedCategory);
+                const displayCatName = selectedCatObj ? (selectedCatObj.categoryName || selectedCatObj.name) : selectedCategory;
+                const selectedSubObj = subCategoryChips.find(sc => sc.id === selectedSubCategory);
+                const displaySubName = selectedSubObj ? selectedSubObj.subCategoryName : selectedSubCategory;
+                return (
+                  <h3 className="text-[17px] font-bold text-[#02006c] capitalize">
+                    {displayCatName.replace('-', ' ')} {selectedSubCategory !== 'all' ? `> ${displaySubName}` : ''}
+                  </h3>
+                );
+              })()}
               <span className="text-[10px] text-[#ee4923] font-bold bg-orange-50 border border-orange-100 px-2.5 py-1 rounded-lg">
                 {getFilteredCategoryProducts().length} Items
               </span>

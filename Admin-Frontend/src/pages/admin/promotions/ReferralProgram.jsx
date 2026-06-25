@@ -26,7 +26,8 @@ const ReferralProgram = () => {
   // Config panel
   const [showConfig, setShowConfig] = useState(false);
   const [configLoading, setConfigLoading] = useState(false);
-  const [coinsPerReferral, setCoinsPerReferral] = useState(100);
+  const [referralCoinsReferrer, setReferralCoinsReferrer] = useState(100);
+  const [referralCoinsReferee, setReferralCoinsReferee] = useState(100);
   const [referralEnabled, setReferralEnabled] = useState(true);
   const [savingConfig, setSavingConfig] = useState(false);
 
@@ -60,7 +61,8 @@ const ReferralProgram = () => {
       const res = await fetch(`${API_BASE}/admin/referrals/config`, { headers });
       const data = await res.json();
       if (data.success) {
-        setCoinsPerReferral(data.config.referralCoinsPerReferral);
+        setReferralCoinsReferrer(data.config.referralCoinsReferrer);
+        setReferralCoinsReferee(data.config.referralCoinsReferee);
         setReferralEnabled(data.config.referralEnabled);
       }
     } catch { /* silent */ }
@@ -76,7 +78,12 @@ const ReferralProgram = () => {
       const res = await fetch(`${API_BASE}/admin/referrals/config`, {
         method: 'PUT',
         headers: { ...headers, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ referralCoinsPerReferral: coinsPerReferral, referralEnabled })
+        body: JSON.stringify({
+          referralCoinsReferrer,
+          referralCoinsReferee,
+          referralCoinsPerReferral: referralCoinsReferrer,
+          referralEnabled
+        })
       });
       const data = await res.json();
       if (data.success) {
@@ -358,25 +365,36 @@ const ReferralProgram = () => {
                     </button>
                   </div>
 
-                  {/* Coins per referral */}
+                  {/* Coins to Referrer */}
                   <div className="space-y-3">
                     <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
-                      Coins per successful referral
+                      Coins to Referrer (Jo refer kar raha hai)
                     </label>
                     <div className="relative">
                       <input
-                        type="number"
-                        value={coinsPerReferral}
-                        onChange={e => setCoinsPerReferral(Number(e.target.value))}
-                        min={0}
-                        max={10000}
+                        type="text"
+                        value={referralCoinsReferrer}
+                        onChange={e => setReferralCoinsReferrer(Number(e.target.value.replace(/\D/g, '')) || 0)}
                         className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 text-sm font-black focus:ring-4 focus:ring-blue-50 outline-none transition-all"
                       />
                       <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Coins</span>
                     </div>
-                    <p className="text-[11px] text-slate-400 font-bold">
-                      Both referrer and referee will each receive this many Mynzo Coins.
-                    </p>
+                  </div>
+
+                  {/* Coins to Referee */}
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">
+                      Coins to Referee (Jo refer ho raha hai)
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={referralCoinsReferee}
+                        onChange={e => setReferralCoinsReferee(Number(e.target.value.replace(/\D/g, '')) || 0)}
+                        className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 text-sm font-black focus:ring-4 focus:ring-blue-50 outline-none transition-all"
+                      />
+                      <span className="absolute right-5 top-1/2 -translate-y-1/2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Coins</span>
+                    </div>
                   </div>
 
                   {/* Info box */}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  User, Shield, Lock, Save, CheckCircle2, ChevronRight, AlertCircle, Camera, Eye, EyeOff
+  User, Shield, Lock, Save, CheckCircle2, ChevronRight, AlertCircle, Camera, Eye, EyeOff, Coins
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
@@ -24,6 +24,12 @@ const Settings = () => {
   const [commission, setCommission] = useState(10);
   const [gstPercentage, setGstPercentage] = useState(18);
 
+  // Coins settings states
+  const [coinConversionEnabled, setCoinConversionEnabled] = useState(true);
+  const [coinsPerRupee, setCoinsPerRupee] = useState(100);
+  const [minimumRedeemCoins, setMinimumRedeemCoins] = useState(500);
+  const [maximumRedeemPerOrder, setMaximumRedeemPerOrder] = useState(10000);
+
   // Security Form States
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -37,6 +43,7 @@ const Settings = () => {
   const sections = [
     { id: 'Profile', icon: User, label: 'My Profile' },
     { id: 'Business', icon: Shield, label: 'Business & Tax' },
+    { id: 'Coins', icon: Coins, label: 'Coins & Wallet' },
     { id: 'Security', icon: Lock, label: 'Login & Security' },
   ];
 
@@ -74,6 +81,10 @@ const Settings = () => {
         setGstNo(s.gstNo || '');
         setCommission(s.commission ?? 10);
         setGstPercentage(s.gstPercentage ?? 18);
+        setCoinConversionEnabled(s.coinConversionEnabled ?? true);
+        setCoinsPerRupee(s.coinsPerRupee ?? 100);
+        setMinimumRedeemCoins(s.minimumRedeemCoins ?? 500);
+        setMaximumRedeemPerOrder(s.maximumRedeemPerOrder ?? 10000);
       }
     } catch (err) {
       console.error(err);
@@ -180,6 +191,31 @@ const Settings = () => {
 
         if (settingsRes.ok && settingsData.success) {
           toast.success('Business & Tax settings updated successfully!');
+          setSaved(true);
+          setTimeout(() => setSaved(false), 2500);
+          fetchData();
+        } else {
+          toast.error(settingsData.message || 'Failed to update settings');
+        }
+      } else if (activeSection === 'Coins') {
+        // Save Coins config
+        const settingsRes = await fetch(`${apiBase}/admin/settings`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            coinConversionEnabled,
+            coinsPerRupee: Number(coinsPerRupee),
+            minimumRedeemCoins: Number(minimumRedeemCoins),
+            maximumRedeemPerOrder: Number(maximumRedeemPerOrder)
+          })
+        });
+        const settingsData = await settingsRes.json();
+
+        if (settingsRes.ok && settingsData.success) {
+          toast.success('Coin & Wallet settings updated successfully!');
           setSaved(true);
           setTimeout(() => setSaved(false), 2500);
           fetchData();
@@ -469,6 +505,33 @@ const Settings = () => {
                             {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
                           </button>
                         </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeSection === 'Coins' && (
+                  <div className="space-y-8 animate-in fade-in duration-300">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">Coins Per Rupee (e.g. 100)</label>
+                        <input 
+                          type="number" 
+                          value={coinsPerRupee}
+                          onChange={e => setCoinsPerRupee(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 text-sm font-semibold focus:ring-4 focus:ring-blue-50 transition-all outline-none" 
+                          required 
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest block">Minimum Redeem Coins</label>
+                        <input 
+                          type="number" 
+                          value={minimumRedeemCoins}
+                          onChange={e => setMinimumRedeemCoins(e.target.value)}
+                          className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 text-sm font-bold focus:ring-4 focus:ring-blue-50 transition-all outline-none" 
+                          required 
+                        />
                       </div>
                     </div>
                   </div>

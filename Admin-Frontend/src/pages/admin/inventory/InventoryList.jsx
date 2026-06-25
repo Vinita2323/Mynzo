@@ -10,7 +10,6 @@ import toast from 'react-hot-toast';
 import ConfirmModal from '../../../components/ConfirmModal';
 import OptimizedImage from '../../../components/common/OptimizedImage';
 
-const CATEGORIES = ['All', 'Electronics', 'Fashion', 'Beauty', 'Home & Kitchen', 'Toys', 'Stationery', 'Jewellery', 'Gifting', 'Electrical'];
 const STATUSES = ['All', 'Approved', 'Pending', 'Out of Stock'];
 
 const statusConfig = {
@@ -46,6 +45,7 @@ const StatCard = ({ label, value, sub, icon: Icon, color }) => (
 export default function InventoryList() {
   const navigate = useNavigate();
   const [dbProducts, setDbProducts] = useState([]);
+  const [categories, setCategories] = useState(['All']);
 
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
@@ -289,6 +289,21 @@ export default function InventoryList() {
 
   useEffect(() => {
     fetchProducts();
+
+    const fetchCategories = async () => {
+      try {
+        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${apiBase}/admin/catalog/chips`);
+        const data = await res.json();
+        if (res.ok && data.success && data.chips) {
+          const fetchedCats = data.chips.filter(c => c.active !== false).map(c => c.categoryName);
+          setCategories(['All', ...fetchedCats]);
+        }
+      } catch (err) {
+        console.error('Failed to fetch categories:', err);
+      }
+    };
+    fetchCategories();
   }, []);
 
   // Show only database products
@@ -413,6 +428,38 @@ export default function InventoryList() {
         fetchProducts();
       } else {
         toast.error(data.message || 'Failed to approve product');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Could not connect to backend server');
+    }
+  };
+
+  const handleUnpublishProduct = async (id) => {
+    if (String(id).startsWith('P0')) {
+      toast.success('Mock product unpublished');
+      return;
+    }
+
+    const token = localStorage.getItem('adminToken');
+    if (!token) return;
+
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/admin/catalog/products/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ status: 'Pending' })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Product unpublished successfully');
+        fetchProducts();
+      } else {
+        toast.error(data.message || 'Failed to unpublish product');
       }
     } catch (err) {
       console.error(err);
@@ -603,7 +650,7 @@ export default function InventoryList() {
               onChange={e => setCategoryFilter(e.target.value)}
               className="appearance-none bg-slate-50 border border-slate-100 rounded-xl py-3 pl-4 pr-10 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-orange-50 transition-all cursor-pointer"
             >
-              {CATEGORIES.map(c => <option key={c}>{c}</option>)}
+              {categories.map(c => <option key={c}>{c}</option>)}
             </select>
             <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
@@ -894,6 +941,15 @@ export default function InventoryList() {
                               title="Approve"
                             >
                               <CheckCircle2 size={14} />
+                            </button>
+                          )}
+                          {product.status === 'Approved' && (
+                            <button
+                              onClick={() => handleUnpublishProduct(product.id)}
+                              className="p-2 bg-amber-50 text-amber-500 rounded-lg hover:bg-amber-100 transition-all"
+                              title="Unpublish"
+                            >
+                              <XCircle size={14} />
                             </button>
                           )}
                           <button

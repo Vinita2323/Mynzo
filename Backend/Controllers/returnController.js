@@ -511,17 +511,17 @@ exports.updateReturnStatus = async (req, res) => {
       }
 
       if (!refundProcessedOnline) {
-        // Credit refund to user's wallet via CoinTransaction
-        await CoinTransaction.create({
+        const WalletTransaction = require('../Models/WalletTransaction');
+        await WalletTransaction.create({
           userId: returnRequest.userId,
-          title: `Refund for Return #${returnRequest._id.toString().substring(returnRequest._id.toString().length - 6).toUpperCase()}`,
+          type: 'Refund',
           amount: returnRequest.refundAmount,
-          type: 'earned'
+          description: `Refund for Return #${returnRequest._id.toString().substring(returnRequest._id.toString().length - 6).toUpperCase()}`
         });
 
-        // Update the User document's referralCoins balance
+        // Update the User document's walletBalance
         await User.findByIdAndUpdate(returnRequest.userId, {
-          $inc: { referralCoins: returnRequest.refundAmount }
+          $inc: { walletBalance: returnRequest.refundAmount }
         });
       }
 

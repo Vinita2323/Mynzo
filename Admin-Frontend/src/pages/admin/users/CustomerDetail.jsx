@@ -19,6 +19,8 @@ const CustomerDetail = () => {
   const [statsData, setStatsData] = useState({ totalOrders: 0, ltv: 0, returnsCount: 0, coinsBalance: 0, avgRating: 0 });
   const [ordersList, setOrdersList] = useState([]);
   const [wishlistList, setWishlistList] = useState([]);
+  const [reviewsList, setReviewsList] = useState([]);
+  const [ticketsList, setTicketsList] = useState([]);
   const [walletData, setWalletData] = useState({ balance: 0, transactions: [] });
 
   const tabs = ['Orders', 'Wishlist', 'Reviews', 'Support'];
@@ -42,6 +44,8 @@ const CustomerDetail = () => {
         setStatsData(data.stats);
         setOrdersList(data.orders);
         setWishlistList(data.wishlist);
+        setReviewsList(data.reviews || []);
+        setTicketsList(data.tickets || []);
         setWalletData(data.wallet);
       } else {
         toast.error(data.message || 'Failed to load customer details');
@@ -108,14 +112,13 @@ const CustomerDetail = () => {
 
   const stats = [
     { label: 'Total Orders', value: statsData.totalOrders.toString(), icon: ShoppingBag, color: 'text-blue-500', bg: 'bg-blue-50' },
-    { label: 'LTV (Revenue)', value: `₹${statsData.ltv.toLocaleString('en-IN')}`, icon: Wallet, color: 'text-green-500', bg: 'bg-green-50' },
+    { label: 'LTV (Revenue)', value: `₹${(statsData.ltv || 0).toLocaleString('en-IN')}`, icon: Wallet, color: 'text-green-500', bg: 'bg-green-50' },
     { label: 'Avg Rating', value: statsData.avgRating ? statsData.avgRating.toString() : '0', icon: Star, color: 'text-amber-500', bg: 'bg-amber-50' },
     { label: 'Returns', value: statsData.returnsCount.toString().padStart(2, '0'), icon: Clock, color: 'text-red-500', bg: 'bg-red-50' },
   ];
 
   const getBadgeClass = (status) => {
-    if (status === 'VIP') return 'bg-amber-50 text-amber-600 border border-amber-100';
-    if (status === 'Inactive') return 'bg-slate-100 text-slate-500 border border-slate-200';
+    if (status === 'Inactive') return 'bg-rose-50 text-rose-600 border border-rose-100';
     return 'bg-green-50 text-green-600 border border-green-100';
   };
 
@@ -128,8 +131,24 @@ const CustomerDetail = () => {
               <ArrowLeft size={20} />
            </button>
            <div className="flex items-center gap-5">
-              <div className="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-2xl font-black shadow-xl shadow-blue-100 uppercase">
-                 {initials}
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black shadow-xl shadow-blue-100 uppercase overflow-hidden border border-slate-100 bg-slate-100">
+                 {customer.avatar ? (
+                    <img 
+                      src={customer.avatar.startsWith('http') ? customer.avatar : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${customer.avatar}`} 
+                      alt={customer.name || 'User'} 
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        // Replace container innerHTML with the initials fallback on image loading error
+                        e.target.parentNode.className = "w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-2xl font-black shadow-xl shadow-blue-100 uppercase";
+                        e.target.parentNode.innerHTML = initials;
+                      }}
+                    />
+                 ) : (
+                    <div className="w-full h-full bg-blue-600 text-white flex items-center justify-center">
+                       {initials}
+                    </div>
+                 )}
               </div>
               <div>
                  <div className="flex items-center gap-3">
@@ -253,7 +272,7 @@ const CustomerDetail = () => {
                               </div>
                               <div className="flex items-center gap-6">
                                  <div className="text-right">
-                                    <p className="text-sm font-black text-slate-900 font-roboto">₹{order.total.toLocaleString('en-IN')}</p>
+                                    <p className="text-sm font-black text-slate-900 font-roboto">₹{(order.total || 0).toLocaleString('en-IN')}</p>
                                     <p className={`text-[9px] font-black uppercase tracking-widest mt-1 ${order.status === 'Cancelled' ? 'text-red-500' : 'text-green-500'}`}>{order.status}</p>
                                  </div>
                                  <button className="p-2 bg-white text-slate-300 rounded-lg group-hover:text-blue-500 transition-all">
@@ -291,7 +310,7 @@ const CustomerDetail = () => {
                               </div>
                               <div className="flex items-center gap-6">
                                  <div className="text-right">
-                                    <p className="text-sm font-black text-slate-900 font-roboto">₹{item.price.toLocaleString('en-IN')}</p>
+                                    <p className="text-sm font-black text-slate-900 font-roboto">₹{(item.price || 0).toLocaleString('en-IN')}</p>
                                  </div>
                                  <button className="p-2 bg-white text-slate-300 rounded-lg group-hover:text-blue-500 transition-all">
                                     <ExternalLink size={16} />
@@ -308,10 +327,126 @@ const CustomerDetail = () => {
                     </div>
                   )}
 
-                  {activeTab !== 'Orders' && activeTab !== 'Wishlist' && (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-300 space-y-4 py-10 opacity-40">
-                       <LayoutGrid size={48} />
-                       <p className="text-[10px] font-black uppercase tracking-widest text-center">Activity history for {activeTab}<br/>is being synchronized...</p>
+                  {activeTab === 'Reviews' && (
+                    <div className="space-y-4">
+                       {reviewsList.length > 0 ? (
+                         reviewsList.map((review) => (
+                           <div key={review.id} className="p-4 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-white hover:shadow-lg hover:shadow-slate-100 transition-all">
+                              <div className="flex items-start gap-4">
+                                 {review.productImage ? (
+                                   <img src={review.productImage} alt={review.productName} className="w-14 h-14 rounded-xl object-cover shadow-sm border border-slate-100 flex-shrink-0" />
+                                 ) : (
+                                   <div className="w-14 h-14 bg-white rounded-xl flex items-center justify-center text-slate-300 shadow-sm border border-slate-100 flex-shrink-0">
+                                      <ShoppingBag size={20} />
+                                   </div>
+                                 )}
+                                 <div className="space-y-1">
+                                    <p className="text-xs font-black text-slate-900 uppercase tracking-tight">{review.productName}</p>
+                                    <div className="flex items-center gap-1.5">
+                                       <div className="flex text-amber-400">
+                                          {Array.from({ length: 5 }).map((_, idx) => (
+                                             <Star key={idx} size={12} className={idx < review.rating ? 'fill-current' : 'text-slate-200'} />
+                                          ))}
+                                       </div>
+                                       <span className="text-[10px] text-slate-400 font-bold">{review.rating}/5 Rating</span>
+                                    </div>
+                                    <p className="text-xs text-slate-600 font-medium italic mt-1">"{review.caption || 'No caption'}"</p>
+                                    <p className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{review.createdAt}</p>
+                                 </div>
+                              </div>
+                              <div className="flex items-center gap-4">
+                                 {review.video && (
+                                   <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-black w-24 aspect-[9/16] shadow-sm flex-shrink-0">
+                                      <video 
+                                        src={review.video.startsWith('http') ? review.video : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${review.video.startsWith('/') ? '' : '/'}${review.video}`} 
+                                        className="w-full h-full object-cover" 
+                                        muted 
+                                        controls 
+                                      />
+                                   </div>
+                                 )}
+                                 <div className="text-right flex flex-col items-end gap-1">
+                                    <span className={`px-2.5 py-0.5 rounded-full text-[8.5px] font-black uppercase tracking-wider ${
+                                      review.status === 'approved' ? 'bg-green-50 text-green-600 border border-green-100' :
+                                      review.status === 'rejected' ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-amber-50 text-amber-600 border border-amber-100'
+                                    }`}>
+                                       {review.status}
+                                    </span>
+                                 </div>
+                              </div>
+                           </div>
+                         ))
+                       ) : (
+                         <div className="h-full flex flex-col items-center justify-center text-slate-300 space-y-4 py-10 opacity-60">
+                            <MessageSquare size={48} className="opacity-20" />
+                            <p className="text-[10px] font-black uppercase tracking-widest text-center">No reviews submitted yet</p>
+                         </div>
+                       )}
+                    </div>
+                  )}
+
+                  {activeTab === 'Support' && (
+                    <div className="space-y-6">
+                       {/* Direct Communication Channels */}
+                       <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 space-y-4">
+                          <p className="text-[10px] font-black text-[#02006c] uppercase tracking-widest">Contact Customer Directly</p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <a href={`tel:${customer.phone}`} className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-100 hover:border-blue-500 hover:text-blue-500 hover:shadow-md transition-all font-black text-[10px] text-slate-700 uppercase tracking-wider">
+                                <Smartphone size={16} className="text-blue-500" />
+                                CALL CLIENT ({customer.phone || 'N/A'})
+                             </a>
+                             <a href={`mailto:${customer.email}`} className="flex items-center gap-3 p-4 bg-white rounded-xl border border-slate-100 hover:border-blue-500 hover:text-blue-500 hover:shadow-md transition-all font-black text-[10px] text-slate-700 uppercase tracking-wider">
+                                <Mail size={16} className="text-blue-500" />
+                                EMAIL CLIENT ({customer.email || 'N/A'})
+                             </a>
+                          </div>
+                       </div>
+
+                       {/* Support Tickets Raised */}
+                       <div className="space-y-4">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Support Tickets Raised By Customer</p>
+                          
+                          {ticketsList.length > 0 ? (
+                             ticketsList.map((ticket) => (
+                                <div key={ticket.id} className="p-5 bg-slate-50 rounded-2xl border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-white hover:shadow-lg hover:shadow-slate-100 transition-all">
+                                   <div className="space-y-1">
+                                      <div className="flex items-center gap-3">
+                                         <span className="text-[10px] font-black text-blue-600 font-roboto">{ticket.ticketId || ticket.id}</span>
+                                         <span className="text-[8px] text-slate-400 font-bold uppercase">{ticket.date}</span>
+                                         <span className={`px-2 py-0.5 rounded-md text-[8px] font-black uppercase tracking-wider ${
+                                            ticket.priority === 'High' ? 'bg-red-55 text-red-655 border border-red-100' :
+                                            ticket.priority === 'Medium' ? 'bg-amber-55 text-amber-655 border border-amber-100' : 'bg-green-55 text-green-655 border border-green-100'
+                                         }`}>
+                                            {ticket.priority} Priority
+                                         </span>
+                                      </div>
+                                      <h4 className="text-xs font-black text-slate-900 font-montserrat uppercase tracking-tight mt-1">{ticket.subject}</h4>
+                                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Category: {ticket.category}</p>
+                                   </div>
+                                   <div className="flex items-center gap-4">
+                                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${
+                                         ticket.status === 'Open' ? 'bg-red-50 text-red-600 border-red-100' :
+                                         ticket.status === 'In-Progress' ? 'bg-blue-50 text-blue-600 border-blue-100' : 'bg-green-50 text-green-600 border-green-100'
+                                      }`}>
+                                         {ticket.status}
+                                      </span>
+                                      <button 
+                                         onClick={() => navigate('/admin/support/tickets')} 
+                                         className="p-2 bg-white text-slate-350 rounded-lg hover:text-blue-500 hover:border-blue-500 transition-all border border-slate-100"
+                                         title="Open Support Helpdesk"
+                                      >
+                                         <ExternalLink size={14} />
+                                      </button>
+                                   </div>
+                                </div>
+                             ))
+                          ) : (
+                             <div className="h-full flex flex-col items-center justify-center text-slate-300 space-y-4 py-10 opacity-60">
+                                <MessageSquare size={48} className="opacity-20" />
+                                <p className="text-[10px] font-black uppercase tracking-widest text-center">0 Support Tickets Raised</p>
+                             </div>
+                          )}
+                       </div>
                     </div>
                   )}
                </div>

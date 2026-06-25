@@ -87,3 +87,93 @@ exports.getHistory = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
+
+// @desc    Get current user's notifications (specific + broadcasts)
+// @route   GET /api/notifications/my
+// @access  Private (User)
+exports.getMyNotifications = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const notifications = await Notification.find({
+      $or: [
+        { target: 'All Users' },
+        { targetUserIds: userId }
+      ]
+    }).sort({ createdAt: -1 });
+
+    const formatted = notifications.map(notif => {
+      const isRead = notif.readBy && notif.readBy.some(id => id.toString() === userId.toString());
+      return {
+        _id: notif._id,
+        title: notif.title,
+        body: notif.body,
+        read: isRead,
+        createdAt: notif.createdAt || notif.sentAt
+      };
+    });
+
+    res.status(200).json({ success: true, notifications: formatted });
+  } catch (error) {
+    console.error('Get My Notifications Error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Mark all notifications as read for current user
+// @route   POST /api/notifications/read-all
+// @access  Private (User)
+exports.markAllRead = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    await Notification.updateMany(
+      {
+        $or: [
+          { target: 'All Users' },
+          { targetUserIds: userId }
+        ],
+        readBy: { $ne: userId }
+      },
+      {
+        $addToSet: { readBy: userId }
+      }
+    );
+    res.status(200).json({ success: true, message: 'All notifications marked as read' });
+  } catch (error) {
+    console.error('Mark all read error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Delete a notification (Admin only)
+// @route   DELETE /admin/notifications/:id
+// @access  Private/Admin
+exports.deleteNotification = async (req, res) => {
+  try {
+    const notification = await Notification.findById(req.params.id);
+    if (!notification) {
+      return res.status(404).json({ success: false, message: 'Notification not found' });
+    }
+    await notification.deleteOne();
+    res.status(200).json({ success: true, message: 'Notification deleted successfully' });
+  } catch (error) {
+    console.error('Delete Notification Error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Bulk delete notifications (Admin only)
+// @route   POST /admin/notifications/bulk-delete
+// @access  Private/Admin
+exports.bulkDeleteNotifications = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ success: false, message: 'Please provide array of notification IDs' });
+    }
+    await Notification.deleteMany({ _id: { $in: ids } });
+    res.status(200).json({ success: true, message: 'Notifications deleted successfully' });
+  } catch (error) {
+    console.error('Bulk Delete Notifications Error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};

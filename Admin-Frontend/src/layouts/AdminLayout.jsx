@@ -118,6 +118,7 @@ const AdminLayout = () => {
       title: 'COMMS',
       items: [
         { name: 'Notification Hub', path: '/admin/comms/notifications', icon: <Bell size={18} /> },
+        { name: 'Support Tickets', path: '/admin/support/tickets', icon: <HelpCircle size={18} /> },
       ]
     },
     {

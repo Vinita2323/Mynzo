@@ -22,11 +22,25 @@ const getYesterdayDateString = () => {
   return localDate.toISOString().split('T')[0];
 };
 
+const seedGamesIfEmpty = async () => {
+  const count = await Game.countDocuments();
+  if (count === 0) {
+    const defaultGames = [
+      { name: 'Snake & Chase', key: 'snake', rewardPoints: 100, requiredDays: 3, requiredPlaysPerDay: 5, rewardRepeatable: true, repeatRewardPoints: 50, dailyPlayLimit: 20, status: true },
+      { name: 'Quiz Game', key: 'quiz', rewardPoints: 120, requiredDays: 3, requiredPlaysPerDay: 3, rewardRepeatable: true, repeatRewardPoints: 60, dailyPlayLimit: 10, status: true },
+      { name: 'Speed Tap', key: 'speedTap', rewardPoints: 80, requiredDays: 2, requiredPlaysPerDay: 4, rewardRepeatable: true, repeatRewardPoints: 40, dailyPlayLimit: 15, status: true },
+      { name: 'Tic Tac Toe', key: 'ticTacToe', rewardPoints: 50, requiredDays: 2, requiredPlaysPerDay: 3, rewardRepeatable: true, repeatRewardPoints: 20, dailyPlayLimit: 10, status: true }
+    ];
+    await Game.insertMany(defaultGames);
+  }
+};
+
 // @desc    Get all active games configuration & user progress
 // @route   GET /api/games
 // @access  Private (User)
 const getGamesList = async (req, res) => {
   try {
+    await seedGamesIfEmpty();
     const games = await Game.find({ status: true });
     const progressList = await UserGameProgress.find({ userId: req.user._id });
     const today = getTodayDateString();
@@ -111,11 +125,12 @@ const recordPlay = async (req, res) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // 2. Fetch/Create progress record
-    let progress = await UserGameProgress.findOne({ userId, gameId: game._id });
-    if (!progress) {
-      progress = new UserGameProgress({ userId, gameId: game._id });
-    }
+    // 2. Fetch/Create progress record atomically
+    let progress = await UserGameProgress.findOneAndUpdate(
+      { userId, gameId: game._id },
+      { $setOnInsert: { userId, gameId: game._id } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
 
     // 3. Handle streak breaking/resetting
     if (progress.lastPlayedDate && progress.lastPlayedDate !== today && progress.lastPlayedDate !== yesterday) {
@@ -194,6 +209,7 @@ const recordPlay = async (req, res) => {
 // @access  Private (Admin)
 const adminGetGames = async (req, res) => {
   try {
+    await seedGamesIfEmpty();
     const games = await Game.find({});
     
     // Aggregated stats

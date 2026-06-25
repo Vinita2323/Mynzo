@@ -2,28 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { 
   MessageSquare, Star, Search, Filter, MoreVertical, 
   CheckCircle2, XCircle, AlertCircle, Trash2, 
-  User, ShoppingBag, Calendar, ThumbsUp, Play, Upload, Plus
+  User, ShoppingBag, Calendar, ThumbsUp, Play, Upload, Plus, Eye
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
-const MOCK_REVIEWS = [
-  { id: 1, user: 'Rahul Sharma', product: 'Premium Leather Satchel', rating: 5, comment: 'Amazing quality! The leather feels very premium and the stitching is perfect.', date: '2026-05-10', status: 'Pending' },
-  { id: 2, user: 'Priyanka Das', product: 'Biotique Face Wash', rating: 4, comment: 'Good product, but the delivery was a bit slow.', date: '2026-05-09', status: 'Approved' },
-  { id: 3, user: 'Amit Verma', product: 'Wireless Earbuds Pro', rating: 1, comment: 'Worst experience. The left earbud stopped working after 2 days.', date: '2026-05-08', status: 'Flagged' },
-  { id: 4, user: 'Sneha Kapur', product: 'Summer Floral Dress', rating: 5, comment: 'Perfect fit and beautiful design. Highly recommended!', date: '2026-05-08', status: 'Pending' },
-];
+const MOCK_REVIEWS = [];
 
 const ReviewModeration = () => {
   const [reviews, setReviews] = useState(MOCK_REVIEWS);
-  const [reviewType, setReviewType] = useState('text'); // 'text' or 'reels'
-  const [activeTab, setActiveTab] = useState('Pending'); // 'Pending', 'Approved', 'Flagged'/'Rejected', 'All'
+  const [reviewType, setReviewType] = useState('reels'); // 'text' or 'reels'
+  const [activeTab, setActiveTab] = useState('All'); // 'All', 'Pending', 'Approved', 'Flagged'/'Rejected'
 
   // Video Reels States
   const [reels, setReels] = useState([]);
   const [products, setProducts] = useState([]);
   const [loadingReels, setLoadingReels] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [previewVideoUrl, setPreviewVideoUrl] = useState(null);
   
   // Admin Upload form fields
   const [selectedProductId, setSelectedProductId] = useState('');
@@ -35,7 +31,7 @@ const ReviewModeration = () => {
   const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false);
   const [productSearchQuery, setProductSearchQuery] = useState('');
 
-  const tabs = ['Pending', 'Approved', 'Flagged', 'All'];
+  const tabs = ['All', 'Pending', 'Approved', 'Flagged'];
   const reelsTabs = ['pending', 'approved', 'rejected', 'All'];
 
   // Fetch reels for admin moderation
@@ -78,6 +74,17 @@ const ReviewModeration = () => {
     } catch (err) {
       console.error(err);
     }
+  };
+
+  const handleUpdateReviewStatus = (reviewId, newStatus) => {
+    setReviews(prev => prev.map(r => r.id === reviewId ? { ...r, status: newStatus } : r));
+    toast.success(`Review marked as ${newStatus}`);
+  };
+
+  const handleDeleteReview = (reviewId) => {
+    if (!window.confirm('Are you sure you want to permanently delete this review?')) return;
+    setReviews(prev => prev.filter(r => r.id !== reviewId));
+    toast.success('Review deleted successfully');
   };
 
   useEffect(() => {
@@ -233,21 +240,7 @@ const ReviewModeration = () => {
         )}
       </div>
 
-      {/* Review Type Selection Toggles */}
-      <div className="flex bg-slate-100 p-1 rounded-2xl w-fit">
-        <button 
-          onClick={() => { setReviewType('text'); setActiveTab('Pending'); }}
-          className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${reviewType === 'text' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-        >
-          Standard Reviews
-        </button>
-        <button 
-          onClick={() => { setReviewType('reels'); setActiveTab('Pending'); }}
-          className={`px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${reviewType === 'reels' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-        >
-          Video Reels Reviews
-        </button>
-      </div>
+
 
       {/* Tabs & Search */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
@@ -305,6 +298,35 @@ const ReviewModeration = () => {
                    <p className="text-sm text-slate-600 font-medium leading-relaxed italic">
                       "{review.comment}"
                    </p>
+                   <div className="flex justify-between items-center pt-2">
+                     <div></div>
+                     <div className="flex gap-2">
+                        {review.status !== 'Approved' && (
+                          <button 
+                            onClick={() => handleUpdateReviewStatus(review.id, 'Approved')}
+                            className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg text-[10px] font-black uppercase tracking-widest hover:scale-105 transition-all shadow-sm"
+                          >
+                             <CheckCircle2 size={14} />
+                             Approve
+                          </button>
+                        )}
+                        {review.status !== 'Flagged' && (
+                          <button 
+                            onClick={() => handleUpdateReviewStatus(review.id, 'Flagged')}
+                            className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-500 border border-red-100 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all shadow-sm"
+                          >
+                             <XCircle size={14} />
+                             Reject
+                          </button>
+                        )}
+                        <button 
+                          onClick={() => handleDeleteReview(review.id)}
+                          className="p-2 bg-slate-50 text-slate-400 rounded-lg hover:bg-red-50 hover:text-red-500 transition-all border border-slate-100"
+                        >
+                           <Trash2 size={16} />
+                        </button>
+                     </div>
+                   </div>
                 </div>
               </motion.div>
             ))}
@@ -326,8 +348,16 @@ const ReviewModeration = () => {
                     className="p-6 hover:bg-slate-50/50 transition-colors flex gap-6"
                   >
                     {/* Video Thumbnail with hover play */}
-                    <div className="relative w-28 h-48 bg-black rounded-2xl overflow-hidden flex-shrink-0 shadow-md group border border-slate-100">
-                      <video src={videoUrl} className="w-full h-full object-cover" controls playsInline muted />
+                    <div 
+                      onClick={() => setPreviewVideoUrl(videoUrl)}
+                      className="relative w-28 h-48 bg-black rounded-2xl overflow-hidden flex-shrink-0 shadow-md group border border-slate-100 cursor-pointer"
+                    >
+                      <video src={videoUrl} className="w-full h-full object-cover" playsInline muted />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <div className="p-3 bg-white/20 backdrop-blur-md rounded-full text-white transform scale-90 group-hover:scale-100 transition-transform duration-200">
+                          <Eye size={20} className="stroke-[2.5]" />
+                        </div>
+                      </div>
                       <div className="absolute top-2 left-2 bg-slate-900/60 text-white px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider">
                         {reel.section}
                       </div>
@@ -338,6 +368,13 @@ const ReviewModeration = () => {
                           <div>
                              <div className="flex items-center gap-3">
                                 <h4 className="font-black text-slate-900 font-montserrat uppercase tracking-tight">@{reel.username}</h4>
+                                <span className={`px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
+                                  reel.userType === 'admin' || reel.userModel === 'Admin'
+                                    ? 'bg-purple-100 text-purple-700 border border-purple-200' 
+                                    : 'bg-amber-100 text-amber-700 border border-amber-200'
+                                }`}>
+                                   {reel.userType === 'admin' || reel.userModel === 'Admin' ? 'Admin' : 'Customer'}
+                                </span>
                                 <StatusBadge status={reel.status} />
                              </div>
                              <div className="flex items-center gap-2 mt-1 text-[10px] text-slate-400 font-bold uppercase tracking-widest">
@@ -399,11 +436,7 @@ const ReviewModeration = () => {
                   </motion.div>
                 );
               })
-            ) : (
-              <div className="py-20 text-center text-slate-300 font-bold uppercase tracking-widest text-xs">
-                No video reels matching this filter.
-              </div>
-            )}
+            ) : null}
           </div>
         )}
       </div>
@@ -543,6 +576,36 @@ const ReviewModeration = () => {
                   </button>
                 </div>
               </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Video Preview Modal */}
+      <AnimatePresence>
+        {previewVideoUrl && (
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-3xl md:max-w-4xl bg-black rounded-3xl overflow-hidden shadow-2xl border border-slate-800"
+            >
+              {/* Close Button */}
+              <button 
+                onClick={() => setPreviewVideoUrl(null)} 
+                className="absolute top-4 right-4 z-50 w-10 h-10 bg-black/50 hover:bg-black/80 rounded-full flex items-center justify-center text-white transition-all border border-white/10"
+              >
+                ✕
+              </button>
+
+              <video 
+                src={previewVideoUrl} 
+                className="w-full max-h-[85vh] object-contain mx-auto" 
+                controls 
+                autoPlay 
+                playsInline 
+              />
             </motion.div>
           </div>
         )}

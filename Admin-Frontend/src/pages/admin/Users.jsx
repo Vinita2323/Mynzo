@@ -35,7 +35,20 @@ const Users = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalUsers, setTotalUsers] = useState(0);
+  const [stats, setStats] = useState({
+    totalUsers: 0,
+    activeNow: 0,
+    avgLtv: 0,
+    newUsersThisWeek: 0
+  });
+  const [editingUser, setEditingUser] = useState(null);
   const limit = 10;
+
+  const handleCloseModal = () => {
+    setIsAddModalOpen(false);
+    setEditingUser(null);
+    setFormData({ name: '', email: '', phone: '', status: 'Active' });
+  };
 
   const fetchUsers = async (page = 1, search = '', status = 'All') => {
     const token = localStorage.getItem('adminToken');
@@ -70,6 +83,9 @@ const Users = () => {
         setUsersList(formattedUsers);
         setTotalPages(data.pages || 1);
         setTotalUsers(data.total || 0);
+        if (data.stats) {
+          setStats(data.stats);
+        }
       } else {
         toast.error(data.message || 'Failed to load users');
       }
@@ -117,30 +133,35 @@ const Users = () => {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/admin/auth/users`, {
-        method: 'POST',
+      const isEditing = !!editingUser;
+      const url = isEditing 
+        ? `${apiBase}/admin/auth/users/${editingUser.id}` 
+        : `${apiBase}/admin/auth/users`;
+      const method = isEditing ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           name: formData.name,
-          email: formData.email || undefined,
+          email: formData.email || '',
           phone: formData.phone
         })
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success(data.message || 'Customer added successfully');
+        toast.success(data.message || (isEditing ? 'Customer updated successfully' : 'Customer added successfully'));
         setCurrentPage(1);
         setSearchQuery('');
         setFilterStatus('All');
         fetchUsers(1, '', 'All');
-        setIsAddModalOpen(false);
-        setFormData({ name: '', email: '', phone: '', status: 'Active' });
+        handleCloseModal();
       } else {
-        toast.error(data.message || 'Failed to add customer');
+        toast.error(data.message || 'Failed to save customer');
       }
     } catch (err) {
       console.error(err);
@@ -159,6 +180,16 @@ const Users = () => {
     e.stopPropagation();
     setActiveMenu(null);
     if (action === 'view') navigate(`/admin/users/${user.id}`);
+    if (action === 'edit') {
+      setEditingUser(user);
+      setFormData({
+        name: user.name || '',
+        email: user.email === 'N/A' ? '' : (user.email || ''),
+        phone: user.phone === 'N/A' ? '' : (user.phone || ''),
+        status: user.status || 'Active'
+      });
+      setIsAddModalOpen(true);
+    }
     if (action === 'force-logout') {
       const confirmLogout = window.confirm(`Are you sure you want to FORCE LOGOUT ${user.name}? This will clear their session on all devices immediately.`);
       if (!confirmLogout) return;
@@ -175,6 +206,64 @@ const Users = () => {
           toast.success(data.message || 'User forced logged out successfully');
         } else {
           toast.error(data.message || 'Failed to force logout user');
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('Could not connect to backend server');
+      }
+    }
+    if (action === 'suspend') {
+      const confirmSuspend = window.confirm(`Are you sure you want to SUSPEND/DEACTIVATE ${user.name}? They will be forced logged out and blocked from logging back in.`);
+      if (!confirmSuspend) return;
+
+      const token = localStorage.getItem('adminToken');
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      try {
+        const res = await fetch(`${apiBase}/admin/auth/users/${user.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ status: 'Inactive' })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          toast.success('Customer suspended successfully');
+          await fetch(`${apiBase}/admin/auth/users/${user.id}/force-logout`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          fetchUsers(currentPage, searchQuery, filterStatus);
+        } else {
+          toast.error(data.message || 'Failed to suspend user');
+        }
+      } catch (err) {
+        console.error(err);
+        toast.error('Could not connect to backend server');
+      }
+    }
+    if (action === 'activate') {
+      const confirmActivate = window.confirm(`Are you sure you want to ACTIVATE ${user.name}?`);
+      if (!confirmActivate) return;
+
+      const token = localStorage.getItem('adminToken');
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      try {
+        const res = await fetch(`${apiBase}/admin/auth/users/${user.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ status: 'Active' })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          toast.success('Customer activated successfully');
+          fetchUsers(currentPage, searchQuery, filterStatus);
+        } else {
+          toast.error(data.message || 'Failed to activate user');
         }
       } catch (err) {
         console.error(err);
@@ -293,10 +382,10 @@ const Users = () => {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
-          { label: 'Total Buyers', value: totalUsers.toLocaleString(), icon: UsersIcon, color: 'text-blue-500', bg: 'bg-blue-50' },
-          { label: 'Active Now', value: '182', icon: Clock, color: 'text-green-500', bg: 'bg-green-50' },
-          { label: 'Avg LTV', value: '₹12,400', icon: Star, color: 'text-amber-500', bg: 'bg-amber-50' },
-          { label: 'New This Week', value: '+45', icon: UserPlus, color: 'text-indigo-500', bg: 'bg-indigo-50' },
+          { label: 'Total Buyers', value: stats.totalUsers > 0 ? stats.totalUsers.toLocaleString() : '00', icon: UsersIcon, color: 'text-blue-500', bg: 'bg-blue-50' },
+          { label: 'Active Now', value: stats.activeNow > 0 ? stats.activeNow.toLocaleString() : '00', icon: Clock, color: 'text-green-500', bg: 'bg-green-50' },
+          { label: 'Avg LTV', value: stats.avgLtv > 0 ? `₹${stats.avgLtv.toLocaleString('en-IN')}` : '00', icon: Star, color: 'text-amber-500', bg: 'bg-amber-50' },
+          { label: 'New This Week', value: stats.newUsersThisWeek > 0 ? `+${stats.newUsersThisWeek}` : '00', icon: UserPlus, color: 'text-indigo-500', bg: 'bg-indigo-50' },
         ].map((stat, i) => (
           <div key={i} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
             <div className={`w-11 h-11 ${stat.bg} ${stat.color} rounded-xl flex items-center justify-center shadow-inner`}>
@@ -344,7 +433,7 @@ const Users = () => {
                       className="absolute right-0 top-16 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 z-20 py-3 overflow-hidden"
                     >
                        <p className="px-4 pb-2 mb-2 border-b border-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-widest">Filter by Status</p>
-                       {['All', 'Active', 'VIP', 'Inactive'].map((status) => (
+                       {['All', 'Active', 'Inactive'].map((status) => (
                          <button 
                             key={status}
                             onClick={() => {
@@ -365,7 +454,7 @@ const Users = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto min-h-[350px]">
           <table className="w-full text-left">
             <thead>
               <tr className="bg-slate-50/50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
@@ -422,58 +511,53 @@ const Users = () => {
                   </td>
                   <td className="px-6 py-5 text-[11px] font-bold text-slate-500 uppercase tracking-tighter">{user.joined}</td>
                   <td className="px-6 py-5">
-                     <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                       user.status === 'VIP' ? 'bg-amber-50 text-amber-600 border border-amber-100' : 
-                       user.status === 'Active' ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-slate-100 text-slate-400'
-                     }`}>
-                        {user.status}
-                     </span>
+                      <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                        user.status === 'Active' ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-rose-50 text-rose-500 border border-rose-100'
+                      }`}>
+                         {user.status}
+                      </span>
                   </td>
-                  <td className="px-6 py-5 text-right relative" onClick={(e) => e.stopPropagation()}>
-                    <button 
-                      onClick={(e) => toggleMenu(e, user.id)}
-                      className={`p-2 rounded-lg transition-all ${activeMenu === user.id ? 'bg-slate-900 text-white' : 'bg-slate-50 text-slate-400 hover:bg-slate-100'}`}
-                    >
-                       <MoreVertical size={16} />
-                    </button>
- 
-                    <AnimatePresence>
-                      {activeMenu === user.id && (
-                        <>
-                          <div className="fixed inset-0 z-10" onClick={() => setActiveMenu(null)} />
-                          <motion.div 
-                            initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                            className={`absolute right-6 w-48 bg-white rounded-2xl shadow-2xl border border-slate-100 z-20 py-2 overflow-hidden ${
-                              i >= usersList.length - 2 && usersList.length > 2 ? 'bottom-14' : 'top-14'
-                            }`}
+                  <td className="px-6 py-5 text-right" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-2">
+                       <button 
+                         onClick={(e) => handleAction(e, 'view', user)}
+                         title="View Profile"
+                         className="p-2 bg-blue-50 text-blue-500 hover:bg-blue-500 hover:text-white rounded-lg transition-all"
+                       >
+                          <Eye size={14} />
+                       </button>
+                       <button 
+                         onClick={(e) => handleAction(e, 'edit', user)}
+                         title="Edit Details"
+                         className="p-2 bg-indigo-50 text-indigo-500 hover:bg-indigo-500 hover:text-white rounded-lg transition-all"
+                       >
+                          <Edit2 size={14} />
+                       </button>
+                       <button 
+                         onClick={(e) => handleAction(e, 'force-logout', user)}
+                         title="Force Logout"
+                         className="p-2 bg-orange-50 text-orange-500 hover:bg-orange-500 hover:text-white rounded-lg transition-all"
+                       >
+                          <LogOut size={14} />
+                       </button>
+                       {user.status === 'Inactive' ? (
+                          <button 
+                            onClick={(e) => handleAction(e, 'activate', user)}
+                            title="Activate Customer"
+                            className="p-2 bg-emerald-50 text-emerald-600 hover:bg-emerald-500 hover:text-white rounded-lg transition-all"
                           >
-                             <button onClick={(e) => handleAction(e, 'view', user)} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 text-slate-600 transition-colors">
-                                <Eye size={14} className="text-blue-500" />
-                                <span className="text-[10px] font-black uppercase tracking-widest">View Profile</span>
-                             </button>
-                             <button onClick={(e) => handleAction(e, 'edit', user)} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 text-slate-600 transition-colors">
-                                <Edit2 size={14} className="text-indigo-500" />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Edit Information</span>
-                             </button>
-                             <button onClick={(e) => handleAction(e, 'email', user)} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-slate-50 text-slate-600 transition-colors">
-                                <Mail size={14} className="text-green-500" />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Send Email</span>
-                             </button>
-                             <div className="h-px bg-slate-50 my-1" />
-                             <button onClick={(e) => handleAction(e, 'force-logout', user)} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-orange-50 text-orange-600 transition-colors">
-                                <LogOut size={14} />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Force Logout</span>
-                             </button>
-                             <button onClick={(e) => handleAction(e, 'suspend', user)} className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-red-50 text-red-600 transition-colors">
-                                <ShieldAlert size={14} />
-                                <span className="text-[10px] font-black uppercase tracking-widest">Suspend Account</span>
-                             </button>
-                          </motion.div>
-                        </>
-                      )}
-                    </AnimatePresence>
+                             <ShieldCheck size={14} />
+                          </button>
+                       ) : (
+                          <button 
+                            onClick={(e) => handleAction(e, 'suspend', user)}
+                            title="Suspend Customer"
+                            className="p-2 bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white rounded-lg transition-all"
+                          >
+                             <ShieldAlert size={14} />
+                          </button>
+                       )}
+                    </div>
                   </td>
                 </tr>
               )) : (
@@ -595,9 +679,11 @@ const Users = () => {
               className="w-full max-w-lg bg-white h-full rounded-[32px] shadow-2xl p-10 flex flex-col"
             >
               <div className="flex justify-between items-center mb-10">
-                <h2 className="text-2xl font-black text-slate-900 font-montserrat uppercase tracking-tight">Add New Customer</h2>
+                <h2 className="text-2xl font-black text-slate-900 font-montserrat uppercase tracking-tight">
+                  {editingUser ? 'Edit Customer Info' : 'Add New Customer'}
+                </h2>
                 <button 
-                  onClick={() => setIsAddModalOpen(false)} 
+                  onClick={handleCloseModal} 
                   className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 hover:text-slate-900 transition-all active:scale-90 shadow-sm"
                 >
                   <XCircle size={24} />
@@ -648,7 +734,6 @@ const Users = () => {
                   >
                     <option value="Active">Active</option>
                     <option value="Inactive">Inactive</option>
-                    <option value="VIP">VIP</option>
                   </select>
                 </div>
                 
@@ -664,13 +749,13 @@ const Users = () => {
               </div>
 
               <div className="pt-8 border-t border-slate-50 flex gap-4">
-                <button onClick={() => setIsAddModalOpen(false)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all">Cancel</button>
+                <button onClick={handleCloseModal} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-100 transition-all">Cancel</button>
                 <button 
                   onClick={handleSaveCustomer}
                   className="flex-1 py-4 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-xl shadow-blue-100 hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2"
                 >
                    <CheckCircle2 size={16} />
-                   Save Customer
+                   {editingUser ? 'Update Customer' : 'Save Customer'}
                 </button>
               </div>
             </motion.div>

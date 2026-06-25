@@ -14,11 +14,8 @@
 const memCache = new Map();
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+console.log('--- API Base URL loaded in frontend apiCache.js: ---', API_BASE);
 
-/**
- * Invalidate (clear) a specific cached key.
- * Call this after a mutation (e.g. admin publishes new banners).
- */
 export function invalidateCache(path) {
   const key = API_BASE + path;
   memCache.delete(key);

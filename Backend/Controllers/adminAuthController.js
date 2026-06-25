@@ -145,19 +145,7 @@ const getUsers = async (req, res) => {
         },
         {
           $addFields: {
-            derivedStatus: {
-              $cond: {
-                if: { $or: [{ $gt: ['$ordersCount', 10] }, { $gt: ['$totalSpent', 15000] }] },
-                then: 'VIP',
-                else: {
-                  $cond: {
-                    if: { $eq: ['$ordersCount', 0] },
-                    then: 'Inactive',
-                    else: 'Active'
-                  }
-                }
-              }
-            }
+            derivedStatus: { $ifNull: ['$status', 'Active'] }
           }
         },
         { $match: { derivedStatus: status } },
@@ -221,19 +209,7 @@ const getUsers = async (req, res) => {
               },
               {
                 $addFields: {
-                  derivedStatus: {
-                    $cond: {
-                      if: { $or: [{ $gt: ['$ordersCount', 10] }, { $gt: ['$totalSpent', 15000] }] },
-                      then: 'VIP',
-                      else: {
-                        $cond: {
-                          if: { $eq: ['$ordersCount', 0] },
-                          then: 'Inactive',
-                          else: 'Active'
-                        }
-                      }
-                    }
-                  }
+                  derivedStatus: { $ifNull: ['$status', 'Active'] }
                 }
               },
               {
@@ -256,13 +232,36 @@ const getUsers = async (req, res) => {
     const users = result[0].data;
     const total = result[0].metadata[0] ? result[0].metadata[0].total : 0;
 
+    // Calculate dashboard statistics dynamically
+    const totalUsers = await User.countDocuments();
+
+    const ltvStats = await Order.aggregate([
+      { $match: { paymentStatus: 'Paid' } },
+      { $group: { _id: null, totalSales: { $sum: '$total' } } }
+    ]);
+    const totalSales = ltvStats[0] ? ltvStats[0].totalSales : 0;
+    const avgLtv = totalUsers > 0 ? Math.round(totalSales / totalUsers) : 0;
+
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+    const newUsersThisWeek = await User.countDocuments({ createdAt: { $gte: sevenDaysAgo } });
+
+    const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const activeNow = await User.countDocuments({ lastLogin: { $gte: fifteenMinsAgo } });
+
     res.status(200).json({ 
       success: true, 
       count: users.length, 
       total,
       page,
       pages: Math.ceil(total / limit),
-      users 
+      users,
+      stats: {
+        totalUsers,
+        activeNow,
+        avgLtv,
+        newUsersThisWeek
+      }
     });
   } catch (error) {
     console.error('Get Users Error:', error);
@@ -317,6 +316,64 @@ const createUser = async (req, res) => {
     });
   } catch (error) {
     console.error('Create User Error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Update user details
+// @route   PUT /api/admin/auth/users/:id
+// @access  Private
+const updateUser = async (req, res) => {
+  try {
+    const User = require('../Models/User');
+    const { name, email, phone, status } = req.body;
+    const userId = req.params.id;
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (phone) {
+      const phoneRegex = /^[0-9]{10}$/;
+      if (!phoneRegex.test(phone)) {
+        return res.status(400).json({ success: false, message: 'Phone number must be exactly 10 digits.' });
+      }
+
+      const existingUser = await User.findOne({ phone, _id: { $ne: userId } });
+      if (existingUser) {
+        return res.status(400).json({ success: false, message: 'User with this phone number already exists' });
+      }
+      user.phone = phone;
+    }
+
+    if (email) {
+      const existingEmail = await User.findOne({ email: email.toLowerCase(), _id: { $ne: userId } });
+      if (existingEmail) {
+        return res.status(400).json({ success: false, message: 'User with this email already exists' });
+      }
+      user.email = email.toLowerCase();
+    } else if (email === '') {
+      user.email = null;
+    }
+
+    if (name !== undefined) {
+      user.name = name || null;
+    }
+
+    if (status !== undefined) {
+      user.status = status;
+    }
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'User updated successfully',
+      user
+    });
+  } catch (error) {
+    console.error('Update User Error:', error);
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
@@ -547,29 +604,19 @@ const getUserDetails = async (req, res) => {
     const totalSpent = coinTransactions.filter(t => t.type === 'spent').reduce((sum, t) => sum + t.amount, 0);
     const coinsBalance = totalEarned - totalSpent;
 
-    // 5.1. Fetch dynamic average rating if Review model exists
-    const mongoose = require('mongoose');
+    // 5.1. Fetch dynamic average rating and reviews from Reel model
+    const Reel = require('../Models/Reel');
+    const userReviews = await Reel.find({ uploadedBy: userId }).populate('productId', 'name price images').lean();
     let avgRating = 0;
-    try {
-      if (mongoose.models.Review) {
-        const Review = mongoose.model('Review');
-        const reviews = await Review.find({ userId });
-        if (reviews.length > 0) {
-          const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
-          avgRating = parseFloat((sum / reviews.length).toFixed(1));
-        }
-      }
-    } catch (err) {
-      console.log('Review model query failed:', err.message);
+    if (userReviews.length > 0) {
+      const sum = userReviews.reduce((acc, r) => acc + (r.rating || 0), 0);
+      avgRating = parseFloat((sum / userReviews.length).toFixed(1));
     }
 
-    // 6. Determine derivedStatus
-    let derivedStatus = 'Active';
-    if (totalOrders > 10 || ltv > 15000) {
-      derivedStatus = 'VIP';
-    } else if (totalOrders === 0) {
-      derivedStatus = 'Inactive';
-    }
+    // 5.2. Fetch user's support tickets
+    const derivedStatus = user.status || 'Active';
+    const SupportTicket = require('../Models/SupportTicket');
+    const userTickets = await SupportTicket.find({ userId }).sort({ createdAt: -1 }).lean();
 
     res.status(200).json({
       success: true,
@@ -599,6 +646,28 @@ const getUserDetails = async (req, res) => {
         price: w.productId.price,
         image: w.productId.images && w.productId.images[0] ? w.productId.images[0] : null
       })),
+      reviews: userReviews.map(r => ({
+        id: r._id,
+        productId: r.productId ? r.productId._id : null,
+        productName: r.productId ? r.productId.name : 'Unknown Product',
+        productPrice: r.productId ? r.productId.price : 0,
+        productImage: r.productId && r.productId.images && r.productId.images[0] ? r.productId.images[0] : null,
+        video: r.video,
+        rating: r.rating || 0,
+        caption: r.caption || '',
+        status: r.status,
+        createdAt: new Date(r.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+      })),
+      tickets: userTickets.map(t => ({
+        id: t._id,
+        ticketId: t.ticketId,
+        subject: t.subject,
+        category: t.category,
+        priority: t.priority,
+        status: t.status,
+        description: t.description,
+        date: new Date(t.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+      })),
       wallet: {
         balance: coinsBalance,
         transactions: coinTransactions.map(t => ({
@@ -616,4 +685,4 @@ const getUserDetails = async (req, res) => {
   }
 };
 
-module.exports = { adminLogin, getMe, adminLogout, getUsers, createUser, updateAdminProfile, changeAdminPassword, forceLogoutUser, forceLogoutAllUsers, getUserDetails };
+module.exports = { adminLogin, getMe, adminLogout, getUsers, createUser, updateUser, updateAdminProfile, changeAdminPassword, forceLogoutUser, forceLogoutAllUsers, getUserDetails };

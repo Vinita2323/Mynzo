@@ -43,7 +43,7 @@ const SubCategoryForm = ({ onSave, onCancel, label, formData, setFormData, image
         >
           <option value="">Select Category</option>
           {categories.map(cat => (
-            <option key={cat.id} value={cat.id}>
+            <option key={cat._id} value={cat._id}>
               {cat.categoryName || cat.name}
             </option>
           ))}
@@ -409,7 +409,7 @@ const SubCategoryChipsManager = () => {
             >
               <option value="all">All Categories</option>
               {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>
+                <option key={cat._id} value={cat._id}>
                   {cat.categoryName || cat.name}
                 </option>
               ))}
@@ -420,7 +420,7 @@ const SubCategoryChipsManager = () => {
         <div className="space-y-2">
           <AnimatePresence>
             {filteredSubCategories.map((sub, index) => {
-              const parentCat = categories.find(c => c.id === sub.categoryId);
+              const parentCat = categories.find(c => c._id === sub.categoryId);
               const parentName = parentCat ? (parentCat.categoryName || parentCat.name) : sub.categoryId;
 
               return (
