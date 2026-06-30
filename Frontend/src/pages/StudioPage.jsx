@@ -498,7 +498,7 @@ export default function StudioPage() {
           return (
             <div 
               key={post.id} 
-              className="w-full h-[100dvh] snap-start relative bg-slate-900 flex justify-center items-center overflow-hidden font-sans"
+              className="w-full h-[100dvh] snap-start snap-always relative bg-slate-900 flex justify-center items-center overflow-hidden font-sans"
             >
               {/* Media Background with active check */}
               <ReelVideo 
