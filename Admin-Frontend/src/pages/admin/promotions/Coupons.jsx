@@ -15,6 +15,7 @@ const Coupons = () => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const [editingCoupon, setEditingCoupon] = useState(null);
+  const todayStr = new Date().toISOString().split('T')[0];
 
   // Form State
   const [code, setCode] = useState('');
@@ -66,6 +67,16 @@ const Coupons = () => {
     e.preventDefault();
     if (!code || !value || !expiry) {
       toast.info('Please fill in code, value and expiry date');
+      return;
+    }
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const selectedExpiry = new Date(expiry);
+    selectedExpiry.setHours(0, 0, 0, 0);
+
+    if (selectedExpiry < today) {
+      toast.info('Expiry date cannot be in the past!');
       return;
     }
 
@@ -516,6 +527,7 @@ const Coupons = () => {
                       className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 text-sm font-bold outline-none" 
                       value={expiry}
                       onChange={e => setExpiry(e.target.value)}
+                      min={todayStr}
                       required
                     />
                   </div>

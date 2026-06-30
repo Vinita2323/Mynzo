@@ -14,6 +14,7 @@ const StockAlerts = () => {
   const [search, setSearch] = useState('');
   const [editingStock, setEditingStock] = useState(null);
   const [stockValue, setStockValue] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchProducts = async () => {
     try {
@@ -26,8 +27,21 @@ const StockAlerts = () => {
     } catch (err) {
       console.error(err);
       toast.error('Failed to load products from server');
+      throw err;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchProducts();
+      toast.success('Stock alerts refreshed successfully!');
+    } catch (err) {
+      toast.error('Failed to refresh stock alerts.');
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -137,10 +151,11 @@ const StockAlerts = () => {
           <p className="text-slate-500 font-medium mt-1 font-raleway">Monitor low-stock items and prevent out-of-stock situations.</p>
         </div>
         <button 
-          onClick={fetchProducts}
-          className="flex items-center gap-2 px-6 py-3 bg-[#ee4923] text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-105 active:scale-95 transition-all"
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="flex items-center gap-2 px-6 py-3 bg-[#ee4923] text-white rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-orange-100 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
         >
-          <RefreshCcw size={16} />
+          <RefreshCcw size={16} className={refreshing ? 'animate-spin' : ''} />
           Refresh
         </button>
       </div>

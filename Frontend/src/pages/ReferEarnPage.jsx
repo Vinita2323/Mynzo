@@ -29,21 +29,27 @@ export default function ReferEarnPage() {
   const [showApply, setShowApply] = useState(false);
 
   const fetchReferral = async () => {
-    if (!user || !user.id) {
+    if (!user || (!user.id && !user._id)) {
+      console.log('Refer & Earn: User or User ID is missing!', user);
       setLoading(false);
       return;
     }
+    const userId = user.id || user._id;
     try {
       const token = localStorage.getItem('userToken');
+      console.log('Refer & Earn: Fetching referral details for user:', userId);
       const res = await fetch(`${API_BASE}/referral/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
+      console.log('Refer & Earn: Received response:', data);
       if (data.success) {
         setReferralData(data);
+      } else {
+        console.error('Refer & Earn: API error:', data.message);
       }
     } catch (err) {
-      console.error('Referral fetch error:', err);
+      console.error('Refer & Earn: Referral fetch error:', err);
     } finally {
       setLoading(false);
     }

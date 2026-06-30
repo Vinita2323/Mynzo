@@ -162,66 +162,96 @@ export default function ProfilePage() {
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast.info('Image size cannot exceed 10MB!');
-        return;
-      }
+    if (!file) return;
+
+    const toastId = toast.loading('Processing image...');
+
+    try {
+      // Client-side image compression to handle high-res camera photos
+      const compressedFile = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          const MAX_DIM = 1200;
+          if (width > MAX_DIM || height > MAX_DIM) {
+            if (width > height) {
+              height = Math.round((height * MAX_DIM) / width);
+              width = MAX_DIM;
+            } else {
+              width = Math.round((width * MAX_DIM) / height);
+              height = MAX_DIM;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Image processing failed'));
+              return;
+            }
+            const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            });
+            resolve(newFile);
+          }, 'image/jpeg', 0.85);
+        };
+        img.onerror = () => reject(new Error('Failed to read image file'));
+      });
 
       const reader = new FileReader();
       reader.onloadend = () => {
         setUploadedImage(reader.result);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
 
       const token = localStorage.getItem('userToken');
       if (token) {
-        const uploadPromise = new Promise(async (resolve, reject) => {
-          try {
-            const formData = new FormData();
-            formData.append('image', file);
-            const apiBase = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/auth`;
-            const res = await fetch(`${apiBase}/profile`, {
-              method: 'PUT',
-              headers: {
-                'Authorization': `Bearer ${token}`
-              },
-              body: formData
-            });
-
-            const data = await res.json();
-            if (!res.ok || !data.success) {
-              reject(new Error(data.message || 'Failed to upload profile photo'));
-              return;
-            }
-
-            const currentInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
-            const updatedInfo = {
-              ...currentInfo,
-              avatar: data.user.avatar
-            };
-            localStorage.setItem('userInfo', JSON.stringify(updatedInfo));
-
-            if (setUser) {
-              setUser({
-                ...user,
-                avatar: data.user.avatar
-              });
-            }
-            resolve('Profile photo updated successfully!');
-          } catch (err) {
-            reject(err);
-          }
+        toast.loading('Uploading photo...', { id: toastId });
+        const formData = new FormData();
+        formData.append('image', compressedFile);
+        const apiBase = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/auth`;
+        const res = await fetch(`${apiBase}/profile`, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
         });
 
-        toast.promise(uploadPromise, {
-          loading: 'Uploading photo...',
-          success: (msg) => msg,
-          error: (err) => err.message || 'Failed to upload photo.'
-        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || 'Failed to upload profile photo');
+        }
+
+        const currentInfo = JSON.parse(localStorage.getItem('userInfo') || '{}');
+        const updatedInfo = {
+          ...currentInfo,
+          avatar: data.user.avatar
+        };
+        localStorage.setItem('userInfo', JSON.stringify(updatedInfo));
+
+        if (setUser) {
+          setUser({
+            ...user,
+            avatar: data.user.avatar
+          });
+        }
+        toast.success('Profile photo updated successfully!', { id: toastId });
       } else {
-        toast.success('Photo preview updated! (Offline mode)');
+        toast.success('Photo preview updated! (Offline mode)', { id: toastId });
       }
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'Failed to upload photo.', { id: toastId });
     }
   };
 

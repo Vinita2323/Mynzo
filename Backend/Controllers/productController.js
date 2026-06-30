@@ -9,6 +9,56 @@ const parseJsonField = (field, defaultVal = {}) => {
   }
 };
 
+const resolveCategoryAndSubcategory = async (categoryInput, subCategoryInput) => {
+  if (!categoryInput) return { categoryId: categoryInput, subCategoryId: subCategoryInput };
+  
+  const CategoryChip = require('../Models/CategoryChip');
+  const SubCategoryChip = require('../Models/SubCategoryChip');
+  const mongoose = require('mongoose');
+
+  let categoryId = categoryInput;
+  let subCategoryId = subCategoryInput;
+
+  // Resolve Category
+  if (categoryInput && !mongoose.Types.ObjectId.isValid(categoryInput)) {
+    const foundCat = await CategoryChip.findOne({
+      categoryName: { $regex: new RegExp(`^${categoryInput.trim()}$`, 'i') }
+    });
+    if (foundCat) {
+      categoryId = foundCat._id.toString();
+    } else {
+      const newCat = await CategoryChip.create({
+        categoryName: categoryInput.trim(),
+        active: true
+      });
+      categoryId = newCat._id.toString();
+    }
+  }
+
+  // Resolve Subcategory
+  if (subCategoryInput && !mongoose.Types.ObjectId.isValid(subCategoryInput)) {
+    const query = {
+      subCategoryName: { $regex: new RegExp(`^${subCategoryInput.trim()}$`, 'i') }
+    };
+    if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
+      query.categoryId = categoryId;
+    }
+    const foundSub = await SubCategoryChip.findOne(query);
+    if (foundSub) {
+      subCategoryId = foundSub._id.toString();
+    } else if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
+      const newSub = await SubCategoryChip.create({
+        categoryId,
+        subCategoryName: subCategoryInput.trim(),
+        active: true
+      });
+      subCategoryId = newSub._id.toString();
+    }
+  }
+
+  return { categoryId, subCategoryId };
+};
+
 // @desc    Get all Products
 // @route   GET /api/admin/catalog/products
 // @access  Public
@@ -86,10 +136,12 @@ const createProduct = async (req, res) => {
       imageUrls = [...imageUrls, ...bodyImages];
     }
 
+    const { categoryId, subCategoryId } = await resolveCategoryAndSubcategory(category, subCategory);
+
     const newProduct = new Product({
       name,
-      category,
-      subCategory,
+      category: categoryId,
+      subCategory: subCategoryId,
       description,
       sellingPrice: Number(sellingPrice),
       mrp: mrp ? Number(mrp) : undefined,
@@ -135,6 +187,14 @@ const updateProduct = async (req, res) => {
     const finalMrp = req.body.mrp !== undefined ? (req.body.mrp ? Number(req.body.mrp) : undefined) : product.mrp;
     if (finalMrp !== undefined && finalMrp < finalSellingPrice) {
       return res.status(400).json({ success: false, message: 'Actual Price (MRP) cannot be less than Selling Price' });
+    }
+
+    if (req.body.category !== undefined || req.body.subCategory !== undefined) {
+      const catVal = req.body.category !== undefined ? req.body.category : product.category;
+      const subVal = req.body.subCategory !== undefined ? req.body.subCategory : product.subCategory;
+      const { categoryId, subCategoryId } = await resolveCategoryAndSubcategory(catVal, subVal);
+      if (req.body.category !== undefined) req.body.category = categoryId;
+      if (req.body.subCategory !== undefined) req.body.subCategory = subCategoryId;
     }
 
     const fields = [
@@ -370,14 +430,17 @@ const bulkUploadProducts = async (req, res) => {
       };
 
       const name = getValue('Name');
-      const category = getValue('Category');
+      const rawCategory = getValue('Category');
       const sellingPrice = getValue('Selling Price');
-      if (!name || !category || !sellingPrice) continue;
+      if (!name || !rawCategory || !sellingPrice) continue;
+
+      const rawSubCategory = getValue('Sub Category');
+      const { categoryId, subCategoryId } = await resolveCategoryAndSubcategory(rawCategory, rawSubCategory);
 
       const productData = {
         name,
-        category,
-        subCategory: getValue('Sub Category'),
+        category: categoryId,
+        subCategory: subCategoryId,
         description: getValue('Description'),
         sellingPrice: Number(sellingPrice),
         mrp: getValue('MRP') ? Number(getValue('MRP')) : undefined,

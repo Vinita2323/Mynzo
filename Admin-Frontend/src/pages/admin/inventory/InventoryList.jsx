@@ -45,7 +45,7 @@ const StatCard = ({ label, value, sub, icon: Icon, color }) => (
 export default function InventoryList() {
   const navigate = useNavigate();
   const [dbProducts, setDbProducts] = useState([]);
-  const [categories, setCategories] = useState(['All']);
+  const [categories, setCategories] = useState([{ id: 'All', name: 'All' }]);
 
   const [search, setSearch] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('All');
@@ -296,8 +296,10 @@ export default function InventoryList() {
         const res = await fetch(`${apiBase}/admin/catalog/chips`);
         const data = await res.json();
         if (res.ok && data.success && data.chips) {
-          const fetchedCats = data.chips.filter(c => c.active !== false).map(c => c.categoryName);
-          setCategories(['All', ...fetchedCats]);
+          const fetchedCats = data.chips
+            .filter(c => c.active !== false)
+            .map(c => ({ id: c._id, name: c.categoryName }));
+          setCategories([{ id: 'All', name: 'All' }, ...fetchedCats]);
         }
       } catch (err) {
         console.error('Failed to fetch categories:', err);
@@ -315,11 +317,19 @@ export default function InventoryList() {
   const pendingCount = allProductsCombined.filter(p => p.status === 'Pending').length;
   const outOfStockCount = allProductsCombined.filter(p => p.stock === 0 || p.status === 'Out of Stock').length;
 
+  const getCategoryName = (catId) => {
+    if (!catId) return 'N/A';
+    const found = categories.find(c => c.id === catId);
+    return found ? found.name : catId;
+  };
+
   // Filter
   const filtered = allProductsCombined
     .filter(p => {
       const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.sku?.toLowerCase().includes(search.toLowerCase());
-      const matchCat = categoryFilter === 'All' || p.category === categoryFilter;
+      const matchCat = categoryFilter === 'All' || 
+                       p.category === categoryFilter ||
+                       (p.category && p.category.toLowerCase() === categoryFilter.toLowerCase());
       const matchStatus = statusFilter === 'All' || p.status === statusFilter;
       
       let matchFlag = true;
@@ -650,7 +660,7 @@ export default function InventoryList() {
               onChange={e => setCategoryFilter(e.target.value)}
               className="appearance-none bg-slate-50 border border-slate-100 rounded-xl py-3 pl-4 pr-10 text-sm font-bold text-slate-700 outline-none focus:ring-4 focus:ring-orange-50 transition-all cursor-pointer"
             >
-              {categories.map(c => <option key={c}>{c}</option>)}
+              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
             <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
           </div>
@@ -848,7 +858,7 @@ export default function InventoryList() {
                       {/* Category */}
                       <td className="px-3 py-4">
                         <span className="px-2.5 py-1 bg-slate-100 text-slate-600 text-[10px] font-black rounded-lg uppercase tracking-wider">
-                          {product.category}
+                          {getCategoryName(product.category)}
                         </span>
                       </td>
 

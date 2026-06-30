@@ -37,19 +37,61 @@ export default function AccountInfoPage() {
   });
   const fileInputRef = useRef(null);
 
-  const handleImageUpload = (e) => {
+  const handleImageUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error('Image size cannot exceed 10MB!');
-        return;
-      }
-      setImageFile(file);
+    if (!file) return;
+
+    const toastId = toast.loading('Processing image...');
+    try {
+      const compressedFile = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.src = URL.createObjectURL(file);
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          const MAX_DIM = 1200;
+          if (width > MAX_DIM || height > MAX_DIM) {
+            if (width > height) {
+              height = Math.round((height * MAX_DIM) / width);
+              width = MAX_DIM;
+            } else {
+              width = Math.round((width * MAX_DIM) / height);
+              height = MAX_DIM;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Image processing failed'));
+              return;
+            }
+            const newFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+              type: 'image/jpeg',
+              lastModified: Date.now()
+            });
+            resolve(newFile);
+          }, 'image/jpeg', 0.85);
+        };
+        img.onerror = () => reject(new Error('Failed to read image file'));
+      });
+
+      setImageFile(compressedFile);
       const reader = new FileReader();
       reader.onloadend = () => {
         setUploadedImage(reader.result);
       };
-      reader.readAsDataURL(file);
+      reader.readAsDataURL(compressedFile);
+      toast.success('Photo ready to save!', { id: toastId });
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to process image.', { id: toastId });
     }
   };
 

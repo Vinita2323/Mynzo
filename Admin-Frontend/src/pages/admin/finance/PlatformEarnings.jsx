@@ -48,6 +48,7 @@ const PlatformEarnings = () => {
       const json = await res.json();
       if (res.ok && json.success) {
         setData(json.data);
+        toast.success('Earnings data refreshed!');
       }
     } catch (err) {
       console.error('Error fetching earnings:', err);

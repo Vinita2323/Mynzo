@@ -45,6 +45,7 @@ const ReferralProgram = () => {
       if (data.success) {
         setReferrals(data.referrals);
         setStats(data.stats);
+        toast.success('Referrals list refreshed!');
       } else {
         toast.error(data.message || 'Failed to load referrals');
       }

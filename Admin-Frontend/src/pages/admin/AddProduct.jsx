@@ -69,9 +69,21 @@ const AddProduct = () => {
   const [description, setDescription] = useState('');
   const [sellingPrice, setSellingPrice] = useState('');
   const [mrp, setMrp] = useState('');
+  const [discountPercent, setDiscountPercent] = useState('');
   const [stock, setStock] = useState(1);
   const [discountLabel, setDiscountLabel] = useState('');
   const [sku, setSku] = useState('');
+
+  useEffect(() => {
+    if (mrp && discountPercent) {
+      const discount = Number(discountPercent);
+      if (!isNaN(discount) && discount >= 0 && discount <= 100) {
+        const calculatedPrice = Math.round(Number(mrp) * (1 - discount / 100));
+        setSellingPrice(calculatedPrice);
+        setDiscountLabel(`-${discount}% OFF`);
+      }
+    }
+  }, [mrp, discountPercent]);
 
   // Key Highlights specs
   const [highlights, setHighlights] = useState({
@@ -507,23 +519,35 @@ const AddProduct = () => {
           <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-7 space-y-5">
             <SectionTitle icon={DollarSign} color="bg-green-50 text-green-600">Pricing & Stocks</SectionTitle>
 
-            <div className="grid grid-cols-3 gap-5">
-              <div>
-                <Label required>Selling Price (₹)</Label>
-                <input 
-                  type="number" 
-                  value={sellingPrice}
-                  onChange={e => setSellingPrice(e.target.value)}
-                  placeholder="0.00" 
-                  className={inputCls} 
-                />
-              </div>
+            <div className="grid grid-cols-4 gap-4">
               <div>
                 <Label>MRP / Strike-off (₹)</Label>
                 <input 
                   type="number" 
                   value={mrp}
                   onChange={e => setMrp(e.target.value)}
+                  placeholder="0.00" 
+                  className={inputCls} 
+                />
+              </div>
+              <div>
+                <Label>Discount (%)</Label>
+                <input 
+                  type="number" 
+                  value={discountPercent}
+                  onChange={e => setDiscountPercent(e.target.value)}
+                  placeholder="e.g. 20" 
+                  className={inputCls} 
+                  min="0"
+                  max="100"
+                />
+              </div>
+              <div>
+                <Label required>Selling Price (₹)</Label>
+                <input 
+                  type="number" 
+                  value={sellingPrice}
+                  onChange={e => setSellingPrice(e.target.value)}
                   placeholder="0.00" 
                   className={inputCls} 
                 />
