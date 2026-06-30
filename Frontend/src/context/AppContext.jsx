@@ -222,7 +222,7 @@ export const AppProvider = ({ children }) => {
 
   useEffect(() => {
     if (user && user.id) {
-      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const apiBase = import.meta.env.VITE_API_URL;
       const socketUrl = apiBase.replace('/api', '');
       const token = localStorage.getItem('userToken');
       console.log('🔌 [Socket] Initializing connection to URL:', socketUrl, 'with token length:', token ? token.length : 0);
