@@ -480,10 +480,6 @@ export default function StudioPage() {
       className="bg-black w-full h-[100dvh] overflow-y-scroll snap-y snap-mandatory scrollbar-hide text-white relative select-none"
       style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'auto' }}
     >
-      {/* Preload Neighboring Videos */}
-      {posts[activeIndex + 1] && (
-        <link rel="preload" href={posts[activeIndex + 1].videoUrl} as="video" />
-      )}
       
       {/* Top Navigation Overlay */}
       <div className="fixed top-0 left-0 right-0 z-50 p-4 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent max-w-md mx-auto font-sans">

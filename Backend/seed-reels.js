@@ -12,70 +12,70 @@ const videoUrls = [
   {
     username: 'fashion_forward',
     caption: 'Neon dreams and street style. 🌟 Rate this outfit in the comments!',
-    video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    video: 'https://www.w3schools.com/html/mov_bbb.mp4',
     rating: 5,
     section: 'forYou'
   },
   {
     username: 'coffee_aesthetic',
     caption: 'Nothing beats a fresh warm brew in the morning. ☕️✨',
-    video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+    video: 'https://www.w3schools.com/html/movie.mp4',
     rating: 4,
     section: 'forYou'
   },
   {
     username: 'shoe_collector',
     caption: 'Step out in style. Premium leather boots for everyday hustle. 👞💼',
-    video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
+    video: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
     rating: 5,
     section: 'forYou'
   },
   {
     username: 'fitness_motivation',
     caption: 'Start your week strong. No excuses, let’s run! 🏃‍♀️💪',
-    video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+    video: 'https://www.w3schools.com/html/mov_bbb.mp4',
     rating: 5,
     section: 'forYou'
   },
   {
     username: 'yellow_summer',
     caption: 'Spinning into summer like... ☀️💛 Grab the summer collection now!',
-    video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4',
+    video: 'https://www.w3schools.com/html/movie.mp4',
     rating: 4,
     section: 'forYou'
   },
   {
     username: 'desk_setup',
     caption: 'Workspace productivity tips. How do you keep focused? 💻🧠',
-    video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4',
+    video: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
     rating: 5,
     section: 'forYou'
   },
   {
     username: 'wanderlust_travel',
     caption: 'Get lost in nature to find yourself. Next stop: mountains! 🏔️🎒',
-    video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+    video: 'https://www.w3schools.com/html/mov_bbb.mp4',
     rating: 5,
     section: 'forYou'
   },
   {
     username: 'chocoholic',
     caption: 'Chocolate therapy is the best therapy. Who wants a bite? 🍫😋',
-    video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4',
+    video: 'https://www.w3schools.com/html/movie.mp4',
     rating: 4,
     section: 'forYou'
   },
   {
     username: 'glow_skincare',
     caption: 'My 3-step morning skincare routine for a natural glowing finish. ✨🧴',
-    video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4',
+    video: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
     rating: 5,
     section: 'forYou'
   },
   {
     username: 'shopaholic_diary',
     caption: 'Retail therapy done right. Shopping haul coming up next! 🛍️💖',
-    video: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4',
+    video: 'https://www.w3schools.com/html/mov_bbb.mp4',
     rating: 5,
     section: 'forYou'
   }
