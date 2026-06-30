@@ -27,6 +27,7 @@ export default function WalletPage() {
   const [redeemAmount, setRedeemAmount] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [historyTab, setHistoryTab] = useState('coins'); // 'coins' | 'cash'
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchWalletDetails = async () => {
     const token = localStorage.getItem('userToken');
@@ -55,8 +56,21 @@ export default function WalletPage() {
       }
     } catch (err) {
       console.error('Wallet fetch error:', err);
+      throw err;
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchWalletDetails();
+      toast.success('Wallet details refreshed successfully!');
+    } catch (err) {
+      toast.error('Failed to refresh wallet details.');
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -158,11 +172,12 @@ export default function WalletPage() {
             + 1000 Coins (Test)
           </button>
           <button 
-            onClick={fetchWalletDetails}
+            onClick={handleRefresh}
             className="p-2 rounded-full hover:bg-slate-100 transition-colors"
             title="Refresh Balance"
+            disabled={refreshing}
           >
-            <RefreshCw className="w-4 h-4 text-slate-500" />
+            <RefreshCw className={`w-4 h-4 text-slate-500 ${refreshing ? 'animate-spin' : ''}`} />
           </button>
         </div>
       </div>

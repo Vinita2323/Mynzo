@@ -21,6 +21,7 @@ const TopSelectionPage   = lazy(() => import('./pages/TopSelectionPage'));
 const SimilarProductsPage= lazy(() => import('./pages/SimilarProductsPage'));
 const HelpSupportPage    = lazy(() => import('./pages/HelpSupportPage'));
 const PrivacyPage        = lazy(() => import('./pages/PrivacyPage'));
+const TermsPage          = lazy(() => import('./pages/TermsPage'));
 const AccountInfoPage    = lazy(() => import('./pages/AccountInfoPage'));
 const SecurityPage       = lazy(() => import('./pages/SecurityPage'));
 const SettingsPage       = lazy(() => import('./pages/SettingsPage'));
@@ -65,7 +66,7 @@ function AppContent() {
 
   // Only show splash screen when landing on the root path '/'.
   // If the user opens a direct link (e.g. /support), skip it immediately.
-  const isPrivacyOrSupport = /privacy|support/i.test(window.location.hash);
+  const isPrivacyOrSupport = /privacy|terms|support/i.test(window.location.hash);
   const isRootPath = window.location.pathname === '/' && !isPrivacyOrSupport;
   const [showSplash, setShowSplash] = useState(isRootPath);
   const [isFading, setIsFading] = useState(false);
@@ -148,6 +149,7 @@ function AppContent() {
         <Route path="/help" element={<HelpSupportPage />} />
         <Route path="/support" element={<HelpSupportPage />} />
         <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/terms" element={<TermsPage />} />
         <Route path="/account" element={<AccountInfoPage />} />
         <Route path="/security" element={<SecurityPage />} />
         <Route path="/settings" element={<SettingsPage />} />

@@ -33,9 +33,9 @@ export default function Footer() {
             <h4 className="text-white font-bold uppercase tracking-wider text-[10px]">Company</h4>
             <ul className="space-y-1.5">
               <li><a href="#" className="hover:text-[#ee4923] transition-colors">About Mynzo</a></li>
-              <li><a href="#" className="hover:text-[#ee4923] transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-[#ee4923] transition-colors">Terms of Service</a></li>
-              <li><a href="#" className="hover:text-[#ee4923] transition-colors">Support Center</a></li>
+              <li><a href="#/privacy" className="hover:text-[#ee4923] transition-colors">Privacy Policy</a></li>
+              <li><a href="#/terms" className="hover:text-[#ee4923] transition-colors">Terms of Service</a></li>
+              <li><a href="#/support" className="hover:text-[#ee4923] transition-colors">Support Center</a></li>
             </ul>
           </div>
         </div>

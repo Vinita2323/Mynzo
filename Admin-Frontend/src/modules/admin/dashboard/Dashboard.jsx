@@ -123,11 +123,12 @@ const Dashboard = () => {
 
   const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'];
 
-  const StatCard = ({ title, value, change, icon: Icon, isPositive }) => (
+  const StatCard = ({ title, value, change, icon: Icon, isPositive, onClick }) => (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      className="bg-white p-5 rounded-2xl border border-blue-50 shadow-sm hover:shadow-md transition-all group"
+      onClick={onClick}
+      className={`bg-white p-5 rounded-2xl border border-blue-50 shadow-sm hover:shadow-md transition-all group ${onClick ? 'cursor-pointer hover:border-blue-300' : ''}`}
     >
       <div className="flex justify-between items-start mb-4">
         <div className="p-3 bg-blue-50 rounded-2xl group-hover:bg-blue-600 group-hover:text-white transition-colors text-blue-600">
@@ -193,11 +194,11 @@ const Dashboard = () => {
           </>
         ) : (
           <>
-            <StatCard title="Total Revenue" value={`₹${(stats?.totalRevenue || 0).toLocaleString()}`} change="+12.5%" icon={DollarSign} isPositive={true} />
-            <StatCard title="Total Orders" value={(stats?.totalOrders || 0).toLocaleString()} change="+5.2%" icon={ShoppingBag} isPositive={true} />
-            <StatCard title="Total Customers" value={stats?.totalCustomers || 0} change="+8.1%" icon={Users} isPositive={true} />
-            <StatCard title="Active Products" value={stats?.totalProducts || 0} change="+14.2%" icon={Package} isPositive={true} />
-            <StatCard title="Coins Distributed" value={(stats?.totalCoinsEarned || 0).toLocaleString()} change="+18.7%" icon={Coins} isPositive={true} />
+            <StatCard title="Total Revenue" value={`₹${(stats?.totalRevenue || 0).toLocaleString()}`} change="+12.5%" icon={DollarSign} isPositive={true} onClick={() => navigate('/admin/finance/earnings')} />
+            <StatCard title="Total Orders" value={(stats?.totalOrders || 0).toLocaleString()} change="+5.2%" icon={ShoppingBag} isPositive={true} onClick={() => navigate('/admin/orders')} />
+            <StatCard title="Total Customers" value={stats?.totalCustomers || 0} change="+8.1%" icon={Users} isPositive={true} onClick={() => navigate('/admin/users')} />
+            <StatCard title="Active Products" value={stats?.totalProducts || 0} change="+14.2%" icon={Package} isPositive={true} onClick={() => navigate('/admin/inventory/all')} />
+            <StatCard title="Coins Distributed" value={(stats?.totalCoinsEarned || 0).toLocaleString()} change="+18.7%" icon={Coins} isPositive={true} onClick={() => navigate('/admin/promotions/referrals')} />
           </>
         )}
       </div>

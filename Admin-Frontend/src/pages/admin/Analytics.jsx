@@ -82,7 +82,10 @@ const Analytics = () => {
 
   const fetchAnalyticsData = async (isSilent = false) => {
     const token = localStorage.getItem('adminToken');
-    if (!token) return;
+    if (!token) {
+      toast.error('No admin token found. Please log in.');
+      return;
+    }
 
     if (!isSilent) setLoading(true);
     else setRefreshing(true);
@@ -91,6 +94,7 @@ const Analytics = () => {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const headers = { 'Authorization': `Bearer ${token}` };
 
+      let hasError = false;
       // Helper to do safe fetching
       const safeFetch = async (urlSuffix) => {
         try {
@@ -100,6 +104,7 @@ const Analytics = () => {
           return data.success ? data.data : null;
         } catch (err) {
           console.error(`Error fetching analytics endpoint /${urlSuffix}:`, err);
+          hasError = true;
           return null;
         }
       };
@@ -135,6 +140,14 @@ const Analytics = () => {
       if (searchRes) setSearches(searchRes);
       if (productsRes) setProducts(productsRes);
       if (gamesRes) setGames(gamesRes);
+
+      if (isSilent) {
+        if (hasError) {
+          toast.error('Refreshed, but some analytics metrics failed to load');
+        } else {
+          toast.success('Analytics data refreshed successfully!');
+        }
+      }
 
     } catch (err) {
       console.error(err);

@@ -30,6 +30,7 @@ export default function ProductDetailsPage() {
   const [reelCaption, setReelCaption] = useState('');
   const [reelVideoFile, setReelVideoFile] = useState(null);
   const [isUploadingReel, setIsUploadingReel] = useState(false);
+  const [isEligibleToReview, setIsEligibleToReview] = useState(false);
 
   const fetchProductReels = async () => {
     try {
@@ -49,9 +50,33 @@ export default function ProductDetailsPage() {
     }
   };
 
+  const fetchReviewEligibility = async () => {
+    if (!user) {
+      setIsEligibleToReview(false);
+      return;
+    }
+    try {
+      const token = localStorage.getItem('userToken');
+      if (!token) return;
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/reels/check-eligibility?productId=${id}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsEligibleToReview(data.eligible);
+      }
+    } catch (err) {
+      console.error('Error checking review eligibility:', err);
+    }
+  };
+
   useEffect(() => {
     fetchProductReels();
-  }, [id]);
+    fetchReviewEligibility();
+  }, [id, user]);
 
   const handleUploadReel = async (e) => {
     e.preventDefault();
@@ -876,19 +901,25 @@ export default function ProductDetailsPage() {
 
             {/* Upload Reel button */}
             <div className="mb-6">
-              <button 
-                onClick={() => {
-                  if (!user) {
-                    navigate('/login');
-                  } else {
-                    setIsUploadReelOpen(true);
-                  }
-                }}
-                className="w-full py-3 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-xl hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2"
-              >
-                <Play className="w-4 h-4 text-indigo-600 fill-indigo-600" />
-                Submit Video Review (Reel)
-              </button>
+              {user && !isEligibleToReview ? (
+                <div className="p-3.5 bg-rose-50 border border-rose-100 rounded-xl text-center text-xs text-rose-600 font-bold leading-relaxed shadow-sm">
+                  ⚠️ You can only review products that you have purchased.
+                </div>
+              ) : (
+                <button 
+                  onClick={() => {
+                    if (!user) {
+                      navigate('/login');
+                    } else {
+                      setIsUploadReelOpen(true);
+                    }
+                  }}
+                  className="w-full py-3 bg-indigo-50 border border-indigo-200 text-indigo-700 font-bold text-xs rounded-xl hover:bg-indigo-100 transition-colors flex items-center justify-center gap-2 shadow-2xs"
+                >
+                  <Play className="w-4 h-4 text-indigo-600 fill-indigo-600" />
+                  Submit Video Review (Reel)
+                </button>
+              )}
             </div>
 
             <h4 className="text-[13px] text-slate-800 mb-2">Features customers loved</h4>
@@ -899,18 +930,70 @@ export default function ProductDetailsPage() {
                 </div>
               ))}
             </div>
-            {/* User Review with Video */}
-            {productReels.length === 0 && (
-              <div className="border-t border-slate-100 pt-4 mt-2 text-center text-slate-400 text-xs">
-                No text reviews yet. Be the first to submit a video reel!
-              </div>
-            )}
-            
-            {productReels.length > 0 && (
-              <button className="w-full mt-4 py-2 text-[11px] font-bold text-[#02006c] border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors">
-                View All Reviews
-              </button>
-            )}
+
+            {/* Customer Reviews List */}
+            <div className="mt-4 border-t border-slate-100 pt-4">
+              <h4 className="text-[13px] font-bold text-slate-800 uppercase tracking-wider mb-3">Customer Reviews</h4>
+              
+              {productReels.length === 0 ? (
+                <p className="text-center text-slate-400 text-xs py-6">
+                  No reviews yet. Be the first to submit a video review!
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {productReels.map((reel) => {
+                    const videoUrl = getImageUrl(reel.video);
+                    return (
+                      <div key={reel._id} className="p-4 bg-slate-50/50 border border-slate-100 rounded-2xl flex gap-3.5 items-start">
+                        {/* Playable Video Thumbnail */}
+                        <div 
+                          onClick={() => setSelectedReviewMedia({ type: 'video', url: videoUrl, reel })}
+                          className="relative w-16 h-24 rounded-lg overflow-hidden flex-shrink-0 bg-black cursor-pointer shadow-sm border border-slate-100 group"
+                        >
+                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center group-hover:bg-black/40 transition-colors">
+                            <Play className="w-4 h-4 text-white fill-white opacity-90 animate-pulse" />
+                          </div>
+                          <video src={videoUrl} className="w-full h-full object-cover" muted playsInline />
+                        </div>
+
+                        {/* Text and Badges */}
+                        <div className="flex-1 space-y-1.5 min-w-0">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-extrabold text-[12px] text-slate-800 truncate">
+                              {reel.username}
+                            </span>
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                              {new Date(reel.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                            </span>
+                          </div>
+
+                          {/* Rating stars */}
+                          <div className="flex items-center gap-0.5">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star 
+                                key={i} 
+                                className={`w-3.5 h-3.5 ${i < (reel.rating || 5) ? 'fill-amber-400 text-amber-400' : 'text-slate-200'}`} 
+                              />
+                            ))}
+                          </div>
+
+                          {/* Verified Purchase Badge */}
+                          <div className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                            Verified Purchase
+                          </div>
+
+                          {/* Caption */}
+                          <p className="text-[12px] text-slate-600 font-semibold leading-relaxed break-words">
+                            {reel.caption || "No comment provided."}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

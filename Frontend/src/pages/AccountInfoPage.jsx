@@ -246,8 +246,9 @@ export default function AccountInfoPage() {
                 type="tel"
                 name="phone"
                 value={formData.phone}
-                onChange={handleChange}
-                className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[13px] text-slate-800 focus:outline-none focus:border-[#ee4923] focus:ring-1 focus:ring-[#ee4923]/20 transition-all"
+                readOnly
+                disabled
+                className="w-full pl-9 pr-3 py-2.5 bg-slate-100 border border-slate-200 rounded-lg text-[13px] text-slate-400 cursor-not-allowed outline-none select-none"
               />
             </div>
           </div>

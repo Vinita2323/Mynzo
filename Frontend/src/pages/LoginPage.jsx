@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { ArrowLeft, Edit2, Loader2 } from 'lucide-react';
 import toast from '../utils/toast';
@@ -327,6 +327,13 @@ export default function LoginPage() {
                   {loading ? <><Loader2 size={14} className="animate-spin" /> Sending...</> : 'Send OTP'}
                 </button>
               </div>
+
+              <div className="text-center pt-2 text-[10px] text-slate-400 font-bold leading-relaxed max-w-xs mx-auto">
+                By continuing, you agree to our{' '}
+                <Link to="/privacy" className="text-[#FF8E4D] hover:underline">Privacy Policy</Link>
+                {' '}and{' '}
+                <Link to="/terms" className="text-[#FF8E4D] hover:underline">Terms & Conditions</Link>.
+              </div>
             </form>
           </div>
         ) : (
@@ -406,6 +413,13 @@ export default function LoginPage() {
                 >
                   Resend Verification Code?
                 </button>
+              </div>
+
+              <div className="text-center pt-2 text-[10px] text-slate-400 font-bold leading-relaxed max-w-xs mx-auto">
+                By continuing, you agree to our{' '}
+                <Link to="/privacy" className="text-[#FF8E4D] hover:underline">Privacy Policy</Link>
+                {' '}and{' '}
+                <Link to="/terms" className="text-[#FF8E4D] hover:underline">Terms & Conditions</Link>.
               </div>
             </form>
           </div>

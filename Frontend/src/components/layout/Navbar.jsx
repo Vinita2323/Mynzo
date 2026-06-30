@@ -113,23 +113,50 @@ export default function Navbar() {
       recognition.interimResults = false;
       recognition.lang = 'en-US';
 
+      const toastId = toast.loading("Listening... Speak now 🎙️");
+
       recognition.onresult = (event) => {
+        toast.dismiss(toastId);
         const transcript = event.results[0][0].transcript;
         setSearchQuery(transcript);
         analytics.trackSearch(transcript);
-        if (window.location.pathname !== '/categories') {
+        toast.success(`Voice search: "${transcript}"`);
+        if (routerLocation.pathname !== '/categories') {
           navigate('/categories');
         }
       };
 
+      recognition.onspeechstart = () => {
+        console.log('🎙️ [SpeechRecognition] Speech start detected');
+      };
+
+      recognition.onspeechend = () => {
+        console.log('🎙️ [SpeechRecognition] Speech end detected');
+      };
+
+      recognition.onsoundstart = () => {
+        console.log('🎙️ [SpeechRecognition] Sound start detected');
+      };
+
+      recognition.onsoundend = () => {
+        console.log('🎙️ [SpeechRecognition] Sound end detected');
+      };
+
       recognition.onerror = (event) => {
+        toast.dismiss(toastId);
         console.error('Speech recognition error', event.error);
-        alert('Could not start voice search.');
+        if (event.error === 'not-allowed') {
+          toast.error('Microphone access denied. Please enable mic permissions in your browser.');
+        } else if (event.error === 'no-speech') {
+          toast.error('No speech detected. Try speaking closer to the microphone.');
+        } else {
+          toast.error(`Could not start voice search: ${event.error}`);
+        }
       };
 
       recognition.start();
     } else {
-      alert("Your browser doesn't support voice search.");
+      toast.error("Your browser doesn't support voice search.");
     }
   };
 

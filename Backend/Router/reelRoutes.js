@@ -15,7 +15,8 @@ const {
   commentReel,
   updateReelComment,
   deleteReelComment,
-  incrementViews
+  incrementViews,
+  checkEligibility
 } = require('../Controllers/reelController');
 
 const { protectUser } = require('../Middlewares/userAuthMiddleware');
@@ -58,6 +59,7 @@ router.get('/', getReels);
 router.post('/:id/view', incrementViews);
 
 // User protected routes
+router.get('/check-eligibility', protectUser, checkEligibility);
 router.post('/', protectUser, uploadVideo.single('video'), createReel);
 router.post('/:id/like', protectUser, likeReel);
 router.post('/:id/comment', protectUser, commentReel);

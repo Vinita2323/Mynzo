@@ -12,6 +12,18 @@ exports.createReel = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Product ID is required' });
     }
 
+    // Verify if user is a verified buyer
+    const Order = require('../Models/Order');
+    const hasPurchased = await Order.exists({
+      userId: req.user._id,
+      "items.productId": productId,
+      status: { $ne: 'Cancelled' }
+    });
+
+    if (!hasPurchased) {
+      return res.status(403).json({ success: false, message: 'You can only review products that you have purchased.' });
+    }
+
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'Please upload a video review' });
     }
@@ -35,6 +47,30 @@ exports.createReel = async (req, res) => {
     res.status(201).json({ success: true, message: 'Reel review uploaded successfully, awaiting moderation.', reel });
   } catch (error) {
     console.error('Error creating reel:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Check if user is eligible to write a review for a product
+// @route   GET /api/reels/check-eligibility
+// @access  Private
+exports.checkEligibility = async (req, res) => {
+  try {
+    const { productId } = req.query;
+    if (!productId) {
+      return res.status(400).json({ success: false, message: 'Product ID is required' });
+    }
+
+    const Order = require('../Models/Order');
+    const hasPurchased = await Order.exists({
+      userId: req.user._id,
+      "items.productId": productId,
+      status: { $ne: 'Cancelled' }
+    });
+
+    res.status(200).json({ success: true, eligible: !!hasPurchased });
+  } catch (error) {
+    console.error('Error checking review eligibility:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 };

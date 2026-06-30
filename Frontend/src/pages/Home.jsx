@@ -706,7 +706,7 @@ export default function Home() {
             {filteredDeals.map((deal) => (
               <div 
                 key={deal.id}
-                onClick={() => navigate('/crazy-deals')}
+                onClick={() => navigate(`/product/${deal.id}`)}
                 className="flex-shrink-0 w-24 flex flex-col justify-between cursor-pointer group"
               >
                 <div>

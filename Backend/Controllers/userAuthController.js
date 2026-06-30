@@ -15,10 +15,10 @@ const getOtp = (phone) => {
   const isStaging = process.env.ENV === 'staging' || process.env.ENV === 'development';
   const testPhones = (process.env.TEST_PHONE_NUMBERS || '').split(',').map(p => p.trim());
 
-  if (testPhones.includes(phone)) {
+  if (isStaging) {
     return process.env.STATIC_OTP || '123456';
   }
-  if (isStaging && !process.env.TEST_PHONE_NUMBERS) {
+  if (testPhones.includes(phone)) {
     return process.env.STATIC_OTP || '123456';
   }
   // Otherwise, random 6-digit OTP

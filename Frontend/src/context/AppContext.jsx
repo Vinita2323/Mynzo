@@ -225,6 +225,7 @@ export const AppProvider = ({ children }) => {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
       const socketUrl = apiBase.replace('/api', '');
       const token = localStorage.getItem('userToken');
+      console.log('🔌 [Socket] Initializing connection to URL:', socketUrl, 'with token length:', token ? token.length : 0);
       const socket = io(socketUrl, {
         auth: {
           token: token
@@ -232,10 +233,24 @@ export const AppProvider = ({ children }) => {
       });
       socketRef.current = socket;
 
-      socket.emit('join', user.id);
-      socket.emit('get_wishlist');
+      socket.on('connect', () => {
+        console.log('🔌 [Socket] Connected successfully. Socket ID:', socket.id);
+        console.log('🔌 [Socket] Emitting join event for user:', user.id);
+        socket.emit('join', user.id);
+        console.log('🔌 [Socket] Emitting get_wishlist event');
+        socket.emit('get_wishlist');
+      });
+
+      socket.on('connect_error', (error) => {
+        console.error('🔌 [Socket] Connection error:', error);
+      });
+
+      socket.on('disconnect', (reason) => {
+        console.warn('🔌 [Socket] Disconnected. Reason:', reason);
+      });
 
       socket.on('wishlist_data', (products) => {
+        console.log('🔌 [Socket] Received wishlist_data:', products);
         const normalised = products.map((p) => ({
           id: p._id || p.id,
           name: p.name,
@@ -253,6 +268,7 @@ export const AppProvider = ({ children }) => {
       });
 
       socket.on('like_status', ({ productId, isLiked, product }) => {
+        console.log('🔌 [Socket] Received like_status update:', { productId, isLiked, product });
         if (isLiked && product) {
           setWishlist((prev) => {
             const exists = prev.some((item) => item.id === productId);
@@ -279,10 +295,12 @@ export const AppProvider = ({ children }) => {
       });
 //
       return () => {
+        console.log('🔌 [Socket] Cleaning up connection, disconnecting...');
         socket.disconnect();
         socketRef.current = null;
       };
     } else {
+      console.log('🔌 [Socket] No user logged in, resetting wishlist');
       setWishlist([]);
     }
   }, [user]);
@@ -611,15 +629,21 @@ export const AppProvider = ({ children }) => {
   };
 
   const toggleWishlist = (product) => {
+    console.log('🔌 [toggleWishlist] Triggered for product:', product);
     if (!user || !user.id) {
+      console.warn('🔌 [toggleWishlist] Blocked: No user logged in or user.id is missing.', user);
       toast.error('Please log in first!');
       return;
     }
     const isAdding = !isInWishlist(product.id);
+    console.log('🔌 [toggleWishlist] Current wishlist items:', wishlist);
+    console.log('🔌 [toggleWishlist] isAdding:', isAdding);
     analytics.track(isAdding ? 'wishlist_add' : 'wishlist_remove', 'social', { productId: product.id });
     if (socketRef.current) {
+      console.log('🔌 [toggleWishlist] Emitting toggle_like with:', { userId: user.id, productId: product.id });
       socketRef.current.emit('toggle_like', { userId: user.id, productId: product.id });
     } else {
+      console.error('🔌 [toggleWishlist] Failed: socketRef.current is null/undefined!');
       toast.error('Real-time connection is offline. Please retry.');
     }
   };
