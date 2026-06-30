@@ -5,14 +5,28 @@ const jwt = require('jsonwebtoken');
 module.exports = (io) => {
   // Use authorization middleware for socket connections
   io.use((socket, next) => {
-    const token = socket.handshake.auth?.token || socket.handshake.headers['authorization'];
-    if (!token) {
-      return next(new Error('Authentication error: Token not provided'));
-    }
-    // Remove "Bearer " prefix if present
-    const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
     try {
+      let token = socket.handshake.auth?.token || socket.handshake.headers['authorization'];
+      if (!token) {
+        return next(new Error('Authentication error: Token not provided'));
+      }
+      
+      // If token is an array, take the first element
+      if (Array.isArray(token)) {
+        token = token[0];
+      }
+      
+      if (typeof token !== 'string') {
+        return next(new Error('Authentication error: Invalid token format'));
+      }
+
+      // Remove "Bearer " prefix if present
+      const cleanToken = token.startsWith('Bearer ') ? token.slice(7) : token;
+      
       const decoded = jwt.verify(cleanToken, process.env.JWT_SECRET);
+      if (!decoded || !decoded.id) {
+        return next(new Error('Authentication error: Token payload missing user ID'));
+      }
       socket.userId = decoded.id;
       next();
     } catch (err) {
