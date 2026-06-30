@@ -4,7 +4,7 @@ const dotenv = require('dotenv');
 const path = require('path');
 const helmet = require('helmet');
 const compression = require('compression');
-const rateLimit = require('express-rate-limit');
+// const rateLimit = require('express-rate-limit');
 const mongoose = require('mongoose');
 
 dotenv.config();
@@ -69,7 +69,8 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 
-// Rate Limiters
+// Rate Limiters (Disabled as requested)
+/*
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: process.env.ENV === 'production' ? 100 : 1000,
@@ -96,6 +97,7 @@ const adminLimiter = rateLimit({
   legacyHeaders: false,
 });
 app.use('/admin/auth/login', adminLimiter);
+*/
 
 // Serve uploads with caching headers
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {

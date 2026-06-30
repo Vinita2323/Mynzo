@@ -216,11 +216,11 @@ const getProductById = async (req, res) => {
     let categoryLabel = product.category;
     if (product.category) {
       const isObjectId = mongoose.isValidObjectId(product.category);
-      const cat = await CategoryChip.findOne({ 
+      const cat = await CategoryChip.findOne({
         $or: [
-          { id: product.category }, 
+          { id: product.category },
           ...(isObjectId ? [{ _id: product.category }] : [])
-        ] 
+        ]
       });
       if (cat) {
         categoryLabel = cat.categoryName;
@@ -230,11 +230,11 @@ const getProductById = async (req, res) => {
     let subCategoryLabel = product.subCategory;
     if (product.subCategory) {
       const isObjectId = mongoose.isValidObjectId(product.subCategory);
-      const subcat = await SubCategoryChip.findOne({ 
+      const subcat = await SubCategoryChip.findOne({
         $or: [
-          { id: product.subCategory }, 
+          { id: product.subCategory },
           ...(isObjectId ? [{ _id: product.subCategory }] : [])
-        ] 
+        ]
       });
       if (subcat) {
         subCategoryLabel = subcat.subCategoryName;
@@ -354,7 +354,7 @@ const bulkUploadProducts = async (req, res) => {
     const headers = parseRow(rows[0]);
     const requiredFields = ['Name', 'Category', 'Selling Price'];
     const missingHeaders = requiredFields.filter(f => !headers.includes(f));
-    
+
     if (missingHeaders.length > 0) {
       return res.status(400).json({ success: false, message: `Missing columns: ${missingHeaders.join(', ')}` });
     }
@@ -425,8 +425,8 @@ const bulkUploadProducts = async (req, res) => {
       try {
         await newProduct.save();
         successCount++;
-      } catch(err) {
-        if(err.code === 11000) {
+      } catch (err) {
+        if (err.code === 11000) {
           productData.sku = `SKU-${Date.now()}-${i}-${Math.random().toString().slice(2, 6)}`;
           const retryProduct = new Product(productData);
           await retryProduct.save();

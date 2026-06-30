@@ -14,7 +14,7 @@ const generateToken = (id, phone, tokenVersion = 0) => {
 const getOtp = (phone) => {
   const isStaging = process.env.ENV === 'staging' || process.env.ENV === 'development';
   const testPhones = (process.env.TEST_PHONE_NUMBERS || '').split(',').map(p => p.trim());
-  
+
   if (testPhones.includes(phone)) {
     return process.env.STATIC_OTP || '123456';
   }
@@ -39,7 +39,7 @@ const sendOtp = async (req, res) => {
 
     // Find or create user (auto-register logic)
     let user = await User.findOne({ phone });
-    
+
     if (user && user.status === 'Inactive') {
       return res.status(403).json({ success: false, message: 'Your account has been deactivated by admin. Please contact support.' });
     }
@@ -78,10 +78,10 @@ const sendOtp = async (req, res) => {
         const templateId = process.env.SMS_TEMPLATE_ID;
         const message = `Welcome to Mynzo Powered by IIDMTB. Use OTP ${otp} to verify your login.`;
         const encodedMsg = encodeURIComponent(message);
-        
+
         let smsUrl = `https://cloud.smsindiahub.in/vendorsms/pushsms.aspx?APIKey=${apiKey}&msisdn=91${phone}&sid=${senderId}&msg=${encodedMsg}&fl=0&gwid=2`;
         let maskedUrl = `https://cloud.smsindiahub.in/vendorsms/pushsms.aspx?APIKey=******&msisdn=91${phone}&sid=${senderId}&msg=${encodedMsg}&fl=0&gwid=2`;
-        
+
         if (peId) {
           smsUrl += `&EntityId=${peId}`;
           maskedUrl += `&EntityId=${peId}`;
@@ -90,7 +90,7 @@ const sendOtp = async (req, res) => {
           smsUrl += `&dlttemplateid=${templateId}`;
           maskedUrl += `&dlttemplateid=${templateId}`;
         }
-        
+
         console.log(`📡 Sending SMS via SMS India Hub to 91${phone}...`);
         console.log(`📡 Request URL (Masked): ${maskedUrl}`);
         try {
@@ -229,7 +229,7 @@ const updateProfile = async (req, res) => {
       user.phone = phone;
     }
     if (dob !== undefined) user.dob = dob;
-    
+
     if (gender !== undefined) {
       if (gender === 'male' || gender === 'Male') user.gender = 'Male';
       else if (gender === 'female' || gender === 'Female') user.gender = 'Female';

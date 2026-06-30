@@ -93,7 +93,7 @@ const getUsers = async (req, res) => {
   try {
     const User = require('../Models/User');
     const Order = require('../Models/Order');
-    
+
     const page = Math.max(1, parseInt(req.query.page) || 1);
     const limit = Math.min(100000, parseInt(req.query.limit) || 10);
     const skip = (page - 1) * limit;
@@ -249,9 +249,9 @@ const getUsers = async (req, res) => {
     const fifteenMinsAgo = new Date(Date.now() - 15 * 60 * 1000);
     const activeNow = await User.countDocuments({ lastLogin: { $gte: fifteenMinsAgo } });
 
-    res.status(200).json({ 
-      success: true, 
-      count: users.length, 
+    res.status(200).json({
+      success: true,
+      count: users.length,
       total,
       page,
       pages: Math.ceil(total / limit),
@@ -393,7 +393,7 @@ const updateAdminProfile = async (req, res) => {
     if (name) admin.name = name;
     if (email) admin.email = email.toLowerCase();
     if (phone !== undefined) admin.phone = phone;
-    
+
     if (req.file) {
       const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
       admin.avatar = `${backendUrl}${req.file.url}`;
@@ -485,21 +485,21 @@ const forceLogoutUser = async (req, res) => {
         type: "FORCE_LOGOUT"
       }
     };
-    
+
     // We send directly via admin to the old tokens since we just cleared them from DB
     const { getMessaging } = require('firebase-admin/messaging');
     const { adminApp } = require('../Router/firebaseAdmin');
-    
+
     const allOldTokens = [...new Set([...oldWebTokens, ...oldMobileTokens])];
-    
+
     if (allOldTokens.length > 0) {
-      const sendPromises = allOldTokens.map(token => 
+      const sendPromises = allOldTokens.map(token =>
         getMessaging(adminApp).send({
           token,
           ...pushPayload
         }).catch(err => console.log('FCM token already invalid:', err.message))
       );
-      
+
       Promise.allSettled(sendPromises);
     }
 
@@ -542,18 +542,18 @@ const forceLogoutAllUsers = async (req, res) => {
         type: "FORCE_LOGOUT"
       }
     };
-    
+
     if (allOldTokens.length > 0) {
       const { getMessaging } = require('firebase-admin/messaging');
       const { adminApp } = require('../Router/firebaseAdmin');
-      
-      const sendPromises = allOldTokens.map(token => 
+
+      const sendPromises = allOldTokens.map(token =>
         getMessaging(adminApp).send({
           token,
           ...pushPayload
         }).catch(err => console.log('FCM token already invalid:', err.message))
       );
-      
+
       Promise.allSettled(sendPromises);
     }
 
@@ -571,7 +571,7 @@ const getUserDetails = async (req, res) => {
     const Address = require('../Models/Address');
     const Wishlist = require('../Models/Wishlist');
     const CoinTransaction = require('../Models/CoinTransaction');
-    
+
     const userId = req.params.id;
 
     // 1. Fetch User details
