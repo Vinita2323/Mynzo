@@ -10,11 +10,17 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-export const messaging = getMessaging(app);
+const hasFirebaseConfig = !!firebaseConfig.projectId && !!firebaseConfig.apiKey;
+
+// Initialize Firebase safely
+const app = hasFirebaseConfig ? initializeApp(firebaseConfig) : null;
+export const messaging = app ? getMessaging(app) : null;
 
 export const requestFcmToken = async () => {
+  if (!messaging) {
+    console.warn('Firebase messaging is not configured/initialized. Notification features will be disabled.');
+    return null;
+  }
   try {
     if (!('Notification' in window)) {
       console.log('This browser does not support notifications');
@@ -38,6 +44,10 @@ export const requestFcmToken = async () => {
 
 export const onMessageListener = () =>
   new Promise((resolve) => {
+    if (!messaging) {
+      resolve(null);
+      return;
+    }
     onMessage(messaging, (payload) => {
       resolve(payload);
     });
