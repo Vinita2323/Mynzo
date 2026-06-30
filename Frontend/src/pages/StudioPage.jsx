@@ -62,17 +62,30 @@ const ReelVideo = ({ src, onVisible, isMuted, toggleMute, active, onDoubleTap })
     };
   }, []);
 
+  const clickTimeoutRef = useRef(null);
+
   const handleTap = (e) => {
     e.stopPropagation();
-    if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        videoRef.current.play()
-          .then(() => setIsPlaying(true))
-          .catch(err => console.log(err));
+    if (clickTimeoutRef.current) {
+      clearTimeout(clickTimeoutRef.current);
+      clickTimeoutRef.current = null;
+      if (onDoubleTap) {
+        onDoubleTap(e);
       }
+    } else {
+      clickTimeoutRef.current = setTimeout(() => {
+        clickTimeoutRef.current = null;
+        if (videoRef.current) {
+          if (isPlaying) {
+            videoRef.current.pause();
+            setIsPlaying(false);
+          } else {
+            videoRef.current.play()
+              .then(() => setIsPlaying(true))
+              .catch(err => console.log(err));
+          }
+        }
+      }, 250);
     }
   };
 
@@ -81,8 +94,6 @@ const ReelVideo = ({ src, onVisible, isMuted, toggleMute, active, onDoubleTap })
       ref={containerRef} 
       className="absolute inset-0 z-0 cursor-pointer select-none will-change-transform" 
       onClick={handleTap}
-      onMouseDown={onDoubleTap}
-      onTouchStart={onDoubleTap}
     >
       <video 
         ref={videoRef}
