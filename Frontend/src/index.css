@@ -20,15 +20,23 @@
 
 /* Global native app behaviors */
 body {
-  /* Disable text selection */
+  /* Disable text selection on mobile by default, but enable on desktop */
   -webkit-user-select: none;
   user-select: none;
   
   /* Disable callout menus on iOS */
   -webkit-touch-callout: none;
   
-  /* Prevent pinch-to-zoom and double-tap zoom (allows scrolling) */
+  /* Prevent pinch-to-zoom and double-tap zoom (allows scrolling) on mobile */
   touch-action: pan-x pan-y;
+}
+
+@media (min-width: 1024px) {
+  body {
+    -webkit-user-select: auto;
+    user-select: auto;
+    touch-action: auto;
+  }
 }
 
 /* Re-enable text selection for form inputs */

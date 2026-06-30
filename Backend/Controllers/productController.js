@@ -320,6 +320,7 @@ const getProductById = async (req, res) => {
 const getTopBuys = async (req, res) => {
   try {
     const products = await Product.find({ status: 'Approved' })
+      .select('name brandName mrp sellingPrice discountLabel images rating sales category subCategory description flags stock')
       .sort({ sales: -1 })
       .limit(10)
       .lean();
@@ -354,6 +355,56 @@ const getTrendingBrands = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
+
+const getHomepageData = async (req, res) => {
+  try {
+    const CategoryChip = require('../Models/CategoryChip');
+    const SubCategoryChip = require('../Models/SubCategoryChip');
+    const Banner = require('../Models/Banner');
+
+    const [chips, subchips, banners, products, topBuys, trendingBrands] = await Promise.all([
+      CategoryChip.find({}).sort({ order: 1 }).lean(),
+      SubCategoryChip.find({}).lean(),
+      Banner.find({}).sort({ createdAt: -1 }).lean(),
+      Product.find({ status: 'Approved' })
+        .select('-highlights -technicalSpecs -description -variations -shippingSpecs')
+        .sort({ createdAt: -1 })
+        .lean(),
+      Product.find({ status: 'Approved' })
+        .select('name brandName mrp sellingPrice discountLabel images rating sales category subCategory description flags stock')
+        .sort({ sales: -1 })
+        .limit(10)
+        .lean(),
+      Product.aggregate([
+        { $match: { status: 'Approved' } },
+        {
+          $group: {
+            _id: '$brandName',
+            brand: { $first: '$brandName' },
+            sales: { $sum: '$sales' },
+            image: { $first: { $arrayElemAt: ['$images', 0] } }
+          }
+        },
+        { $sort: { sales: -1 } },
+        { $limit: 6 }
+      ])
+    ]);
+
+    res.status(200).json({
+      success: true,
+      chips,
+      subchips,
+      banners,
+      products,
+      topBuys,
+      trendingBrands
+    });
+  } catch (error) {
+    console.error('Get Homepage Data Error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
 
 const getCombinedCatalog = async (req, res) => {
   try {
@@ -514,5 +565,6 @@ module.exports = {
   getTopBuys,
   getTrendingBrands,
   getCombinedCatalog,
-  bulkUploadProducts
+  bulkUploadProducts,
+  getHomepageData
 };

@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Bell, Heart, ShoppingCart, MapPin, ChevronDown, Search, Camera, Mic, Scan, X, Crosshair, MoreHorizontal, Home, Plus, Gamepad2 } from 'lucide-react';
+import { Bell, Heart, ShoppingCart, MapPin, ChevronDown, Search, Camera, Mic, Scan, X, Crosshair, MoreHorizontal, Home, Plus, Gamepad2, User, LogOut, Compass, Gift, Sparkles, HelpCircle, Wallet, Percent } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import toast from '../../utils/toast';
@@ -43,6 +43,7 @@ export default function Navbar() {
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
+  const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const fileInputRef = useRef(null);
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -239,60 +240,61 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-[#EE4923] shadow-sm transition-all duration-300 pb-2">
+      {/* MOBILE HEADER: Visible only on screen sizes < md */}
+      <header className="sticky top-0 z-50 bg-[#EE4923] shadow-sm transition-all duration-300 pb-2 md:hidden">
         {/* Compact Main top header */}
         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${shouldHideTopSections ? 'max-h-0 opacity-0' : 'max-h-[100px] opacity-100'}`}>
           <div className="flex items-center justify-between px-2.5 py-1 bg-transparent">
             <div className="flex items-center gap-2 cursor-pointer animate-fade-in" onClick={() => navigate('/')}>
-            {/* Logo image */}
-            <img
-              src="/HopeFinal.webp"
-              alt="Mynzo Logo"
-              className="h-12 bg-white p-1 rounded-lg shadow-sm object-contain hover:scale-105 transition-transform duration-300"
-              onError={(e) => {
-                e.target.alt = "Mynzo World";
-              }}
-            />
-          </div>
+              {/* Logo image */}
+              <img
+                src="/HopeFinal.webp"
+                alt="Mynzo Logo"
+                className="h-12 bg-white p-1 rounded-lg shadow-sm object-contain hover:scale-105 transition-transform duration-300"
+                onError={(e) => {
+                  e.target.alt = "Mynzo World";
+                }}
+              />
+            </div>
 
-          {/* Color theme updated to white for dark bg */}
-          <div className="flex items-center gap-3 text-white">
-            <button 
-              onClick={() => {
-                if (!user) {
-                  navigate('/login');
-                } else {
-                  setIsNotificationModalOpen(true);
-                }
-              }}
-              className="relative p-1 hover:bg-white/20 rounded-full transition-colors"
-            >
-              <Bell className="w-5.5 h-5.5 stroke-[1.8]" />
-              {notifications.some(n => !n.read) && (
-                <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 bg-white border-2 border-[#EE4923] rounded-full"></span>
-              )}
-            </button>
-            <button 
-              onClick={() => navigate('/wishlist')}
-              className="relative p-1 hover:bg-white/20 rounded-full transition-colors"
-            >
-              <Heart className="w-5.5 h-5.5 stroke-[1.8]" />
-              {user && wishlist && wishlist.length > 0 && (
-                <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-white border border-[#EE4923] rounded-full"></span>
-              )}
-            </button>
-            <button
-              onClick={() => navigate('/cart')}
-              className="relative p-1 hover:bg-white/20 rounded-full transition-colors"
-            >
-              <ShoppingCart className="w-5.5 h-5.5 stroke-[1.8]" />
-              {totalCartItems > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white text-[8.5px] font-black text-[#EE4923] ring-1.5 ring-[#EE4923] animate-pulse">
-                  {totalCartItems}
-                </span>
-              )}
-            </button>
-          </div>
+            {/* Color theme updated to white for dark bg */}
+            <div className="flex items-center gap-3 text-white">
+              <button 
+                onClick={() => {
+                  if (!user) {
+                    navigate('/login');
+                  } else {
+                    setIsNotificationModalOpen(true);
+                  }
+                }}
+                className="relative p-1 hover:bg-white/20 rounded-full transition-colors"
+              >
+                <Bell className="w-5.5 h-5.5 stroke-[1.8]" />
+                {notifications.some(n => !n.read) && (
+                  <span className="absolute top-0.5 right-0.5 w-2.5 h-2.5 bg-white border-2 border-[#EE4923] rounded-full"></span>
+                )}
+              </button>
+              <button 
+                onClick={() => navigate('/wishlist')}
+                className="relative p-1 hover:bg-white/20 rounded-full transition-colors"
+              >
+                <Heart className="w-5.5 h-5.5 stroke-[1.8]" />
+                {user && wishlist && wishlist.length > 0 && (
+                  <span className="absolute top-0.5 right-0.5 w-2 h-2 bg-white border border-[#EE4923] rounded-full"></span>
+                )}
+              </button>
+              <button
+                onClick={() => navigate('/cart')}
+                className="relative p-1 hover:bg-white/20 rounded-full transition-colors"
+              >
+                <ShoppingCart className="w-5.5 h-5.5 stroke-[1.8]" />
+                {totalCartItems > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white text-[8.5px] font-black text-[#EE4923] ring-1.5 ring-[#EE4923] animate-pulse">
+                    {totalCartItems}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -300,17 +302,17 @@ export default function Navbar() {
         <div className={`overflow-hidden transition-all duration-300 ease-in-out ${shouldHideTopSections ? 'max-h-0 opacity-0' : 'max-h-[100px] opacity-100'}`}>
           <div className="px-2 py-1 bg-transparent">
             <div
-            onClick={() => setIsLocationModalOpen(true)}
-            className="bg-white/20 border border-white/30 text-white flex items-center justify-between px-4 py-2.5 rounded-lg text-[10.5px] font-black cursor-pointer hover:bg-white/30 shadow-md shadow-black/5 active:scale-[0.99] transition-all duration-300"
-          >
-            <div className="flex items-center gap-1.5 truncate">
-              <MapPin className="w-4 h-4 text-white flex-shrink-0" />
-              <span className="truncate tracking-wide">
-                HOME &nbsp;<span className="font-normal text-orange-50/90">| &nbsp;{location}</span>
-              </span>
+              onClick={() => setIsLocationModalOpen(true)}
+              className="bg-white/20 border border-white/30 text-white flex items-center justify-between px-4 py-2.5 rounded-lg text-[10.5px] font-black cursor-pointer hover:bg-white/30 shadow-md shadow-black/5 active:scale-[0.99] transition-all duration-300"
+            >
+              <div className="flex items-center gap-1.5 truncate">
+                <MapPin className="w-4 h-4 text-white flex-shrink-0" />
+                <span className="truncate tracking-wide">
+                  HOME &nbsp;<span className="font-normal text-orange-50/90">| &nbsp;{location}</span>
+                </span>
+              </div>
+              <ChevronDown className="w-4 h-4 text-white flex-shrink-0" />
             </div>
-            <ChevronDown className="w-4 h-4 text-white flex-shrink-0" />
-          </div>
           </div>
         </div>
 
@@ -362,24 +364,298 @@ export default function Navbar() {
         </div>
       </header>
 
-      {/* Delivery Address Modal */}
+      {/* DESKTOP HEADER: Visible on screen sizes >= md */}
+      <header className="hidden md:block sticky top-0 z-50 bg-[#EE4923] text-white shadow-md select-none">
+        {/* Main top header bar */}
+        <div className="max-w-7xl mx-auto px-4 lg:px-8 py-3 flex items-center justify-between gap-4">
+          
+          {/* Logo & Brand */}
+          <div className="flex items-center gap-4 flex-shrink-0">
+            <div className="flex items-center gap-2 cursor-pointer transition-transform duration-300 hover:scale-102" onClick={() => navigate('/')}>
+              <img
+                src="/HopeFinal.webp"
+                alt="Mynzo Logo"
+                className="h-11 bg-white p-1 rounded-lg shadow-sm object-contain"
+                onError={(e) => {
+                  e.target.alt = "Mynzo World";
+                }}
+              />
+            </div>
+
+            {/* Location selector capsule */}
+            <div
+              onClick={() => setIsLocationModalOpen(true)}
+              className="bg-white/10 hover:bg-white/20 border border-white/25 flex items-center gap-1.5 px-3 py-2 rounded-lg text-[11px] font-extrabold cursor-pointer transition-all duration-200 truncate max-w-[200px]"
+              title={location}
+            >
+              <MapPin className="w-3.5 h-3.5 text-white flex-shrink-0" />
+              <span className="truncate tracking-wide font-black">
+                HOME | <span className="font-normal text-orange-100">{location}</span>
+              </span>
+              <ChevronDown className="w-3 h-3 text-white flex-shrink-0" />
+            </div>
+          </div>
+
+          {/* Search bar wrapper */}
+          <div className="flex-1 max-w-xl relative flex items-center bg-white rounded-lg px-4 py-2 focus-within:ring-2 focus-within:ring-orange-200 transition-all duration-300 shadow-sm text-slate-800">
+            <Search className="w-4.5 h-4.5 text-slate-400 mr-2.5 flex-shrink-0" />
+            <input
+              type="text"
+              placeholder="Search for teddy bears, rc cars, customized gifts..."
+              className="w-full bg-transparent text-sm text-[#02006c] outline-none placeholder-slate-400 font-semibold"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  if (searchQuery.trim() !== '') {
+                    analytics.trackSearch(searchQuery);
+                  }
+                  if (window.location.pathname !== '/categories') {
+                    navigate('/categories');
+                  }
+                }
+              }}
+            />
+            {/* Action buttons inside search */}
+            <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+              <Mic 
+                onClick={handleVoiceSearch}
+                className="w-4.5 h-4.5 text-slate-400 cursor-pointer hover:text-[#EE4923] transition-colors" 
+                title="Voice Search"
+              />
+            </div>
+          </div>
+
+          {/* Right Action Menu Icons */}
+          <div className="flex items-center gap-4 text-white flex-shrink-0">
+            {/* Fun Games */}
+            <button 
+              onClick={() => navigate('/games')}
+              className="p-2 hover:bg-white/10 rounded-full transition-colors flex items-center justify-center relative cursor-pointer group"
+              title="Games & Rewards"
+            >
+              <Gamepad2 className="w-5 h-5 stroke-[1.8]" />
+              <span className="absolute -top-0.5 -right-0.5 flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+              </span>
+            </button>
+
+            {/* Notifications */}
+            <button 
+              onClick={() => {
+                if (!user) navigate('/login');
+                else setIsNotificationModalOpen(true);
+              }}
+              className="p-2 hover:bg-white/10 rounded-full transition-colors flex items-center justify-center relative cursor-pointer"
+              title="Notifications"
+            >
+              <Bell className="w-5 h-5 stroke-[1.8]" />
+              {notifications.some(n => !n.read) && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-white border border-[#EE4923] rounded-full"></span>
+              )}
+            </button>
+
+            {/* Wishlist */}
+            <button 
+              onClick={() => navigate('/wishlist')}
+              className="p-2 hover:bg-white/10 rounded-full transition-colors flex items-center justify-center relative cursor-pointer"
+              title="Wishlist"
+            >
+              <Heart className="w-5 h-5 stroke-[1.8]" />
+              {user && wishlist && wishlist.length > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-white border border-[#EE4923] rounded-full"></span>
+              )}
+            </button>
+
+            {/* Cart */}
+            <button 
+              onClick={() => navigate('/cart')}
+              className="p-2 hover:bg-white/10 rounded-full transition-colors flex items-center justify-center relative cursor-pointer"
+              title="Shopping Cart"
+            >
+              <ShoppingCart className="w-5 h-5 stroke-[1.8]" />
+              {totalCartItems > 0 && (
+                <span className="absolute top-0.5 right-0.5 flex h-4.5 w-4.5 items-center justify-center rounded-full bg-white text-[9px] font-black text-[#EE4923] ring-1.5 ring-[#EE4923]">
+                  {totalCartItems}
+                </span>
+              )}
+            </button>
+
+            {/* User Account / Profile Dropdown */}
+            <div className="relative">
+              {user ? (
+                <div>
+                  <button 
+                    onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+                    onBlur={() => setTimeout(() => setProfileDropdownOpen(false), 200)}
+                    className="flex items-center gap-1.5 bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-lg border border-white/20 cursor-pointer transition-all duration-200"
+                  >
+                    <User className="w-4 h-4 text-white" />
+                    <span className="text-xs font-bold text-white max-w-[80px] truncate">{user.name}</span>
+                    <ChevronDown className="w-3 h-3 text-white" />
+                  </button>
+                  
+                  {/* Dropdown Card */}
+                  {profileDropdownOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white text-slate-800 rounded-xl shadow-xl border border-slate-100 py-1.5 z-[100] animate-fade-in">
+                      <div className="px-4 py-2 border-b border-slate-100">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Account</p>
+                        <p className="text-xs font-black text-slate-800 truncate">{user.name}</p>
+                      </div>
+                      
+                      <button 
+                        onClick={() => navigate('/profile')} 
+                        className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                      >
+                        <User className="w-3.5 h-3.5 text-slate-500" />
+                        My Profile
+                      </button>
+                      <button 
+                        onClick={() => navigate('/orders')} 
+                        className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                      >
+                        <Plus className="w-3.5 h-3.5 text-slate-500" />
+                        My Orders
+                      </button>
+                      <button 
+                        onClick={() => navigate('/saved-addresses')} 
+                        className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                      >
+                        <MapPin className="w-3.5 h-3.5 text-slate-500" />
+                        Addresses
+                      </button>
+                      <button 
+                        onClick={() => navigate('/wallet')} 
+                        className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                      >
+                        <Wallet className="w-3.5 h-3.5 text-slate-500" />
+                        Wallet & Coins
+                      </button>
+                      <button 
+                        onClick={() => navigate('/coupons')} 
+                        className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                      >
+                        <Percent className="w-3.5 h-3.5 text-slate-500" />
+                        My Coupons
+                      </button>
+                      
+                      <div className="border-t border-slate-100 my-1"></div>
+                      <button 
+                        onClick={logout} 
+                        className="w-full text-left px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
+                      >
+                        <LogOut className="w-3.5 h-3.5" />
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <button 
+                  onClick={() => navigate('/login')}
+                  className="bg-white hover:bg-orange-50 text-[#EE4923] text-xs font-black px-4.5 py-2 rounded-lg transition-colors cursor-pointer shadow-3xs"
+                >
+                  Login / Register
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Sub-header with Category Nav */}
+        <div className="bg-white text-[#02006c] border-b border-slate-200">
+          <div className="max-w-7xl mx-auto px-4 lg:px-8 py-2.5 flex items-center justify-between text-xs font-black tracking-wide">
+            {/* Category horizontal list */}
+            <div className="flex items-center gap-6 lg:gap-8">
+              <button 
+                onClick={() => navigate('/')} 
+                className={`hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 ${routerLocation.pathname === '/' ? 'text-[#EE4923]' : ''}`}
+              >
+                <Home className="w-3.5 h-3.5" />
+                Home
+              </button>
+              <button 
+                onClick={() => navigate('/categories?cat=beauty')} 
+                className={`hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 ${routerLocation.pathname.startsWith('/categories') && routerLocation.search.includes('cat=beauty') ? 'text-[#EE4923]' : ''}`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Beauty
+              </button>
+              <button 
+                onClick={() => navigate('/categories?cat=gifting')} 
+                className={`hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 ${routerLocation.pathname.startsWith('/categories') && routerLocation.search.includes('cat=gifting') ? 'text-[#EE4923]' : ''}`}
+              >
+                <Gift className="w-3.5 h-3.5" />
+                Gifting
+              </button>
+              <button 
+                onClick={() => navigate('/categories?cat=electronics')} 
+                className={`hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 ${routerLocation.pathname.startsWith('/categories') && routerLocation.search.includes('cat=electronics') ? 'text-[#EE4923]' : ''}`}
+              >
+                <Compass className="w-3.5 h-3.5" />
+                Electronics
+              </button>
+              <button 
+                onClick={() => navigate('/categories?cat=jewellery')} 
+                className={`hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 ${routerLocation.pathname.startsWith('/categories') && routerLocation.search.includes('cat=jewellery') ? 'text-[#EE4923]' : ''}`}
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                Jewellery
+              </button>
+              <button 
+                onClick={() => navigate('/categories?cat=toys')} 
+                className={`hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 ${routerLocation.pathname.startsWith('/categories') && routerLocation.search.includes('cat=toys') ? 'text-[#EE4923]' : ''}`}
+              >
+                <Gamepad2 className="w-3.5 h-3.5" />
+                Toys
+              </button>
+              <button 
+                onClick={() => navigate('/categories?cat=fashion')} 
+                className={`hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 ${routerLocation.pathname.startsWith('/categories') && routerLocation.search.includes('cat=fashion') ? 'text-[#EE4923]' : ''}`}
+              >
+                <User className="w-3.5 h-3.5" />
+                Fashion
+              </button>
+            </div>
+
+            {/* Right-aligned links */}
+            <div className="flex items-center gap-5 text-[#64748B]">
+              <button onClick={() => navigate('/studio')} className="hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 font-bold">
+                <Camera className="w-3.5 h-3.5 text-[#EE4923]" />
+                Studio (Reels)
+              </button>
+              <button onClick={() => navigate('/refer')} className="hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 font-bold">
+                <Gift className="w-3.5 h-3.5 text-teal-600" />
+                Refer & Earn
+              </button>
+              <button onClick={() => navigate('/support')} className="hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 font-bold">
+                <HelpCircle className="w-3.5 h-3.5" />
+                Help
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Delivery Address Modal - Responsive wrapper centering on desktop */}
       {isLocationModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs transition-opacity duration-300">
-          <div className="w-full max-w-md bg-white rounded-t-3xl p-5 shadow-2xl animate-slide-up max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-xs transition-opacity duration-300 p-0 md:p-4">
+          <div className="w-full max-w-md md:rounded-2xl bg-white rounded-t-3xl p-5 shadow-2xl animate-slide-up max-h-[90vh] flex flex-col">
             {/* Drag Handle */}
-            <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4" />
+            <div className="w-10 h-1 bg-slate-200 rounded-full mx-auto mb-4 md:hidden" />
             
             <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <h3 className="text-[17px] font-bold text-[#02006c] nunito-heading">Select delivery address</h3>
               <button
                 onClick={() => setIsLocationModalOpen(false)}
-                className="p-1 rounded-full hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5 text-slate-500" />
               </button>
             </div>
 
-            <div className="overflow-y-auto scrollbar-none pb-24 flex-grow space-y-5">
+            <div className="overflow-y-auto scrollbar-none pb-24 md:pb-4 flex-grow space-y-5">
               {/* Search Bar */}
               <div className="relative flex items-center bg-white rounded-xl border border-slate-200 px-3 py-2.5 shadow-3xs focus-within:border-[#ee4923] focus-within:ring-2 focus-within:ring-orange-100 transition-all">
                 <Search className="w-4 h-4 text-slate-400 mr-2.5" />
@@ -395,7 +671,7 @@ export default function Navbar() {
               {/* Use Current Location */}
               <button 
                 onClick={() => handleSaveLocation("Current Location")}
-                className="flex items-center gap-3 w-full py-1 text-[#ee4923] hover:opacity-80 transition-opacity"
+                className="flex items-center gap-3 w-full py-1 text-[#ee4923] hover:opacity-80 transition-opacity cursor-pointer"
               >
                 <Crosshair className="w-5 h-5" />
                 <span className="text-sm font-bold">Use my current location</span>
@@ -418,7 +694,7 @@ export default function Navbar() {
                       setNewAddressForm({ name: '', address: '', pincode: '' });
                     }
                   }}
-                  className="text-[#ee4923] text-xs font-bold flex items-center gap-1 hover:underline"
+                  className="text-[#ee4923] text-xs font-bold flex items-center gap-1 hover:underline cursor-pointer"
                 >
                   {isAddingNewAddress ? "Cancel" : <><Plus className="w-3.5 h-3.5" /> Add New</>}
                 </button>
@@ -434,7 +710,7 @@ export default function Navbar() {
                         type="text" 
                         value={newAddressForm.name}
                         onChange={(e) => setNewAddressForm({...newAddressForm, name: e.target.value})}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-[#ee4923] focus:outline-none bg-white" 
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-[#ee4923] focus:outline-none bg-white font-medium" 
                         placeholder="e.g. John Doe"
                       />
                     </div>
@@ -444,7 +720,7 @@ export default function Navbar() {
                         type="text" 
                         value={newAddressForm.pincode}
                         onChange={(e) => setNewAddressForm({...newAddressForm, pincode: e.target.value.replace(/[^0-9]/g, '')})}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-[#ee4923] focus:outline-none bg-white" 
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-[#ee4923] focus:outline-none bg-white font-medium" 
                         placeholder="e.g. 452010"
                         maxLength={6}
                       />
@@ -454,7 +730,7 @@ export default function Navbar() {
                       <textarea 
                         value={newAddressForm.address}
                         onChange={(e) => setNewAddressForm({...newAddressForm, address: e.target.value})}
-                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-[#ee4923] focus:outline-none bg-white min-h-[80px]" 
+                        className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:border-[#ee4923] focus:outline-none bg-white min-h-[80px] font-medium" 
                         placeholder="e.g. 123 Main St, Apartment 4B..."
                       />
                     </div>
@@ -516,7 +792,7 @@ export default function Navbar() {
                           toast.error("Failed to save address.");
                         }
                       }}
-                      className="w-full bg-[#ee4923] text-white text-sm font-bold py-2.5 rounded-lg hover:bg-orange-600 transition-colors"
+                      className="w-full bg-[#ee4923] text-white text-sm font-bold py-2.5 rounded-lg hover:bg-orange-600 transition-colors cursor-pointer"
                     >
                       {editingAddressId ? "Update Address" : "Save Address"}
                     </button>
@@ -548,7 +824,7 @@ export default function Navbar() {
                             toast.error("Failed to delete address");
                           }
                         }}
-                        className="w-full bg-red-500 text-white text-sm font-bold py-2.5 rounded-lg hover:bg-red-600 transition-colors mt-2"
+                        className="w-full bg-red-500 text-white text-sm font-bold py-2.5 rounded-lg hover:bg-red-600 transition-colors mt-2 cursor-pointer"
                       >
                         Delete Address
                       </button>
@@ -556,7 +832,6 @@ export default function Navbar() {
                   </div>
                 ) : (
                   filteredAddresses.map((addr) => {
-                    // Simple mock selection logic
                     const isSelected = location === addr.address || (location === "Delhi, India" && addr.id === 1);
                     return (
                       <div key={addr.id} className="flex items-start gap-3 w-full group animate-fade-in">
@@ -586,7 +861,7 @@ export default function Navbar() {
                             });
                             setIsAddingNewAddress(true);
                           }}
-                          className="p-1 text-slate-400 hover:text-slate-600 transition-colors"
+                          className="p-1 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                         >
                           <MoreHorizontal className="w-5 h-5" />
                         </button>
@@ -604,21 +879,22 @@ export default function Navbar() {
           </div>
         </div>
       )}
-      {/* Notification Modal */}
+
+      {/* Notification Modal - Responsive wrapper centering on desktop */}
       {isNotificationModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-xs transition-opacity duration-300">
-          <div className="w-full max-w-md bg-white rounded-t-3xl p-6 shadow-2xl animate-slide-up max-h-[85vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-xs transition-opacity duration-300 p-0 md:p-4">
+          <div className="w-full max-w-md md:rounded-2xl bg-white rounded-t-3xl p-6 shadow-2xl animate-slide-up max-h-[85vh] flex flex-col animate-scale-in">
             <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3 flex-shrink-0">
               <h3 className="text-base font-bold text-[#02006c] nunito-heading">Notifications</h3>
               <button
                 onClick={() => setIsNotificationModalOpen(false)}
-                className="p-1 rounded-full hover:bg-slate-100 transition-colors"
+                className="p-1 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5 text-slate-500" />
               </button>
             </div>
 
-            <div className="space-y-3 overflow-y-auto pb-24 scrollbar-none">
+            <div className="space-y-3 overflow-y-auto pb-24 md:pb-4 scrollbar-none">
               {loadingNotifications ? (
                 <div className="text-center py-8 text-slate-400 text-xs font-medium">
                   Loading notifications...

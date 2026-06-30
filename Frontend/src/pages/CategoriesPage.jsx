@@ -178,9 +178,9 @@ export default function CategoriesPage() {
   const filteredProducts = getFilteredProducts();
 
   return (
-    <div className="h-full flex flex-col bg-white overflow-hidden">
-      {/* Elevated Sticky Header */}
-      <header className="sticky top-0 bg-[#ee4923] border-b border-[#ee4923] px-4 py-3 flex items-center justify-between z-40 flex-shrink-0">
+    <div className="h-full flex flex-col bg-slate-50 overflow-hidden select-none">
+      {/* Elevated Sticky Header (Mobile Only) */}
+      <header className="sticky top-0 bg-[#ee4923] border-b border-[#ee4923] px-4 py-3 flex items-center justify-between z-40 flex-shrink-0 md:hidden">
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate(-1)}
@@ -207,8 +207,8 @@ export default function CategoriesPage() {
 
       <div className="flex-grow flex animate-fade-in overflow-hidden">
 
-        {/* 1. Vertical Sidebar Category Navigation */}
-        <div className="w-[72px] bg-[#02006c]/[0.02] border-r border-slate-100 flex flex-col items-center pt-2 pb-2 overflow-y-auto scrollbar-none gap-3 flex-shrink-0">
+        {/* 1. Vertical Sidebar Category Navigation (Responsive sidebar) */}
+        <div className="w-[72px] md:w-64 bg-[#02006c]/[0.02] md:bg-white border-r border-slate-100 flex flex-col items-center md:items-stretch pt-2 pb-2 md:p-4 overflow-y-auto scrollbar-none gap-3 flex-shrink-0">
           {categories.map((cat) => {
             const catKey = cat._id || cat.id;
             const isActive = selectedCategory === catKey;
@@ -218,9 +218,9 @@ export default function CategoriesPage() {
               <button
                 key={catKey}
                 onClick={() => setSelectedCategory(catKey)}
-                className="flex flex-col items-center w-full relative pb-1 group cursor-pointer"
+                className="flex flex-col md:flex-row items-center md:gap-3 w-full relative pb-1 md:pb-0 md:p-2.5 rounded-xl group cursor-pointer"
               >
-                <div className="relative w-[52px] h-[52px] flex items-center justify-center">
+                <div className="relative w-[52px] h-[52px] md:w-9 md:h-9 flex items-center justify-center flex-shrink-0">
                   {/* Background Cover */}
                   {isActive ? (
                     <motion.div
@@ -240,7 +240,7 @@ export default function CategoriesPage() {
                         alt={labelText}
                         type="category"
                         objectFit="contain"
-                        className={`w-[36px] h-[36px] drop-shadow-sm transition-transform duration-300 ${isActive ? 'scale-110' : 'scale-100'}`}
+                        className={`w-[36px] h-[36px] md:w-5 md:h-5 drop-shadow-sm transition-transform duration-300 ${isActive ? 'scale-110' : 'scale-100'}`}
                       />
                     ) : (
                       renderCatIcon(cat.id, isActive)
@@ -249,16 +249,19 @@ export default function CategoriesPage() {
                 </div>
 
                 {/* Text Label */}
-                <span className={`text-[10px] leading-tight font-bold tracking-tight select-none px-1 text-center mt-1 transition-colors ${isActive ? 'text-[#0F172A] font-bold' : 'text-slate-500 font-semibold'
-                  }`}>
+                <span className={`text-[10px] md:text-sm leading-tight font-bold tracking-tight select-none px-1 text-center md:text-left mt-1 md:mt-0 transition-colors relative z-10 ${
+                  isActive 
+                    ? 'text-[#0F172A] md:text-white font-bold' 
+                    : 'text-slate-500 md:text-slate-700 font-semibold group-hover:text-[#ee4923]'
+                }`}>
                   {labelText}
                 </span>
 
-                {/* Active Indicator Line (Vertical Left) */}
+                {/* Active Indicator Line (Vertical Left) - Mobile only */}
                 {isActive && (
                   <motion.div
                     layoutId="activeCategoryLine"
-                    className="absolute left-0 top-1 bottom-1 w-1 bg-[#02006c] rounded-r-full z-20"
+                    className="absolute left-0 top-1 bottom-1 w-1 bg-[#02006c] rounded-r-full z-20 md:hidden"
                     transition={{ type: 'spring', stiffness: 380, damping: 30 }}
                   />
                 )}
@@ -268,15 +271,15 @@ export default function CategoriesPage() {
         </div>
 
         {/* 2. Main filtered products catalog grid */}
-        <div className="flex-grow p-2.5 overflow-y-auto space-y-3 bg-[#ff7400]/15 relative">
+        <div className="flex-grow p-2.5 md:p-6 overflow-y-auto space-y-4 bg-[#ff7400]/5 md:bg-slate-50 relative">
 
           {/* Title bar */}
-          <div className="flex items-center justify-between border-b border-slate-50 pb-2 relative z-20 px-1">
+          <div className="flex items-center justify-between border-b border-slate-100 pb-2 relative z-20 px-1">
             <div className="space-y-0.5">
-              <h3 className="text-xs font-bold text-[#02006c] uppercase tracking-wider">
+              <h3 className="text-xs md:text-sm font-black text-[#02006c] uppercase tracking-wider">
                 {categories.find((c) => c.id === selectedCategory || c._id === selectedCategory)?.categoryName || categories.find((c) => c.id === selectedCategory || c._id === selectedCategory)?.name || "Catalog"}
               </h3>
-              <p className="text-[8px] text-[#02006c]/60 font-bold uppercase tracking-widest">
+              <p className="text-[8px] md:text-xs text-slate-400 font-bold uppercase tracking-widest">
                 {filteredProducts.length} items found
               </p>
             </div>
@@ -318,19 +321,19 @@ export default function CategoriesPage() {
 
           {/* Horizontal Subcategories Scroll */}
           {selectedCategory !== 'for-you' && subCategories.filter(sc => sc.categoryId.toLowerCase() === selectedCategory.toLowerCase()).length > 0 && (
-            <div className="flex overflow-x-auto gap-3 py-2.5 scrollbar-none snap-x relative z-20 px-1.5 flex-shrink-0 bg-white/40 backdrop-blur-md rounded-2xl border border-white/50 shadow-3xs items-start">
+            <div className="flex overflow-x-auto gap-3 py-3 scrollbar-none snap-x relative z-20 px-2 flex-shrink-0 bg-white border border-slate-100 rounded-2xl shadow-3xs items-start">
               <button
                 onClick={() => setSelectedSubCategory('all')}
                 className="flex flex-col items-center w-[68px] group cursor-pointer flex-shrink-0 snap-start"
               >
-                <div className="relative w-[52px] h-[52px] flex items-center justify-center">
+                <div className="relative w-[52px] h-[52px] md:w-11 md:h-11 flex items-center justify-center">
                   {selectedSubCategory === 'all' ? (
                     <div className="absolute inset-0 rounded-lg bg-[#ee4923] shadow-md shadow-[#ee4923]/25" />
                   ) : (
                     <div className="absolute inset-0 rounded-lg bg-orange-50 group-hover:bg-orange-100 transition-colors duration-300" />
                   )}
                   <div className="relative z-10 flex items-center justify-center">
-                    <LayoutGrid className={`w-6 h-6 transition-all duration-300 ${selectedSubCategory === 'all' ? 'text-white scale-110' : 'text-[#ee4923]'}`} />
+                    <LayoutGrid className={`w-6 h-6 md:w-5 md:h-5 transition-all duration-300 ${selectedSubCategory === 'all' ? 'text-white scale-110' : 'text-[#ee4923]'}`} />
                   </div>
                 </div>
                 <span className={`text-[9px] leading-[1.1] font-black tracking-tight select-none px-0.5 text-center mt-1.5 w-full transition-colors ${selectedSubCategory === 'all' ? 'text-[#0F172A]' : 'text-slate-500'
@@ -347,7 +350,7 @@ export default function CategoriesPage() {
                     onClick={() => setSelectedSubCategory(subKey)}
                     className="flex flex-col items-center w-[68px] group cursor-pointer flex-shrink-0 snap-start"
                   >
-                    <div className="relative w-[52px] h-[52px] flex items-center justify-center">
+                    <div className="relative w-[52px] h-[52px] md:w-11 md:h-11 flex items-center justify-center">
                       {isSubActive ? (
                         <div className="absolute inset-0 rounded-lg bg-[#ee4923] shadow-md shadow-[#ee4923]/25 animate-scale-up" />
                       ) : (
@@ -360,7 +363,7 @@ export default function CategoriesPage() {
                             alt=""
                             type="subcategory"
                             objectFit="contain"
-                            className={`w-[34px] h-[34px] drop-shadow-xs transition-transform duration-300 ${isSubActive ? 'scale-110' : 'scale-100'}`}
+                            className={`w-[34px] h-[34px] md:w-7 md:h-7 drop-shadow-xs transition-transform duration-300 ${isSubActive ? 'scale-110' : 'scale-100'}`}
                           />
                         ) : (
                           <div className="w-[34px] h-[34px] bg-slate-200 rounded" />
@@ -379,7 +382,7 @@ export default function CategoriesPage() {
 
           {/* Dynamic product list */}
           {loading ? (
-            <div className="grid grid-cols-2 gap-2 pb-8">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-8">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
                 <div key={i} className="bg-white flex flex-col items-center pb-3 animate-pulse shadow-sm border border-slate-100 rounded-lg overflow-hidden">
                   <div className="w-full aspect-[4/5] bg-slate-200 mb-2" />
@@ -394,7 +397,7 @@ export default function CategoriesPage() {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="grid grid-cols-2 gap-2 pb-8"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-8"
             >
               {filteredProducts.map((product) => (
                 <ProductCard key={product.id} product={product} />
@@ -406,7 +409,7 @@ export default function CategoriesPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.2 }}
-              className="bg-slate-50 border border-dashed border-slate-200 rounded-3xl p-8 text-center space-y-3 mt-6"
+              className="bg-slate-50 border border-dashed border-slate-200 rounded-3xl p-8 text-center space-y-3 mt-6 animate-scale-in"
             >
               <div className="w-12 h-12 bg-orange-100 text-[#ee4923] rounded-full flex items-center justify-center mx-auto shadow-sm">
                 <Search className="w-6 h-6 animate-pulse" />
@@ -422,7 +425,7 @@ export default function CategoriesPage() {
                   setSelectedCategory('for-you');
                   setSearchQuery('');
                 }}
-                className="bg-white border border-slate-200 hover:border-[#ee4923] text-[#ee4923] text-[8px] font-black px-4 py-2 rounded-xl transition-all duration-300"
+                className="bg-white border border-slate-200 hover:border-[#ee4923] text-[#ee4923] text-[8px] font-black px-4 py-2 rounded-xl transition-all duration-300 cursor-pointer"
               >
                 RESET FILTERS
               </button>

@@ -224,9 +224,9 @@ export default function CartPage() {
   const mockOriginalTotal = totalCartPrice + mockSavings;
 
   return (
-    <div className="flex-grow flex flex-col bg-slate-100 pb-40 relative font-sans">
-      {/* Header - Kept identical to original Mynzo theme per request */}
-      <header className="sticky top-0 bg-orange-100 border-b border-orange-200/50 px-4 py-3 flex items-center justify-between z-40 shadow-sm">
+    <div className="flex-grow flex flex-col bg-slate-50 pb-40 md:pb-12 relative font-sans select-none">
+      {/* Header - Kept identical to original Mynzo theme per request (Mobile Only) */}
+      <header className="sticky top-0 bg-orange-100 border-b border-orange-200/50 px-4 py-3 flex items-center justify-between z-45 shadow-sm md:hidden">
         <div className="flex items-center gap-3">
           <button 
             onClick={() => navigate(-1)}
@@ -254,107 +254,168 @@ export default function CartPage() {
       </header>
 
       {/* Main Page Content */}
-      <div className="flex-grow animate-fade-in flex flex-col gap-2 pt-2">
+      <div className="flex-grow animate-fade-in max-w-7xl mx-auto w-full px-0 md:px-6 lg:px-8 py-4 md:py-8">
         {cart.length > 0 ? (
-          <>
-            {/* Cart Items */}
-            <div className="flex flex-col gap-2">
-              {cart.map((item, index) => (
-                <div key={item.id} className="bg-white shadow-sm pb-1 pt-4">
-                  {/* Tag */}
-                  <div className="px-4 mb-3">
-                    {index === 0 ? (
-                      <span className="bg-green-50 border border-green-100 text-green-700 text-[10px] font-medium px-2 py-0.5 rounded-sm">Hot Deal</span>
-                    ) : (
-                      <span className="text-rose-700 font-medium text-[10px]">Only few left</span>
-                    )}
-                  </div>
-                  
-                  <div className="flex gap-4 px-4">
-                    {/* Left side: Image and Qty */}
-                    <div className="flex flex-col gap-3 w-[84px] flex-shrink-0">
-                      <div className="aspect-[4/5] bg-white border border-slate-200 p-1 rounded relative overflow-hidden">
-                        <OptimizedImage src={item.image} alt={item.name} type="product" className="absolute inset-0" />
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+            
+            {/* Left Column: Cart Items (Loop) - Spans 8 cols */}
+            <div className="md:col-span-8 space-y-4">
+              <h2 className="hidden md:block text-xl font-black text-[#02006c] mb-2 uppercase tracking-wide">
+                Your Shopping Cart ({totalCartItems} Items)
+              </h2>
+
+              <div className="flex flex-col gap-3">
+                {cart.map((item, index) => (
+                  <div key={item.id} className="bg-white rounded-2xl border border-slate-100 shadow-3xs p-4 flex flex-col justify-between">
+                    {/* Tag */}
+                    <div className="mb-3.5">
+                      {index === 0 ? (
+                        <span className="bg-green-50 border border-green-100 text-green-700 text-[10px] font-bold px-2.5 py-0.5 rounded">Hot Deal</span>
+                      ) : (
+                        <span className="text-rose-700 font-bold text-[10px] bg-rose-50 border border-rose-100 px-2.5 py-0.5 rounded">Only few left</span>
+                      )}
+                    </div>
+                    
+                    <div className="flex gap-4">
+                      {/* Left side: Image and Qty */}
+                      <div className="flex flex-col gap-3 w-20 md:w-24 flex-shrink-0">
+                        <div className="aspect-[4/5] bg-[#F8F9FD] border border-slate-100 p-1.5 rounded-xl relative overflow-hidden">
+                          <OptimizedImage src={item.image} alt={item.name} type="product" className="absolute inset-0" />
+                        </div>
+                        
+                        <div className="relative border border-slate-200 rounded-lg flex items-center justify-between px-2.5 py-1.5 bg-white shadow-3xs cursor-pointer hover:border-slate-350 transition-colors">
+                          <span className="text-[11px] font-bold text-slate-800">Qty: {item.quantity}</span>
+                          <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                          <select 
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                            value={item.quantity > 3 ? "custom" : item.quantity}
+                            onChange={(e) => {
+                              if (e.target.value === "more") {
+                                setQtyModalItemId(item.id);
+                                setCustomQtyInput(item.quantity > 3 ? item.quantity.toString() : '');
+                                setIsQtyModalOpen(true);
+                              } else if (e.target.value !== "custom") {
+                                updateQuantity(item.id, parseInt(e.target.value));
+                              }
+                            }}
+                          >
+                            <option value="1">1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            {item.quantity > 3 && <option value="custom" hidden>{item.quantity}</option>}
+                            <option value="more">More</option>
+                          </select>
+                        </div>
                       </div>
                       
-                      <div className="relative border border-slate-300 rounded flex items-center justify-between px-2 py-1 bg-white shadow-sm cursor-pointer hover:border-slate-400">
-                        <span className="text-[11px] font-bold text-slate-800">Qty: {item.quantity}</span>
-                        <ChevronDown className="w-3.5 h-3.5 text-slate-600" />
-                        <select 
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          value={item.quantity > 3 ? "custom" : item.quantity}
-                          onChange={(e) => {
-                            if (e.target.value === "more") {
-                              setQtyModalItemId(item.id);
-                              setCustomQtyInput(item.quantity > 3 ? item.quantity.toString() : '');
-                              setIsQtyModalOpen(true);
-                            } else if (e.target.value !== "custom") {
-                              updateQuantity(item.id, parseInt(e.target.value));
-                            }
-                          }}
-                        >
-                          <option value="1">1</option>
-                          <option value="2">2</option>
-                          <option value="3">3</option>
-                          {item.quantity > 3 && <option value="custom" hidden>{item.quantity}</option>}
-                          <option value="more">More</option>
-                        </select>
+                      {/* Right side: Details */}
+                      <div className="flex-1 flex flex-col justify-between">
+                        <div>
+                          <h3 className="text-xs md:text-sm font-bold text-slate-800 leading-snug pr-2">{item.name}</h3>
+                          <p className="text-[10px] md:text-xs text-slate-400 mt-1 font-semibold">{item.desc || "Pack of 1, Standard Fit"}</p>
+                          
+                          {/* Rating */}
+                          <div className="flex items-center gap-1.5 mt-2">
+                            <div className="flex items-center gap-0.5 bg-green-600 text-white px-1 py-[2px] rounded-sm text-[10px] font-bold leading-none">
+                              4.5 <Star className="w-2.5 h-2.5 fill-white" />
+                            </div>
+                            <span className="text-[10px] text-slate-400 font-medium">(408 reviews)</span>
+                          </div>
+                        </div>
+                        
+                        {/* Pricing & delivery */}
+                        <div className="mt-3 flex items-end justify-between">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-[#ee4923] font-bold text-xs">↓{item.discount}</span>
+                            <span className="text-slate-400 line-through text-xs">₹{item.originalPrice * item.quantity}</span>
+                            <span className="text-slate-900 font-black text-base md:text-lg tracking-tight">₹{item.price * item.quantity}</span>
+                          </div>
+                          
+                          <span className="text-[10px] text-slate-500 font-bold hidden md:inline">Delivery by tomorrow</span>
+                        </div>
                       </div>
                     </div>
                     
-                    {/* Right side: Details */}
-                    <div className="flex-1 flex flex-col">
-                      <h3 className="text-[13px] text-slate-800 leading-snug pr-2">{item.name}</h3>
-                      <p className="text-[11px] text-slate-400 mt-1">{item.desc || "Pack of 1, Standard Fit"}</p>
-                      
-                      {/* Rating */}
-                      <div className="flex items-center gap-1.5 mt-2">
-                        <div className="flex items-center gap-0.5 bg-green-600 text-white px-1 py-[2px] rounded-sm text-[10px] font-bold leading-none">
-                          4.5 <Star className="w-2.5 h-2.5 fill-white" />
-                        </div>
-                        <span className="text-[10px] text-slate-400 font-medium">(408)</span>
-                      </div>
-                      
-                      {/* Pricing */}
-                      <div className="flex items-end gap-2 mt-2.5">
-                        <span className="text-green-600 font-bold text-xs mb-0.5">↓{item.discount}</span>
-                        <span className="text-slate-400 line-through text-xs mb-0.5">₹{item.originalPrice * item.quantity}</span>
-                        <span className="text-slate-900 font-black text-lg tracking-tight leading-none">₹{item.price * item.quantity}</span>
-                      </div>
-                      
-                      {/* Delivery */}
-                      <div className="flex items-center gap-1.5 mt-3 text-[11px]">
-                        <span className="text-slate-600">Delivery by tomorrow, 11 PM</span>
-                      </div>
+                    {/* Actions */}
+                    <div className="flex border-t border-slate-100/80 mt-4 pt-2.5">
+                      <button 
+                        onClick={() => removeFromCart(item.id)} 
+                        className="flex-1 flex items-center justify-center gap-1.5 text-slate-500 hover:text-red-500 hover:bg-red-50 py-1.5 rounded-lg text-xs font-black transition-colors cursor-pointer"
+                      >
+                        <Trash2 className="w-4 h-4" /> Remove
+                      </button>
+                      <button 
+                        onClick={handleCheckout} 
+                        className="flex-1 flex items-center justify-center gap-1.5 text-[#ee4923] hover:bg-orange-50 py-1.5 rounded-lg text-xs font-black transition-colors cursor-pointer"
+                      >
+                        <Zap className="w-4 h-4" /> Buy this now
+                      </button>
                     </div>
                   </div>
-                  
-                  {/* Actions */}
-                  <div className="flex border-t border-slate-100 mt-4 h-[42px]">
-                    <button onClick={() => removeFromCart(item.id)} className="flex-1 flex items-center justify-center gap-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-50 text-xs font-bold border-r border-slate-100 transition-colors">
-                      <Trash2 className="w-3.5 h-3.5" /> Remove
-                    </button>
-                    <button 
-                      onClick={handleCheckout} 
-                      className="flex-1 flex items-center justify-center gap-1.5 text-[#ee4923] hover:bg-orange-50 text-xs font-bold transition-colors"
-                    >
-                      <Zap className="w-3.5 h-3.5" /> Buy this now
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            {/* Safe seal */}
-            <div className="flex items-center justify-center gap-2 py-6">
-              <ShieldCheck className="w-5 h-5 text-slate-400" />
-              <span className="text-[10px] font-bold text-slate-400 leading-tight uppercase tracking-widest">
-                100% Secure Payments
-              </span>
+                ))}
+              </div>
+
+              {/* Secure checkout seal */}
+              <div className="flex items-center justify-center gap-2 py-6">
+                <ShieldCheck className="w-5 h-5 text-slate-400" />
+                <span className="text-[10px] font-bold text-slate-400 leading-tight uppercase tracking-widest">
+                  100% Secure Payments & Encrypted Checkout
+                </span>
+              </div>
             </div>
 
-            {/* Bottom sticky bar */}
-            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3 z-50 flex items-center justify-between max-w-md mx-auto shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+            {/* Right Column: Sticky Order Summary Card - Spans 4 cols */}
+            <div className="md:col-span-4 bg-white rounded-2xl border border-slate-100 shadow-3xs p-6 space-y-6 md:sticky md:top-28">
+              <h3 className="text-sm font-black text-[#02006c] uppercase tracking-wide border-b border-slate-100 pb-3">
+                Order Summary
+              </h3>
+
+              {/* Price Details Breakdown */}
+              <div className="space-y-3.5 text-xs text-slate-600 font-semibold">
+                <div className="flex justify-between">
+                  <span>Price ({totalCartItems} Items)</span>
+                  <span className="text-slate-900">₹{totalCartPrice}</span>
+                </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-green-600">
+                    <span>Coupon Discount</span>
+                    <span>- ₹{discountAmount}</span>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <span>GST (18% inclusive)</span>
+                  <span className="text-slate-900">₹{gstAmount}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Platform Fee</span>
+                  <span className="text-slate-900">₹{platformCommission}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Shipping Fee</span>
+                  <span className="text-emerald-600 font-bold">FREE</span>
+                </div>
+
+                <div className="border-t border-slate-100 pt-3 flex justify-between text-base font-black text-[#02006c]">
+                  <span>Total Amount</span>
+                  <span>₹{finalTotal}</span>
+                </div>
+              </div>
+
+              {/* Desktop Checkout button */}
+              <button 
+                onClick={handleCheckout} 
+                className="w-full bg-[#ee4923] hover:bg-orange-600 text-white py-4 rounded-xl font-black text-sm uppercase tracking-wider shadow-md shadow-orange-500/20 transition-all cursor-pointer flex items-center justify-center gap-2"
+              >
+                <ShieldCheck className="w-4 h-4" /> Place Order
+              </button>
+
+              <div className="text-[10px] text-slate-400 font-semibold text-center leading-relaxed">
+                By placing your order, you agree to Mynzo's Terms of Service and Privacy Policy.
+              </div>
+            </div>
+            
+            {/* Mobile Bottom sticky bar (Hidden on desktop) */}
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3 z-50 flex items-center justify-between max-w-md mx-auto shadow-[0_-4px_10px_rgba(0,0,0,0.05)] md:hidden">
               <div className="flex flex-col justify-center">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Subtotal</span>
                 <span className="text-xl font-black text-slate-800 tracking-tight leading-none">₹{totalCartPrice}</span>
@@ -366,20 +427,21 @@ export default function CartPage() {
                 Checkout
               </button>
             </div>
-          </>
+
+          </div>
         ) : (
           /* Empty State */
-          <div className="bg-white border-t border-slate-100 p-10 text-center flex flex-col items-center justify-center flex-grow">
+          <div className="bg-white border border-slate-100 rounded-2xl p-16 text-center flex flex-col items-center justify-center min-h-[400px]">
             <div className="w-20 h-20 bg-orange-50 text-[#ee4923] rounded-full flex items-center justify-center mx-auto shadow-sm mb-4">
               <ShoppingBag className="w-10 h-10" />
             </div>
-            <h4 className="text-base font-black text-[#0F172A] mb-2">Your Bag is Empty</h4>
+            <h4 className="text-base font-black text-[#0F172A] mb-2">Your Basket is Empty</h4>
             <p className="text-xs text-slate-500 font-medium leading-relaxed max-w-[200px] mb-8">
               Looks like you haven't added any items to your shopping bag yet.
             </p>
             <button
               onClick={() => { navigate('/'); setActiveTab('home'); }}
-              className="bg-[#ee4923] active:scale-95 text-white text-xs font-black px-8 py-3.5 rounded shadow-sm transition-all"
+              className="bg-[#ee4923] hover:bg-orange-600 text-white text-xs font-black px-8 py-3.5 rounded-xl shadow-sm transition-all cursor-pointer"
             >
               CONTINUE SHOPPING
             </button>
@@ -423,9 +485,9 @@ export default function CartPage() {
 
       {/* Address Selection Modal */}
       {isAddressModalOpen && (
-        <div className="fixed inset-0 z-[60] flex flex-col justify-end bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-[60] flex flex-col md:items-center md:justify-center justify-end bg-slate-900/40 backdrop-blur-sm animate-fade-in p-0 md:p-4">
           {/* Modal Content */}
-          <div className="bg-white rounded-t-2xl max-h-[85vh] flex flex-col overflow-hidden animate-slide-up">
+          <div className="bg-white rounded-t-2xl md:rounded-2xl max-h-[85vh] w-full md:max-w-md flex flex-col overflow-hidden animate-slide-up">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-white sticky top-0 z-10">
               <h2 className="text-base font-black text-[#02006c]">Select Delivery Address</h2>

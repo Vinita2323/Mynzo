@@ -8,15 +8,6 @@ function ProductCard({ product }) {
   const { toggleWishlist, isInWishlist, user } = useApp();
   const navigate = useNavigate();
 
-  // Generate a random mock review count based on product id to stay consistent
-  const getReviewCount = (id) => {
-    const num = (id.length * 3.4) % 100;
-    return `${num.toFixed(1)}k`;
-  };
-
-  // Generate a dynamic "Best Price" (e.g. 15% off)
-  const bestPrice = Math.floor(product.price * 0.85);
-
   const getProductBrand = (type) => {
     switch (type) {
       case 'earbuds':

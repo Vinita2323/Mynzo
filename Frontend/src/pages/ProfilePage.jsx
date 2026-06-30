@@ -257,10 +257,10 @@ export default function ProfilePage() {
 
   if (!user) {
     return (
-      <div className="bg-slate-100 min-h-[100dvh] pb-24 font-sans animate-fade-in flex flex-col">
+      <div className="bg-slate-50 min-h-screen pb-24 font-sans animate-fade-in flex flex-col items-center justify-center select-none">
         
-        {/* Sticky App Header */}
-        <div className="bg-[#FFE4D6] px-4 py-4 shadow-sm z-10 sticky top-0 flex items-center gap-3">
+        {/* Sticky App Header (Mobile Only) */}
+        <div className="bg-[#FFE4D6] w-full px-4 py-4 shadow-sm z-10 sticky top-0 flex items-center gap-3 md:hidden">
           <button 
             onClick={() => navigate(-1)}
             className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center text-[#02006c] hover:bg-white active:scale-95 transition-all cursor-pointer shadow-sm flex-shrink-0"
@@ -270,49 +270,53 @@ export default function ProfilePage() {
           <h1 className="text-[#02006c] text-[20px] font-black tracking-tight">Profile</h1>
         </div>
 
-        {/* Login Section Card */}
-        <div className="bg-white px-4 py-4 mb-2 shadow-sm mt-2">
-          <div className="flex items-center justify-between">
-            <span className="text-[14px] text-[#02006c] font-medium">Log in to get exclusive offers</span>
+        {/* Centered card wrapper */}
+        <div className="w-full max-w-md px-4 py-8 space-y-6">
+          {/* Login Section Card */}
+          <div className="bg-white border border-slate-100 rounded-2xl p-6 shadow-3xs text-center space-y-4">
+            <div className="w-16 h-16 bg-orange-50 text-[#ee4923] rounded-full flex items-center justify-center mx-auto shadow-sm">
+              <User className="w-8 h-8" />
+            </div>
+            <div className="space-y-1">
+              <h2 className="text-lg font-black text-[#02006c]">Welcome to Mynzo</h2>
+              <p className="text-xs text-slate-500 font-semibold leading-relaxed">
+                Log in to view your orders, wishlist, rewards, and custom avatar.
+              </p>
+            </div>
             <button 
               onClick={() => navigate('/login')}
-              className="bg-[#02006c] hover:bg-blue-900 active:scale-95 text-white text-[13px] font-bold py-2 px-6 rounded transition-all shadow-sm"
+              className="w-full bg-[#ee4923] hover:bg-orange-650 text-white font-black text-xs uppercase tracking-wider py-3.5 rounded-xl shadow-md shadow-orange-500/20 transition-all cursor-pointer"
             >
-              Log In
+              Log In / Sign Up
             </button>
           </div>
-        </div>
 
-
-
-
-
-
-        {/* Feedback & Information */}
-        <div className="bg-white shadow-sm mb-4">
-          <h3 className="text-[15px] font-bold text-slate-800 p-4 pb-2">Feedback & Information</h3>
-          <div className="flex flex-col">
-            {[
-              { icon: FileText, label: 'Terms, Policies and Licenses', id: 'terms' },
-              { icon: HelpCircle, label: 'Browse FAQs', id: 'faq' },
-              { icon: Phone, label: 'Help & Support', path: '/help' }
-            ].map((item, idx) => (
-              <div 
-                key={idx} 
-                onClick={() => {
-                  if (item.path) {
-                    navigate(item.path);
-                  } else {
-                    setInfoModalType(item.id);
-                  }
-                }}
-                className="flex items-center gap-4 p-4 border-b border-slate-50 last:border-0 cursor-pointer hover:bg-slate-50 group transition-colors"
-              >
-                <item.icon className="w-5 h-5 text-[#02006c] group-hover:scale-110 transition-transform" />
-                <span className="text-[13px] font-medium text-slate-700 flex-1 group-hover:text-[#02006c] transition-colors">{item.label}</span>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#ee4923] group-hover:translate-x-1 transition-all" />
-              </div>
-            ))}
+          {/* Feedback & Information */}
+          <div className="bg-white border border-slate-100 rounded-2xl shadow-3xs overflow-hidden">
+            <h3 className="text-xs font-black text-[#02006c] uppercase tracking-wider px-5 pt-4 pb-2 border-b border-slate-50">Feedback & Information</h3>
+            <div className="flex flex-col">
+              {[
+                { icon: FileText, label: 'Terms, Policies and Licenses', id: 'terms' },
+                { icon: HelpCircle, label: 'Browse FAQs', id: 'faq' },
+                { icon: Phone, label: 'Help & Support', path: '/help' }
+              ].map((item, idx) => (
+                <div 
+                  key={idx} 
+                  onClick={() => {
+                    if (item.path) {
+                      navigate(item.path);
+                    } else {
+                      setInfoModalType(item.id);
+                    }
+                  }}
+                  className="flex items-center gap-4 px-5 py-4 border-b border-slate-50 last:border-0 cursor-pointer hover:bg-slate-50 group transition-colors"
+                >
+                  <item.icon className="w-5 h-5 text-[#02006c] group-hover:scale-110 transition-transform" />
+                  <span className="text-xs font-bold text-slate-700 flex-1 group-hover:text-[#02006c] transition-colors">{item.label}</span>
+                  <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#ee4923] group-hover:translate-x-1 transition-all" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -337,7 +341,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="px-6 pb-4 pt-1 flex items-center justify-between border-b border-slate-100">
                   <h3 className="text-lg font-black text-[#02006c]">Terms & Policies</h3>
-                  <button onClick={() => setInfoModalType(null)} className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors"><X className="w-4.5 h-4.5 text-slate-500" /></button>
+                  <button onClick={() => setInfoModalType(null)} className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"><X className="w-4.5 h-4.5 text-slate-500" /></button>
                 </div>
                 <div className="p-6 overflow-y-auto space-y-4 text-sm text-slate-600">
                   <h4 className="font-bold text-slate-800">1. Acceptance of Terms</h4>
@@ -374,7 +378,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="px-6 pb-4 pt-1 flex items-center justify-between border-b border-slate-100">
                   <h3 className="text-lg font-black text-[#02006c]">Frequently Asked Questions</h3>
-                  <button onClick={() => setInfoModalType(null)} className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors"><X className="w-4.5 h-4.5 text-slate-500" /></button>
+                  <button onClick={() => setInfoModalType(null)} className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"><X className="w-4.5 h-4.5 text-slate-500" /></button>
                 </div>
                 <div className="p-6 overflow-y-auto space-y-6">
                   <div>
@@ -470,20 +474,20 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="bg-white relative pb-24 w-full min-h-full font-sans overflow-x-hidden selection:bg-orange-100 animate-fade-in">
+    <div className="bg-slate-50 md:bg-slate-50 min-h-screen relative pb-24 w-full font-sans overflow-x-hidden selection:bg-orange-100 animate-fade-in select-none">
       
-      {/* 1. Dark Orange Background */}
-      <div className="absolute top-0 left-0 right-0 h-[240px] z-0 pointer-events-none overflow-hidden rounded-b-2xl bg-[#ee4923]">
+      {/* 1. Dark Orange Background (Mobile Only) */}
+      <div className="absolute top-0 left-0 right-0 h-[240px] z-0 pointer-events-none overflow-hidden rounded-b-2xl bg-[#ee4923] md:hidden">
         {/* Cute soft blobs */}
         <div className="absolute -top-10 -left-10 w-48 h-48 bg-white/20 rounded-full mix-blend-overlay filter blur-3xl opacity-60"></div>
         <div className="absolute top-10 -right-10 w-48 h-48 bg-yellow-400/20 rounded-full mix-blend-overlay filter blur-3xl opacity-60"></div>
       </div>
 
       {/* 2. Page Content Overlaid */}
-      <div className="relative z-10 pt-4 px-5 space-y-4">
+      <div className="relative z-10 pt-4 px-4 space-y-4 max-w-7xl mx-auto w-full md:px-6 lg:px-8 md:py-8">
         
-        {/* Navigation Bar */}
-        <div className="flex items-center justify-between">
+        {/* Navigation Bar (Mobile Only) */}
+        <div className="flex items-center justify-between md:hidden">
           <button 
             onClick={() => navigate('/')}
             className="w-10 h-10 rounded-full bg-white flex items-center justify-center border border-slate-100 text-[#02006c] hover:bg-slate-50 active:scale-95 transition-all cursor-pointer shadow-sm"
@@ -499,216 +503,337 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        {/* User Card: Avatar and Names (Cute & Simple) */}
-        <div className="flex flex-col items-center text-center !-mt-4 relative">
-          {/* Avatar Container with Soft Ring */}
-          <div 
-            onClick={handleOpenCreator}
-            className="relative group cursor-pointer"
-          >
-            {/* Soft Pulse Ring */}
-            <div className="absolute -inset-1.5 rounded-full bg-orange-200/40 animate-ping opacity-50 blur-sm"></div>
-            
-            <div className="relative p-1.5 bg-white rounded-full shadow-md border border-orange-100 transition-transform duration-300 group-hover:scale-105">
-              <div className="w-20 h-20 rounded-full border-2 border-orange-50 overflow-hidden bg-slate-50 flex items-center justify-center relative">
-                {uploadedImage ? (
-                  <OptimizedImage src={uploadedImage} alt="Uploaded Profile" type="default" className="w-full h-full" />
-                ) : avatarConfig ? (
-                  <DynamicAvatar config={avatarConfig} size="w-full h-full object-cover" />
-                ) : (
-                  <OptimizedImage src={avtarImage} alt="Profile Avatar" type="default" className="w-full h-full" />
-                )}
-              </div>
-              
-              {/* Floating Camera Button */}
-              <div 
-                onClick={(e) => {
-                  e.stopPropagation();
-                  fileInputRef.current.click();
-                }}
-                className="absolute -bottom-1 -right-1 p-2 bg-white border border-slate-100 rounded-full shadow-sm text-orange-400 group-hover:text-orange-500 transition-colors"
-              >
-                <Camera className="w-3.5 h-3.5 fill-current" />
-              </div>
-              <input 
-                type="file" 
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-                onClick={(e) => e.stopPropagation()}
-                accept="image/*"
-                className="hidden"
-              />
-            </div>
-          </div>
+        {/* Desktop title header */}
+        <h2 className="hidden md:block text-2xl font-black text-[#02006c] uppercase tracking-wide border-b border-slate-200 pb-3 mb-6">
+          My Account Dashboard
+        </h2>
 
-          {/* User Names */}
-          <h3 className="text-xl font-black text-white mt-3 font-syne tracking-wide drop-shadow-md">
-            {mockUser.name}
-          </h3>
-          <div className="flex items-center gap-1 mt-1.5 bg-orange-50 border border-orange-100 px-3 py-1 rounded-full shadow-sm">
-            <Sparkles className="w-3 h-3 text-orange-400 fill-orange-400" />
-            <span className="text-[9px] text-orange-600 font-extrabold tracking-widest uppercase">
-              {mockUser.tier || 'Gold Tier Gifter'}
-            </span>
-          </div>
-        </div>
-
-
-
-        {/* Action Grid (Orders, Wishlist, Coupons, Help Center) */}
-        <div className="grid grid-cols-2 gap-3 px-1 pt-4">
-          <div 
-            onClick={() => navigate('/orders')}
-            className="bg-white rounded h-[52px] px-3.5 flex items-center gap-3 shadow-sm border border-slate-100 hover:border-orange-200 hover:shadow-md transition-all cursor-pointer group"
-          >
-            <Package className="w-5 h-5 text-[#ee4923] group-hover:scale-110 transition-transform" />
-            <span className="text-[13px] font-bold text-slate-800 whitespace-nowrap">Orders</span>
-          </div>
-
-          <div 
-            onClick={() => navigate('/wishlist')}
-            className="bg-white rounded h-[52px] px-3.5 flex items-center gap-3 shadow-sm border border-slate-100 hover:border-orange-200 hover:shadow-md transition-all cursor-pointer group"
-          >
-            <Heart className="w-5 h-5 text-[#ee4923] group-hover:scale-110 transition-transform" />
-            <span className="text-[13px] font-bold text-slate-800 whitespace-nowrap">My Picks</span>
-          </div>
-
-          <div 
-            onClick={() => navigate('/coupons')}
-            className="bg-white rounded h-[52px] px-3.5 flex items-center gap-3 shadow-sm border border-slate-100 hover:border-orange-200 hover:shadow-md transition-all cursor-pointer group"
-          >
-            <Gift className="w-5 h-5 text-[#ee4923] group-hover:scale-110 transition-transform" />
-            <span className="text-[13px] font-bold text-slate-800 whitespace-nowrap">Coupons</span>
-          </div>
-
-          <div 
-            onClick={() => navigate('/support')}
-            className="bg-white rounded h-[52px] px-3.5 flex items-center gap-3 shadow-sm border border-slate-100 hover:border-orange-200 hover:shadow-md transition-all cursor-pointer group"
-          >
-            <Headphones className="w-5 h-5 text-[#ee4923] group-hover:scale-110 transition-transform" />
-            <span className="text-[13px] font-bold text-slate-800 whitespace-nowrap">Help Center</span>
-          </div>
-        </div>
-
-        {/* Mynzo Trust Stamps (Value Props) */}
-        <div className="px-1">
-          <div className="grid grid-cols-4 gap-2">
-            {VALUE_PROPS.map((prop) => (
-              <div 
-                key={prop.id} 
-                className="flex flex-col items-center justify-center rounded-lg bg-white border border-orange-200 p-1.5 py-2 shadow-3xs hover:border-[#ee4923] hover:scale-[1.01] active:scale-95 transition-all duration-300 cursor-pointer"
-              >
-                {/* Colored Stamp Icon box with soft blue and blue icon */}
-                <div className="w-7 h-7 bg-blue-50 text-[#02006c] rounded-md flex items-center justify-center mb-1 shadow-3xs">
-                  {prop.id === 1 && <Truck className="w-4 h-4 stroke-[2.2]" />}
-                  {prop.id === 2 && <RotateCcw className="w-4 h-4 stroke-[2.2]" />}
-                  {prop.id === 3 && <ShieldCheck className="w-4 h-4 stroke-[2.2]" />}
-                  {prop.id === 4 && <Tag className="w-4 h-4 stroke-[2.2]" />}
-                </div>
-                <h5 className="text-[8px] font-bold text-[#02006c] leading-tight text-center">{prop.title}</h5>
-                <p className="text-[7px] text-slate-400 font-medium leading-none mt-0.5 text-center">{prop.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Soft Pastel Avatar Creator Prompt Banner */}
-        <div 
-          onClick={handleOpenCreator}
-          className="relative overflow-hidden rounded p-4 bg-orange-50 border border-orange-100 cursor-pointer group hover:bg-orange-100/50 transition-colors duration-300 shadow-sm"
-        >
-          {/* Subtle Decorative blobs */}
-          <div className="absolute -right-4 -top-4 w-24 h-24 bg-orange-200/30 rounded-full blur-xl"></div>
+        {/* Responsive Grid layout */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
           
-          <div className="relative z-10 flex items-center justify-between">
-            <div className="space-y-1">
-              <h4 className="text-sm font-black uppercase tracking-wider font-syne text-orange-500 flex items-center gap-1.5">
-                Create My Avatar
-                <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-              </h4>
-              <p className="text-[9px] font-extrabold text-orange-400/80 uppercase tracking-widest leading-none">
-                Design & dress your character
-              </p>
-            </div>
-            <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center text-orange-400 border border-orange-100 shadow-sm group-hover:bg-orange-50 transition-colors">
-              <ChevronRight className="w-4 h-4 stroke-[2.5] group-hover:translate-x-0.5 transition-transform" />
-            </div>
-          </div>
-        </div>
-
-        {/* Menu Options Stack (Cute List) */}
-        <div className="pt-2">
-          <h3 className="text-[15px] font-bold text-slate-800 px-1 mb-3">Account Settings</h3>
-          <div className="bg-white rounded p-2 shadow-sm border border-slate-100">
-          <div className="space-y-1">
-            {menuOptions.map((opt, idx) => {
-              const Icon = opt.icon;
-              const isWallet = opt.id === 'wallet';
-              return (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    if (opt.path) navigate(opt.path);
-                  }}
-                  className="w-full flex items-center justify-between p-3.5 rounded hover:bg-slate-50 active:scale-[0.98] transition-all duration-300 text-left cursor-pointer group"
+          {/* LEFT COLUMN: User Card, Avatar creation banner & Log out controls (Mobile-first, 4 cols on desktop) */}
+          <div className="md:col-span-5 lg:col-span-4 bg-white md:border md:border-slate-150/50 md:rounded-2xl md:p-6 md:shadow-3xs space-y-6">
+            
+            {/* Desktop orange card background banner overlay */}
+            <div className="hidden md:block relative bg-[#ee4923] rounded-2xl p-6 text-center text-white overflow-hidden shadow-sm">
+              <div className="absolute -top-10 -left-10 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
+              <div className="absolute -bottom-10 -right-10 w-24 h-24 bg-yellow-400/10 rounded-full blur-xl"></div>
+              
+              <div className="relative z-10 flex flex-col items-center">
+                {/* Avatar */}
+                <div 
+                  onClick={handleOpenCreator}
+                  className="relative group cursor-pointer"
                 >
-                  <div className="flex items-center gap-4 min-w-0 flex-1">
-                    <div className={`w-11 h-11 ${opt.color} rounded flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-105 shadow-inner`}>
-                      <Icon className="w-5 h-5" />
+                  <div className="absolute -inset-1 rounded-full bg-white/20 animate-ping opacity-60 blur-xs"></div>
+                  <div className="relative p-1 bg-white rounded-full shadow-md">
+                    <div className="w-20 h-20 rounded-full overflow-hidden bg-slate-50 flex items-center justify-center relative">
+                      {uploadedImage ? (
+                        <OptimizedImage src={uploadedImage} alt="Uploaded Profile" type="default" className="w-full h-full" />
+                      ) : avatarConfig ? (
+                        <DynamicAvatar config={avatarConfig} size="w-full h-full object-cover" />
+                      ) : (
+                        <OptimizedImage src={avtarImage} alt="Profile Avatar" type="default" className="w-full h-full" />
+                      )}
                     </div>
-                    <div className="min-w-0">
-                      <span className="text-sm font-bold text-[#02006c] font-sans tracking-wide block leading-tight">{opt.label}</span>
-                      <span className="text-[9px] text-slate-400 font-bold block truncate mt-1 leading-none tracking-wide">{opt.desc}</span>
+                    {/* Camera */}
+                    <div 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        fileInputRef.current.click();
+                      }}
+                      className="absolute -bottom-1 -right-1 p-2 bg-[#ee4923] border border-white rounded-full shadow-sm text-white hover:bg-orange-600 transition-colors"
+                    >
+                      <Camera className="w-3.5 h-3.5 fill-current" />
                     </div>
                   </div>
-                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#ee4923] group-hover:translate-x-1 transition-all" />
-                </button>
-              );
-            })}
+                </div>
+
+                <h3 className="text-lg font-black mt-3 font-syne tracking-wide drop-shadow-md">
+                  {mockUser.name}
+                </h3>
+                <div className="flex items-center gap-1 mt-1.5 bg-white/20 border border-white/20 px-3.5 py-0.5 rounded-full">
+                  <Sparkles className="w-3 h-3 text-amber-300 fill-amber-300 animate-pulse" />
+                  <span className="text-[9px] text-white font-extrabold tracking-wider uppercase">
+                    {mockUser.tier || 'Gold Tier Gifter'}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile User Card (Only on mobile) */}
+            <div className="flex flex-col items-center text-center !-mt-4 relative md:hidden">
+              <div 
+                onClick={handleOpenCreator}
+                className="relative group cursor-pointer"
+              >
+                <div className="absolute -inset-1.5 rounded-full bg-orange-200/40 animate-ping opacity-50 blur-sm"></div>
+                <div className="relative p-1.5 bg-white rounded-full shadow-md border border-orange-100 transition-transform duration-300 group-hover:scale-105">
+                  <div className="w-20 h-20 rounded-full border-2 border-orange-50 overflow-hidden bg-slate-50 flex items-center justify-center relative">
+                    {uploadedImage ? (
+                      <OptimizedImage src={uploadedImage} alt="Uploaded Profile" type="default" className="w-full h-full" />
+                    ) : avatarConfig ? (
+                      <DynamicAvatar config={avatarConfig} size="w-full h-full object-cover" />
+                    ) : (
+                      <OptimizedImage src={avtarImage} alt="Profile Avatar" type="default" className="w-full h-full" />
+                    )}
+                  </div>
+                  
+                  <div 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      fileInputRef.current.click();
+                    }}
+                    className="absolute -bottom-1 -right-1 p-2 bg-white border border-slate-100 rounded-full shadow-sm text-orange-400 group-hover:text-orange-500 transition-colors"
+                  >
+                    <Camera className="w-3.5 h-3.5 fill-current" />
+                  </div>
+                  <input 
+                    type="file" 
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                    onClick={(e) => e.stopPropagation()}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                </div>
+              </div>
+
+              <h3 className="text-xl font-black text-white mt-3 font-syne tracking-wide drop-shadow-md">
+                {mockUser.name}
+              </h3>
+              <div className="flex items-center gap-1 mt-1.5 bg-orange-50 border border-orange-100 px-3 py-1 rounded-full shadow-sm">
+                <Sparkles className="w-3 h-3 text-orange-400 fill-orange-400" />
+                <span className="text-[9px] text-orange-600 font-extrabold tracking-widest uppercase">
+                  {mockUser.tier || 'Gold Tier Gifter'}
+                </span>
+              </div>
+            </div>
+
+            {/* Action Grid (Orders, Wishlist, Coupons, Help Center) */}
+            <div className="grid grid-cols-2 gap-3">
+              <div 
+                onClick={() => navigate('/orders')}
+                className="bg-white md:bg-slate-50/50 rounded-xl h-[52px] px-3.5 flex items-center gap-3 shadow-3xs border border-slate-100 hover:border-orange-200 hover:bg-orange-50/10 transition-all cursor-pointer group"
+              >
+                <Package className="w-5 h-5 text-[#ee4923] group-hover:scale-110 transition-transform" />
+                <span className="text-[13px] font-bold text-[#02006c] whitespace-nowrap">Orders</span>
+              </div>
+
+              <div 
+                onClick={() => navigate('/wishlist')}
+                className="bg-white md:bg-slate-50/50 rounded-xl h-[52px] px-3.5 flex items-center gap-3 shadow-3xs border border-slate-100 hover:border-orange-200 hover:bg-orange-50/10 transition-all cursor-pointer group"
+              >
+                <Heart className="w-5 h-5 text-[#ee4923] group-hover:scale-110 transition-transform" />
+                <span className="text-[13px] font-bold text-[#02006c] whitespace-nowrap">My Picks</span>
+              </div>
+
+              <div 
+                onClick={() => navigate('/coupons')}
+                className="bg-white md:bg-slate-50/50 rounded-xl h-[52px] px-3.5 flex items-center gap-3 shadow-3xs border border-slate-100 hover:border-orange-200 hover:bg-orange-50/10 transition-all cursor-pointer group"
+              >
+                <Gift className="w-5 h-5 text-[#ee4923] group-hover:scale-110 transition-transform" />
+                <span className="text-[13px] font-bold text-[#02006c] whitespace-nowrap">Coupons</span>
+              </div>
+
+              <div 
+                onClick={() => navigate('/support')}
+                className="bg-white md:bg-slate-50/50 rounded-xl h-[52px] px-3.5 flex items-center gap-3 shadow-3xs border border-slate-100 hover:border-orange-200 hover:bg-orange-50/10 transition-all cursor-pointer group"
+              >
+                <Headphones className="w-5 h-5 text-[#ee4923] group-hover:scale-110 transition-transform" />
+                <span className="text-[13px] font-bold text-[#02006c] whitespace-nowrap">Help Center</span>
+              </div>
+            </div>
+
+            {/* Avatar Creator Prompter banner */}
+            <div 
+              onClick={handleOpenCreator}
+              className="relative overflow-hidden rounded-2xl p-4 bg-orange-50 border border-orange-100 cursor-pointer group hover:bg-orange-100/50 transition-colors duration-300 shadow-3xs"
+            >
+              <div className="absolute -right-4 -top-4 w-24 h-24 bg-orange-200/30 rounded-full blur-xl"></div>
+              
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="space-y-1">
+                  <h4 className="text-xs font-black uppercase tracking-wider font-syne text-[#ee4923] flex items-center gap-1.5">
+                    Customize Avatar
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                  </h4>
+                  <p className="text-[9px] font-extrabold text-orange-450 uppercase tracking-widest leading-none">
+                    Design your look
+                  </p>
+                </div>
+                <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-orange-400 border border-orange-100 shadow-sm group-hover:bg-orange-50 transition-colors">
+                  <ChevronRight className="w-4 h-4 stroke-[2.5] group-hover:translate-x-0.5 transition-transform" />
+                </div>
+              </div>
+            </div>
+
+            {/* Logout and Delete Actions on Desktop Left Column */}
+            <div className="hidden md:flex flex-col gap-2 pt-2 border-t border-slate-100">
+              <button 
+                onClick={() => { logout(); navigate('/login'); }}
+                className="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-rose-50/50 text-left cursor-pointer group transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-rose-50 text-rose-500 rounded-lg flex items-center justify-center shadow-3xs">
+                    <LogOut className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-black text-rose-500 block leading-tight">Log Out</span>
+                    <span className="text-[9px] text-slate-400 font-bold block mt-0.5 leading-none">Safely terminate session</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-rose-400 transition-colors" />
+              </button>
+
+              <button
+                onClick={() => setShowDeleteModal(true)}
+                className="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-red-50/50 text-left cursor-pointer group transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 bg-red-50 text-red-500 rounded-lg flex items-center justify-center shadow-3xs">
+                    <Trash2 className="w-4.5 h-4.5" />
+                  </div>
+                  <div>
+                    <span className="text-xs font-black text-red-500 block leading-tight">Delete Account</span>
+                    <span className="text-[9px] text-slate-400 font-bold block mt-0.5 leading-none">Remove account permanently</span>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-red-400 transition-colors" />
+              </button>
+            </div>
+
           </div>
 
-          <div className="h-[1px] w-full bg-slate-100 my-2.5"></div>
-
-          {/* Logout Button */}
-          <button 
-            onClick={() => {
-              logout();
-              navigate('/login');
-            }}
-            className="w-full flex items-center justify-between p-3.5 rounded hover:bg-rose-50/60 active:scale-[0.98] transition-all duration-300 text-left cursor-pointer group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-11 h-11 bg-rose-50 text-rose-500 rounded flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105 shadow-inner">
-                <LogOut className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-sm font-bold text-rose-500 font-sans tracking-wide block leading-tight">Log Out</span>
-                <span className="text-[9px] text-slate-400 font-bold block mt-1 leading-none tracking-wide">Safely terminate session</span>
-              </div>
-            </div>
-            <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-rose-400 transition-colors" />
-          </button>
-
-          <div className="h-[1px] w-full bg-slate-100 my-1"></div>
-
-          {/* Delete Account Button */}
-          <button
-            onClick={() => setShowDeleteModal(true)}
-            className="w-full flex items-center justify-between p-3.5 rounded hover:bg-red-50/80 active:scale-[0.98] transition-all duration-300 text-left cursor-pointer group"
-          >
-            <div className="flex items-center gap-4">
-              <div className="w-11 h-11 bg-red-50 text-red-500 rounded flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105 shadow-inner">
-                <Trash2 className="w-5 h-5" />
-              </div>
-              <div>
-                <span className="text-sm font-bold text-red-500 font-sans tracking-wide block leading-tight">Delete Account</span>
-                <span className="text-[9px] text-slate-400 font-bold block mt-1 leading-none tracking-wide">Permanently remove your account</span>
+          {/* RIGHT COLUMN: Settings Options & feedback info list (Mobile-first, 8 cols on desktop) */}
+          <div className="md:col-span-7 lg:col-span-8 space-y-6">
+            
+            {/* Account settings options box */}
+            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-3xs border border-slate-100">
+              <h3 className="text-sm font-black text-[#02006c] uppercase tracking-wide px-1 mb-4 border-b border-slate-50 pb-2">
+                Account Settings
+              </h3>
+              
+              <div className="space-y-1.5">
+                {menuOptions.map((opt, idx) => {
+                  const Icon = opt.icon;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => { if (opt.path) navigate(opt.path); }}
+                      className="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-slate-50/80 active:scale-[0.98] transition-all duration-300 text-left cursor-pointer group"
+                    >
+                      <div className="flex items-center gap-4 min-w-0 flex-1">
+                        <div className={`w-11 h-11 ${opt.color} rounded-xl flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-105 shadow-3xs`}>
+                          <Icon className="w-5 h-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <span className="text-sm font-black text-[#02006c] block leading-tight">{opt.label}</span>
+                          <span className="text-[10px] text-slate-400 font-semibold block truncate mt-1 leading-none tracking-wide">{opt.desc}</span>
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-[#ee4923] group-hover:translate-x-1 transition-all" />
+                    </button>
+                  );
+                })}
               </div>
             </div>
-            <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-red-400 transition-colors" />
-          </button>
+
+            {/* Trust Stamps Stamp list banner */}
+            <div className="bg-white rounded-2xl p-4 md:p-6 shadow-3xs border border-slate-100">
+              <h3 className="text-sm font-black text-[#02006c] uppercase tracking-wide px-1 mb-4 border-b border-slate-50 pb-2">
+                Mynzo Guarantee
+              </h3>
+              
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                {VALUE_PROPS.map((prop) => (
+                  <div 
+                    key={prop.id} 
+                    className="flex flex-col items-center justify-center rounded-xl bg-slate-50 border border-slate-100 p-4 shadow-3xs hover:border-[#ee4923] transition-all duration-300 cursor-pointer"
+                  >
+                    <div className="w-10 h-10 bg-white text-[#02006c] rounded-xl flex items-center justify-center mb-2 shadow-3xs">
+                      {prop.id === 1 && <Truck className="w-5 h-5 stroke-[2]" />}
+                      {prop.id === 2 && <RotateCcw className="w-5 h-5 stroke-[2]" />}
+                      {prop.id === 3 && <ShieldCheck className="w-5 h-5 stroke-[2]" />}
+                      {prop.id === 4 && <Tag className="w-5 h-5 stroke-[2]" />}
+                    </div>
+                    <h5 className="text-[10px] font-black text-[#02006c] leading-tight text-center">{prop.title}</h5>
+                    <p className="text-[8px] text-slate-400 font-semibold leading-normal mt-1.5 text-center">{prop.desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Feedback & Info links */}
+            <div className="bg-white rounded-2xl shadow-3xs border border-slate-100 overflow-hidden">
+              <h3 className="text-sm font-black text-[#02006c] uppercase tracking-wide px-5 pt-4 pb-2 border-b border-slate-50">
+                Feedback & Information
+              </h3>
+              <div className="flex flex-col">
+                {[
+                  { icon: FileText, label: 'Terms, Policies and Licenses', id: 'terms' },
+                  { icon: HelpCircle, label: 'Browse FAQs', id: 'faq' },
+                  { icon: Phone, label: 'Help & Support', path: '/help' }
+                ].map((item, idx) => (
+                  <div 
+                    key={idx} 
+                    onClick={() => {
+                      if (item.path) navigate(item.path);
+                      else setInfoModalType(item.id);
+                    }}
+                    className="flex items-center gap-4 px-5 py-4 border-b border-slate-50 last:border-0 cursor-pointer hover:bg-slate-50 group transition-colors"
+                  >
+                    <item.icon className="w-5 h-5 text-[#02006c] group-hover:scale-110 transition-transform" />
+                    <span className="text-xs font-bold text-slate-700 flex-1 group-hover:text-[#02006c] transition-colors">{item.label}</span>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-[#ee4923] group-hover:translate-x-1 transition-all" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Log out controls on mobile view (Hidden on desktop) */}
+            <div className="space-y-3.5 md:hidden">
+              <div className="bg-white rounded p-2 shadow-sm border border-slate-100">
+                <button 
+                  onClick={() => { logout(); navigate('/login'); }}
+                  className="w-full flex items-center justify-between p-3.5 rounded hover:bg-rose-50/60 active:scale-[0.98] transition-all duration-300 text-left cursor-pointer group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-11 h-11 bg-rose-50 text-rose-500 rounded flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-105 shadow-inner">
+                      <LogOut className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-sm font-bold text-rose-500 font-sans tracking-wide block leading-tight">Log Out</span>
+                      <span className="text-[9px] text-slate-400 font-bold block mt-1 leading-none tracking-wide">Safely terminate session</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-rose-400 transition-colors" />
+                </button>
+
+                <div className="h-[1px] w-full bg-slate-100 my-1"></div>
+
+                <button
+                  onClick={() => setShowDeleteModal(true)}
+                  className="w-full flex items-center justify-between p-3.5 rounded hover:bg-red-50/80 active:scale-[0.98] transition-all duration-300 text-left cursor-pointer group"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="w-11 h-11 bg-red-50 text-red-500 rounded flex items-center justify-center flex-shrink-0 transition-transform duration-300 group-hover:scale-105 shadow-inner">
+                      <Trash2 className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <span className="text-sm font-bold text-red-500 font-sans tracking-wide block leading-tight">Delete Account</span>
+                      <span className="text-[9px] text-slate-400 font-bold block mt-1 leading-none tracking-wide">Permanently remove your account</span>
+                    </div>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-red-400 transition-colors" />
+                </button>
+              </div>
+            </div>
+
+          </div>
+
         </div>
-        </div>
+
       </div>
 
       {/* Delete Account Confirmation Modal */}

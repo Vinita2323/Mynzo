@@ -240,9 +240,9 @@ Thank you for shopping with Mynzo!
   };
 
   return (
-    <div className="bg-white min-h-[100dvh] font-sans pb-24">
-      {/* Header */}
-      <div className="bg-[#FFE4D6] px-4 py-3 sticky top-0 z-50 flex items-center justify-between shadow-sm">
+    <div className="bg-slate-50 min-h-screen font-sans pb-24 select-none">
+      {/* Header (Mobile Only) */}
+      <div className="bg-[#FFE4D6] px-4 py-3 sticky top-0 z-50 flex items-center justify-between shadow-sm md:hidden">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate(-1)} className="p-1 -ml-1 hover:bg-orange-200/50 rounded-full transition-colors cursor-pointer">
             <ArrowLeft className="w-6 h-6 text-[#02006c]" />
@@ -257,401 +257,432 @@ Thank you for shopping with Mynzo!
         </button>
       </div>
 
-      <div className="flex flex-col">
-        {/* Top Section */}
-        <div className="p-3">
-          {/* Products List & Order ID */}
-          <div className="flex flex-col gap-3 mb-3">
-            {orderItems.map((item, idx) => (
-              <div key={item.id || idx} className="flex gap-3 items-center p-2.5 bg-slate-50 rounded-xl border border-slate-100">
-                <div className="w-14 h-14 bg-pink-50 rounded-lg p-1.5 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-200/50 shadow-sm relative">
-                   <OptimizedImage src={item.image} alt={item.name} type="product" className="absolute inset-0 p-0.5 object-contain mix-blend-multiply" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[13px] text-slate-800 line-clamp-1 font-semibold">
-                    {item.name}
-                  </p>
-                  <p className="text-[11px] text-slate-500 mt-0.5">
-                    Qty: {item.quantity} • Price: ₹{item.price}
-                  </p>
-                </div>
-              </div>
-            ))}
-            <div className="flex items-center gap-1.5 text-[11px] text-slate-500 px-1 mt-1 justify-between">
-              <div className="flex items-center gap-1">
-                <span>Order ID: #{id}</span>
-                <Copy onClick={handleCopyId} className="w-3.5 h-3.5 text-[#ee4923] cursor-pointer hover:text-[#ff5c3f]" />
-              </div>
-              <span className="font-bold text-slate-600">Total Items: {orderItems.reduce((acc, curr) => acc + curr.quantity, 0)}</span>
-            </div>
+      {/* Responsive layout wrapper */}
+      <div className="max-w-6xl mx-auto w-full px-4 py-6 md:py-10 space-y-6">
+        
+        {/* Desktop title header */}
+        <div className="hidden md:flex justify-between items-center border-b border-slate-200 pb-3">
+          <div className="flex flex-col">
+            <h2 className="text-xl font-black text-[#02006c] uppercase tracking-wide">
+              Order Details & Invoice
+            </h2>
+            <span className="text-xs text-slate-400 font-bold mt-1">Order ID: #{id}</span>
           </div>
-
-          {/* Compact Delivered Card */}
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden mb-1">
-            <div className="p-3 border-b border-slate-100 flex items-center justify-between">
-               <div>
-                 <h2 className={`text-[15px] font-bold ${isDelivered ? 'text-green-700' : 'text-[#ee4923]'} mb-1`}>
-                   {isDelivered ? `Delivered, ${globalOrder?.date || 'Apr 13'}` : (globalOrder?.etd ? `Estimated Delivery: ${globalOrder.etd}` : 'Processing Order')}
-                 </h2>
-                 {isDelivered ? (
-                   <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                     <div className="w-3 h-3 border border-slate-400 rounded-full flex items-center justify-center text-[8px]">i</div>
-                     Return policy ended on Apr 23
-                   </div>
-                 ) : (
-                   <div className="flex items-center gap-1.5 text-[11px] text-slate-500">
-                     <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                     Item is out for delivery
-                   </div>
-                 )}
-               </div>
-               <div className={`${isDelivered ? 'bg-green-600' : 'bg-[#ee4923]'} rounded-full w-6 h-6 flex items-center justify-center shadow-sm`}>
-                 {isDelivered ? (
-                   <CheckCircle2 className="w-4 h-4 text-white" />
-                 ) : (
-                   <Package className="w-4 h-4 text-white" />
-                 )}
-               </div>
-            </div>
+          <div className="flex items-center gap-3">
             <button 
-              onClick={() => navigate(`/track-order/${id}`)}
-              className="w-full py-2.5 text-[13px] font-semibold text-[#ee4923] hover:bg-[#ee4923]/5 active:bg-[#ee4923]/10 transition-colors border-b border-slate-100"
+              onClick={() => navigate('/support')}
+              className="px-4 py-2 border border-[#02006c]/20 bg-white text-[#02006c] rounded-xl text-xs font-bold transition-all shadow-3xs cursor-pointer hover:bg-slate-50"
             >
-              {isDelivered ? 'See all updates' : 'Track your order'}
+              Help & Support
             </button>
-
-            {/* Return Request Section */}
-            {isDelivered && !existingReturn && !checkingReturn && (
-              <button 
-                onClick={() => setShowReturnSheet(true)}
-                className="w-full py-2.5 text-[13px] font-semibold text-amber-600 hover:bg-amber-50 active:bg-amber-100 transition-colors flex items-center justify-center gap-2"
-              >
-                <RotateCcw className="w-4 h-4" />
-                Request Return / Refund
-              </button>
-            )}
-
-            {existingReturn && (
-              <div className="px-3 py-2.5 bg-amber-50 border-t border-amber-100">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <RotateCcw className="w-4 h-4 text-amber-600" />
-                    <span className="text-[12px] font-bold text-amber-700">Return {existingReturn.status}</span>
-                  </div>
-                  <span className={`text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${
-                    existingReturn.status === 'Refunded' ? 'bg-green-50 text-green-600 border-green-100' :
-                    existingReturn.status === 'Rejected' ? 'bg-red-50 text-red-600 border-red-100' :
-                    'bg-amber-50 text-amber-600 border-amber-100'
-                  }`}>{existingReturn.status}</span>
-                </div>
-                <p className="text-[11px] text-amber-600 mt-1">Refund: ₹{existingReturn.refundAmount?.toLocaleString()} • {existingReturn.reason}</p>
-              </div>
-            )}
+            <button 
+              onClick={() => navigate(-1)}
+              className="px-4 py-2 bg-[#02006c] text-white rounded-xl text-xs font-bold transition-all shadow-3xs cursor-pointer hover:bg-opacity-90"
+            >
+              Go Back
+            </button>
           </div>
         </div>
 
-        <div className="h-2 bg-slate-100 w-full"></div>
+        {/* Desktop 2-column Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+          
+          {/* LEFT COLUMN: Items, Status & Review forms (Spans 7 cols on desktop) */}
+          <div className="md:col-span-7 space-y-6">
+            
+            {/* Products List & Order ID */}
+            <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-3xs space-y-4">
+              <h3 className="text-sm font-black text-[#02006c] uppercase tracking-wide border-b border-slate-50 pb-2">
+                Purchased Items ({orderItems.reduce((acc, curr) => acc + curr.quantity, 0)})
+              </h3>
 
-        {isDelivered && (
-          <>
-            {/* Rate Experience */}
-            <div className="p-3">
-              <h2 className="text-[15px] font-bold text-slate-800 mb-2">Rate your experience</h2>
-              {isEditingReview ? (
-                <div className="bg-slate-50 rounded-xl p-4 border border-slate-100">
-                  <div className="flex flex-col items-center justify-center mb-5">
-                    <p className="text-[14px] font-semibold text-slate-700 mb-2">How would you rate this product?</p>
-                    <div className="flex items-center gap-2">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <button key={star} onClick={() => setReviewRating(star)} className="p-1 hover:scale-110 transition-transform cursor-pointer">
-                          <Star className={`w-8 h-8 ${star <= reviewRating ? 'text-green-500 fill-green-500' : 'text-slate-200'} transition-colors`} />
-                        </button>
-                      ))}
+              <div className="flex flex-col gap-3">
+                {orderItems.map((item, idx) => (
+                  <div key={item.id || idx} className="flex gap-4 items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                    <div className="w-14 h-14 bg-white rounded-lg p-1.5 flex-shrink-0 flex items-center justify-center overflow-hidden border border-slate-150 shadow-3xs relative">
+                       <OptimizedImage src={item.image} alt={item.name} type="product" className="absolute inset-0 p-0.5 object-contain mix-blend-multiply" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs md:text-sm text-slate-800 line-clamp-1 font-bold">
+                        {item.name}
+                      </p>
+                      <p className="text-[11px] text-slate-500 mt-1 font-semibold">
+                        Quantity: {item.quantity} • Price: ₹{item.price}
+                      </p>
                     </div>
                   </div>
+                ))}
+              </div>
 
-                  <div className="mb-5">
-                    <p className="text-[14px] font-semibold text-slate-700 mb-2">Add a written review</p>
-                    <textarea
-                      value={reviewText}
-                      onChange={(e) => setReviewText(e.target.value)}
-                      placeholder="What did you like or dislike?"
-                      className="w-full bg-white border border-slate-200 rounded-xl p-3 text-[14px] outline-none focus:border-[#ee4923] focus:ring-1 focus:ring-[#ee4923] transition-all resize-none h-[80px]"
-                    ></textarea>
-                  </div>
-
-                  <div className="mb-5">
-                    <p className="text-[14px] font-semibold text-slate-700 mb-2">Add Photos or Reel (Optional)</p>
-                    {(reviewPhotos.length > 0 || reviewVideo) && (
-                      <div className="flex gap-2 mb-3 flex-wrap">
-                        {reviewPhotos.map((p, i) => (
-                          <div key={i} className="w-14 h-14 rounded-lg border border-slate-200 overflow-hidden relative">
-                            <OptimizedImage src={p} alt="" type="default" className="absolute inset-0" />
-                            <button onClick={() => setReviewPhotos(prev => prev.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 bg-white rounded-full p-0.5 text-slate-500 shadow-sm"><X className="w-3 h-3" /></button>
-                          </div>
-                        ))}
-                        {reviewVideo && (
-                          <div className="w-14 h-14 rounded-lg border border-slate-200 overflow-hidden relative bg-black flex items-center justify-center">
-                            <Video className="w-5 h-5 text-white/70 absolute" />
-                            <video src={reviewVideo} className="w-full h-full object-cover opacity-50" />
-                            <button onClick={() => setReviewVideo(null)} className="absolute top-1 right-1 bg-white rounded-full p-0.5 text-slate-500 shadow-sm z-10"><X className="w-3 h-3" /></button>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <div className="flex gap-3">
-                      <label className="flex flex-col items-center justify-center w-20 h-20 border-2 border-dashed border-slate-300 bg-white rounded-xl cursor-pointer hover:border-[#ee4923] hover:bg-orange-50 transition-colors">
-                        <ImageIcon className="w-5 h-5 text-slate-400 mb-1" />
-                        <span className="text-[10px] font-medium text-slate-600">Add Photos</span>
-                        <input type="file" accept="image/jpeg, image/png, image/webp" multiple className="hidden" onChange={handlePhotoUpload} />
-                      </label>
-                      <label className="flex flex-col items-center justify-center w-20 h-20 border-2 border-dashed border-slate-300 bg-white rounded-xl cursor-pointer hover:border-[#ee4923] hover:bg-orange-50 transition-colors">
-                        <Video className="w-5 h-5 text-slate-400 mb-1" />
-                        <span className="text-[10px] font-medium text-slate-600">Add Reel</span>
-                        <input type="file" accept="video/mp4, video/webm" className="hidden" onChange={handleVideoUpload} />
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    {submittedReview && (
-                      <button 
-                        onClick={() => setIsEditingReview(false)}
-                        className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-3 rounded-xl transition-colors shadow-sm cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                    )}
-                    <button 
-                      onClick={() => {
-                        setSubmittedReview({ rating: reviewRating, text: reviewText, photos: reviewPhotos, video: reviewVideo });
-                        setIsEditingReview(false);
-                        
-                        if (reviewVideo || reviewPhotos.length > 0) {
-                          addStudioPost({
-                            id: Date.now(),
-                            username: user ? user.name.toLowerCase().replace(' ', '_') : 'guest_user',
-                            desc: reviewText || "Check out my new purchase! ✨",
-                            likes: 0,
-                            comments: 0,
-                            views: "0",
-                            isLiked: false,
-                            product: product,
-                            videoUrl: reviewVideo,
-                            imageUrl: reviewPhotos.length > 0 ? reviewPhotos[0] : null
-                          });
-                        }
-                        
-                        alert("Review submitted successfully!");
-                      }}
-                      className="flex-1 bg-[#ee4923] hover:bg-[#ff5c3f] text-white font-bold py-3 rounded-xl transition-colors shadow-sm cursor-pointer"
-                    >
-                      Submit Review
-                    </button>
-                  </div>
+              <div className="flex items-center gap-1.5 text-[11px] text-slate-400 justify-between pt-2">
+                <div className="flex items-center gap-1">
+                  <span>Order ID: {id}</span>
+                  <Copy onClick={handleCopyId} className="w-3.5 h-3.5 text-[#ee4923] cursor-pointer hover:text-[#ff5c3f]" />
                 </div>
-              ) : submittedReview ? (
-                <div className="bg-slate-50 rounded-lg p-3 border border-slate-100">
-                  <div className="flex justify-between items-start mb-1">
-                    <div className="flex items-center gap-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star key={star} className={`w-4 h-4 ${star <= submittedReview.rating ? 'text-green-600 fill-green-600' : 'text-slate-200 fill-slate-200'}`} />
-                      ))}
-                    </div>
-                    <button onClick={() => setIsEditingReview(true)} className="text-[12px] font-semibold text-[#ee4923] hover:underline flex items-center gap-1">
-                      <PenLine className="w-3 h-3" /> Edit
-                    </button>
-                  </div>
-                  {submittedReview.text && (
-                    <p className="text-[12px] text-slate-700 mt-1 mb-2 leading-snug">{submittedReview.text}</p>
-                  )}
-                  {(submittedReview.photos.length > 0 || submittedReview.video) && (
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {submittedReview.photos.map((p, i) => (
-                        <div key={i} onClick={() => setSelectedMedia({ type: 'image', url: p })} className="w-12 h-12 rounded-md border border-slate-200 overflow-hidden bg-white cursor-pointer hover:opacity-80 transition-opacity relative">
-                          <OptimizedImage src={p} alt="" type="default" className="absolute inset-0" />
-                        </div>
-                      ))}
-                      {submittedReview.video && (
-                        <div onClick={() => setSelectedMedia({ type: 'video', url: submittedReview.video })} className="w-12 h-12 rounded-md border border-slate-200 overflow-hidden bg-black relative flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
-                          <Video className="w-4 h-4 text-white/80 absolute z-10" />
-                          <video src={submittedReview.video} className="w-full h-full object-cover opacity-60" />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="bg-slate-50 rounded-xl p-4">
-                  <div className="flex items-center gap-2 text-[14px] text-slate-700 mb-4">
-                     <Receipt className="w-5 h-5 text-slate-400" />
-                     Write a product review
-                  </div>
+              </div>
+            </div>
+
+            {/* Compact Delivered Status Card */}
+            <div className="bg-white rounded-2xl border border-slate-100 shadow-3xs overflow-hidden">
+              <div className="p-5 border-b border-slate-105 flex items-center justify-between">
+                 <div>
+                   <h2 className={`text-base font-black ${isDelivered ? 'text-green-700' : 'text-[#ee4923]'} mb-1`}>
+                     {isDelivered ? `Delivered, ${globalOrder?.date || 'Apr 13'}` : (globalOrder?.etd ? `Estimated Delivery: ${globalOrder.etd}` : 'Processing Order')}
+                   </h2>
+                   {isDelivered ? (
+                     <div className="flex items-center gap-1.5 text-xs text-slate-455">
+                       <div className="w-3.5 h-3.5 border border-slate-400 rounded-full flex items-center justify-center text-[9px] font-bold">i</div>
+                       Return window expired on Apr 23
+                     </div>
+                   ) : (
+                     <div className="flex items-center gap-1.5 text-xs text-slate-455">
+                       <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                       Item is out for delivery
+                     </div>
+                   )}
+                 </div>
+                 <div className={`${isDelivered ? 'bg-green-600' : 'bg-[#ee4923]'} rounded-full w-8 h-8 flex items-center justify-center shadow-sm`}>
+                   {isDelivered ? (
+                     <CheckCircle2 className="w-4 h-4 text-white" />
+                   ) : (
+                     <Package className="w-4 h-4 text-white" />
+                   )}
+                 </div>
+              </div>
+              <button 
+                onClick={() => navigate(`/track-order/${id}`)}
+                className="w-full py-3.5 text-xs font-black text-[#ee4923] hover:bg-orange-50/20 active:bg-orange-50/50 transition-colors border-b border-slate-50 uppercase tracking-wider"
+              >
+                {isDelivered ? 'See all updates' : 'Track your order'}
+              </button>
+
+              {/* Return Request Section */}
+              {isDelivered && !existingReturn && !checkingReturn && (
+                <button 
+                  onClick={() => setShowReturnSheet(true)}
+                  className="w-full py-3.5 text-xs font-black text-amber-600 hover:bg-amber-50 active:bg-amber-100 transition-colors flex items-center justify-center gap-2 uppercase tracking-wider"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Request Return / Refund
+                </button>
+              )}
+
+              {existingReturn && (
+                <div className="px-5 py-3.5 bg-amber-50/40 border-t border-amber-100 text-xs">
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1">
-                      <span className="text-[14px] font-bold text-slate-800 mr-1">Okay</span>
-                      <Star className="w-5 h-5 text-green-600 fill-green-600" />
-                      <Star className="w-5 h-5 text-green-600 fill-green-600" />
-                      <Star className="w-5 h-5 text-green-600 fill-green-600" />
-                      <Star className="w-5 h-5 text-slate-200 fill-slate-200" />
-                      <Star className="w-5 h-5 text-slate-200 fill-slate-200" />
+                    <div className="flex items-center gap-2">
+                      <RotateCcw className="w-4 h-4 text-amber-600" />
+                      <span className="font-black text-amber-700">Return {existingReturn.status}</span>
                     </div>
-                    <button 
-                      onClick={() => setIsEditingReview(true)}
-                      className="border border-[#ee4923] text-[#ee4923] bg-white px-4 py-1.5 rounded-lg text-[14px] font-semibold flex items-center gap-2 hover:bg-[#ee4923]/5 transition-colors"
-                    >
-                      <PenLine className="w-4 h-4" />
-                      Write review
-                    </button>
+                    <span className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full border ${
+                      existingReturn.status === 'Refunded' ? 'bg-green-50 text-green-600 border-green-100' :
+                      existingReturn.status === 'Rejected' ? 'bg-red-50 text-red-650' :
+                      'bg-amber-50 text-amber-600 border-amber-100'
+                    }`}>{existingReturn.status}</span>
                   </div>
+                  <p className="text-amber-600 font-bold mt-1.5">Refund: ₹{existingReturn.refundAmount?.toLocaleString()} • Reason: {existingReturn.reason}</p>
                 </div>
               )}
             </div>
 
-            <div className="h-2 bg-slate-100 w-full"></div>
-          </>
-        )}
+            {/* Rate Experience section */}
+            {isDelivered && (
+              <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-3xs">
+                <h3 className="text-sm font-black text-slate-800 uppercase tracking-wide border-b border-slate-50 pb-2 mb-4">
+                  Rate your experience
+                </h3>
+                
+                {isEditingReview ? (
+                  <div className="bg-slate-55 rounded-xl p-4 border border-slate-100 space-y-4">
+                    <div className="flex flex-col items-center justify-center">
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">How would you rate this product?</p>
+                      <div className="flex items-center gap-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <button key={star} onClick={() => setReviewRating(star)} className="p-1 hover:scale-115 transition-transform cursor-pointer">
+                            <Star className={`w-8 h-8 ${star <= reviewRating ? 'text-green-500 fill-green-500' : 'text-slate-200'} transition-colors`} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-        {/* Delivery Details */}
-        <div className="p-4">
-          <h2 className="text-[18px] font-bold text-slate-800 mb-3">Delivery details</h2>
-          <div className="bg-slate-50 rounded-xl p-4 space-y-4">
-             <div 
-               className="flex gap-3 cursor-pointer group"
-               onClick={() => setIsAddressExpanded(!isAddressExpanded)}
-             >
-                <MapPin className="w-5 h-5 text-slate-600 flex-shrink-0 mt-0.5 group-hover:text-slate-800 transition-colors" />
-                <p className={`text-[14px] text-slate-700 leading-snug transition-all ${isAddressExpanded ? '' : 'line-clamp-2'}`}>
-                  <span className="font-bold text-slate-900 mr-1">{deliveryAddress.type}</span>
-                  {deliveryAddress.address}, {deliveryAddress.pincode}
-                </p>
-             </div>
-             <div className="flex gap-3 items-center pt-2">
-                <div className="w-5 h-5 flex items-center justify-center">
-                  <svg className="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                </div>
-                <p className="text-[14px] font-semibold text-slate-800">
-                  {deliveryAddress.name} <span className="font-normal text-slate-600 ml-1">{user?.phone || '9302841832'}</span>
-                </p>
-             </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Add a written review</p>
+                      <textarea
+                        value={reviewText}
+                        onChange={(e) => setReviewText(e.target.value)}
+                        placeholder="What did you like or dislike?"
+                        className="w-full bg-white border border-slate-200 rounded-xl p-3 text-xs outline-none focus:border-[#ee4923] focus:ring-1 focus:ring-[#ee4923] transition-all resize-none h-[80px]"
+                      ></textarea>
+                    </div>
+
+                    <div>
+                      <p className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Add Photos or Reel (Optional)</p>
+                      {(reviewPhotos.length > 0 || reviewVideo) && (
+                        <div className="flex gap-2 mb-3 flex-wrap">
+                          {reviewPhotos.map((p, i) => (
+                            <div key={i} className="w-14 h-14 rounded-lg border border-slate-200 overflow-hidden relative">
+                              <OptimizedImage src={p} alt="" type="default" className="absolute inset-0" />
+                              <button onClick={() => setReviewPhotos(prev => prev.filter((_, idx) => idx !== i))} className="absolute top-1 right-1 bg-white rounded-full p-0.5 text-slate-555 shadow-sm"><X className="w-3 h-3" /></button>
+                            </div>
+                          ))}
+                          {reviewVideo && (
+                            <div className="w-14 h-14 rounded-lg border border-slate-200 overflow-hidden relative bg-black flex items-center justify-center">
+                              <Video className="w-5 h-5 text-white/70 absolute z-10" />
+                              <video src={reviewVideo} className="w-full h-full object-cover opacity-50 animate-fade-in" />
+                              <button onClick={() => setReviewVideo(null)} className="absolute top-1 right-1 bg-white rounded-full p-0.5 text-slate-555 shadow-sm z-20"><X className="w-3 h-3" /></button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      
+                      <div className="flex gap-3">
+                        <label className="flex flex-col items-center justify-center w-20 h-20 border-2 border-dashed border-slate-200 bg-white rounded-xl cursor-pointer hover:border-[#ee4923] hover:bg-orange-50/10 transition-colors">
+                          <ImageIcon className="w-5 h-5 text-slate-400 mb-1" />
+                          <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Add Photos</span>
+                          <input type="file" accept="image/jpeg, image/png, image/webp" multiple className="hidden" onChange={handlePhotoUpload} />
+                        </label>
+                        <label className="flex flex-col items-center justify-center w-20 h-20 border-2 border-dashed border-slate-200 bg-white rounded-xl cursor-pointer hover:border-[#ee4923] hover:bg-orange-50/10 transition-colors">
+                          <Video className="w-5 h-5 text-slate-400 mb-1" />
+                          <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Add Reel</span>
+                          <input type="file" accept="video/mp4, video/webm" className="hidden" onChange={handleVideoUpload} />
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      {submittedReview && (
+                        <button 
+                          onClick={() => setIsEditingReview(false)}
+                          className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold py-3 rounded-xl transition-colors shadow-3xs cursor-pointer text-xs uppercase tracking-wider"
+                        >
+                          Cancel
+                        </button>
+                      )}
+                      <button 
+                        onClick={() => {
+                          setSubmittedReview({ rating: reviewRating, text: reviewText, photos: reviewPhotos, video: reviewVideo });
+                          setIsEditingReview(false);
+                          
+                          if (reviewVideo || reviewPhotos.length > 0) {
+                            addStudioPost({
+                              id: Date.now(),
+                              username: user ? user.name.toLowerCase().replace(' ', '_') : 'guest_user',
+                              desc: reviewText || "Check out my new purchase! ✨",
+                              likes: 0,
+                              comments: 0,
+                              views: "0",
+                              isLiked: false,
+                              product: product,
+                              videoUrl: reviewVideo,
+                              imageUrl: reviewPhotos.length > 0 ? reviewPhotos[0] : null
+                            });
+                          }
+                          
+                          alert("Review submitted successfully!");
+                        }}
+                        className="flex-1 bg-[#ee4923] hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-colors shadow-md shadow-orange-500/10 cursor-pointer text-xs uppercase tracking-wider"
+                      >
+                        Submit Review
+                      </button>
+                    </div>
+                  </div>
+                ) : submittedReview ? (
+                  <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 space-y-3">
+                    <div className="flex justify-between items-start">
+                      <div className="flex items-center gap-0.5">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star key={star} className={`w-4 h-4 ${star <= submittedReview.rating ? 'text-green-600 fill-green-600' : 'text-slate-200 fill-slate-200'}`} />
+                        ))}
+                      </div>
+                      <button onClick={() => setIsEditingReview(true)} className="text-xs font-bold text-[#ee4923] hover:underline flex items-center gap-1 cursor-pointer">
+                        <PenLine className="w-3.5 h-3.5" /> Edit
+                      </button>
+                    </div>
+                    {submittedReview.text && (
+                      <p className="text-xs text-slate-650 leading-relaxed font-semibold">{submittedReview.text}</p>
+                    )}
+                    {(submittedReview.photos.length > 0 || submittedReview.video) && (
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {submittedReview.photos.map((p, i) => (
+                          <div key={i} onClick={() => setSelectedMedia({ type: 'image', url: p })} className="w-12 h-12 rounded-lg border border-slate-150 overflow-hidden bg-white cursor-pointer hover:opacity-85 transition-opacity relative">
+                            <OptimizedImage src={p} alt="" type="default" className="absolute inset-0" />
+                          </div>
+                        ))}
+                        {submittedReview.video && (
+                          <div onClick={() => setSelectedMedia({ type: 'video', url: submittedReview.video })} className="w-12 h-12 rounded-lg border border-slate-150 overflow-hidden bg-black relative flex items-center justify-center cursor-pointer hover:opacity-85 transition-opacity">
+                            <Video className="w-4 h-4 text-white/80 absolute z-10" />
+                            <video src={submittedReview.video} className="w-full h-full object-cover opacity-60" />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="bg-slate-50 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-650">
+                       <Receipt className="w-4 h-4 text-slate-400" />
+                       Share your thoughts about this product
+                    </div>
+                    <button 
+                      onClick={() => setIsEditingReview(true)}
+                      className="border border-[#ee4923] text-[#ee4923] bg-white px-4 py-2 rounded-xl text-xs font-black flex items-center gap-1.5 hover:bg-orange-50/20 transition-all cursor-pointer uppercase tracking-wider"
+                    >
+                      <PenLine className="w-3.5 h-3.5" />
+                      Write review
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
+
+          {/* RIGHT COLUMN: Delivery address & Price details invoice (Spans 5 cols on desktop) */}
+          <div className="md:col-span-5 space-y-6">
+            
+            {/* Delivery details card */}
+            <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-3xs space-y-3">
+              <h3 className="text-sm font-black text-[#02006c] uppercase tracking-wide border-b border-slate-50 pb-2">
+                Delivery Details
+              </h3>
+              
+              <div className="bg-slate-55 rounded-xl p-4 space-y-3 text-xs">
+                 <div 
+                   className="flex gap-2.5 cursor-pointer group"
+                   onClick={() => setIsAddressExpanded(!isAddressExpanded)}
+                 >
+                    <MapPin className="w-4 h-4 text-slate-400 flex-shrink-0 mt-0.5 group-hover:text-slate-650 transition-colors" />
+                    <p className={`text-slate-650 leading-relaxed font-semibold transition-all ${isAddressExpanded ? '' : 'line-clamp-2'}`}>
+                      <span className="font-black text-[#02006c] mr-1 uppercase">{deliveryAddress.type}</span>
+                      {deliveryAddress.address}, {deliveryAddress.pincode}
+                    </p>
+                 </div>
+                 <div className="flex gap-2.5 items-center pt-2 border-t border-slate-150/40">
+                    <div className="w-4 h-4 flex items-center justify-center text-slate-400">
+                      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+                    </div>
+                    <p className="font-bold text-slate-800">
+                      {deliveryAddress.name} <span className="font-semibold text-slate-450 ml-1">{user?.phone || '9302841832'}</span>
+                    </p>
+                 </div>
+              </div>
+            </div>
+
+            {/* Price details card */}
+            <div className="bg-white rounded-2xl p-5 border border-slate-100 shadow-3xs">
+              <h3 className="text-sm font-black text-[#02006c] uppercase tracking-wide border-b border-slate-50 pb-2 mb-4">
+                Price Breakdown
+              </h3>
+
+              <div className="space-y-3.5 text-xs">
+                 <div className="flex justify-between items-center text-slate-600 font-semibold">
+                   <span>Listing price</span>
+                   <span>₹{orderItems.reduce((acc, curr) => acc + (curr.price * 1.2 * curr.quantity), 0).toFixed(0)}</span>
+                 </div>
+                 <div className="flex justify-between items-center text-slate-600 font-semibold">
+                   <span className="flex items-center gap-1">Selling price <div className="w-3.5 h-3.5 border border-slate-350 rounded-full flex items-center justify-center text-[8px] font-bold">i</div></span>
+                   <span>₹{orderItems.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0)}</span>
+                 </div>
+                 <div className="flex justify-between items-center text-slate-600 font-semibold">
+                   <span className="flex items-center gap-1">Total fees <ChevronDown className="w-3.5 h-3.5 text-slate-400" /></span>
+                   <span>₹15</span>
+                 </div>
+                 <div className="flex justify-between items-center text-slate-600 font-semibold">
+                   <span>Delivery Charges</span>
+                   <span className={globalOrder?.deliveryCharge ? "font-bold text-slate-800" : "text-green-600 font-black"}>
+                     {globalOrder?.deliveryCharge ? `₹${globalOrder.deliveryCharge}` : 'FREE'}
+                   </span>
+                 </div>
+                 
+                 <div className="border-t border-dashed border-slate-200 pt-3 flex justify-between items-center text-xs font-semibold text-slate-600">
+                   <span>Items Total</span>
+                   <span>₹{orderItems.reduce((acc, curr) => acc + curr.price * curr.quantity, 0)}</span>
+                 </div>
+                 <div className="flex justify-between items-center text-xs font-semibold text-slate-600">
+                   <span>Delivery Charge</span>
+                   {globalOrder?.deliveryCharge > 0 ? (
+                     <span>₹{globalOrder.deliveryCharge}</span>
+                   ) : (
+                     <span className="font-bold text-green-600">FREE</span>
+                   )}
+                 </div>
+
+                 <div className="border-t border-slate-100 my-2"></div>
+                 
+                 <div className="flex justify-between items-center text-sm font-black text-[#02006c] uppercase">
+                   <span>Total Paid</span>
+                   <span>₹{orderTotal}</span>
+                 </div>
+
+                 <div className="bg-slate-50 rounded-xl p-3 flex justify-between items-center text-xs mt-3 border border-slate-100">
+                   <span className="text-slate-500 font-semibold">Paid Method</span>
+                   <div className="flex items-center gap-1.5 font-bold text-slate-700">
+                     <span className="border border-slate-350 rounded px-1 text-[9px] font-black uppercase tracking-wider">{globalOrder?.paymentMethod || 'COD'}</span>
+                     {globalOrder?.paymentMethod || 'Cash on Delivery'}
+                   </div>
+                 </div>
+
+                 <button 
+                   onClick={handleDownload}
+                   disabled={isDownloading}
+                   className="w-full mt-4 flex items-center justify-center gap-2 border border-slate-200 rounded-xl py-3 text-xs font-black text-slate-705 hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-3xs cursor-pointer uppercase tracking-wider"
+                 >
+                   <Download className="w-4 h-4" /> 
+                   {isDownloading ? 'Downloading...' : 'Download Invoice'}
+                 </button>
+              </div>
+            </div>
+
+            {/* Shop more from Mynzo button (Only visible on desktop) */}
+            <button 
+              onClick={() => navigate('/')}
+              className="hidden md:block w-full border border-[#ee4923] text-[#ee4923] font-black text-xs py-3.5 rounded-xl hover:bg-orange-50/20 transition-all uppercase tracking-wider text-center cursor-pointer shadow-3xs"
+            >
+              Shop more from Mynzo
+            </button>
+
+          </div>
+
         </div>
 
-        <div className="h-2 bg-slate-100 w-full"></div>
-
-        {/* Price Details */}
-        <div className="p-4">
-          <h2 className="text-[18px] font-bold text-slate-800 mb-3">Price details</h2>
-          <div className="bg-white border border-slate-200 rounded-xl shadow-sm p-4 mb-4">
-             <div className="space-y-3 text-[14px]">
-                <div className="flex justify-between items-center text-slate-700">
-                  <span>Listing price</span>
-                  <span>₹{orderItems.reduce((acc, curr) => acc + (curr.price * 1.2 * curr.quantity), 0).toFixed(0)}</span>
-                </div>
-                <div className="flex justify-between items-center text-slate-700">
-                  <span className="flex items-center gap-1">Selling price <div className="w-3.5 h-3.5 border border-slate-400 rounded-full flex items-center justify-center text-[8px]">i</div></span>
-                  <span>₹{orderItems.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0)}</span>
-                </div>
-                <div className="flex justify-between items-center text-slate-700">
-                  <span className="flex items-center gap-1">Total fees <ChevronDown className="w-4 h-4" /></span>
-                  <span>₹15</span>
-                </div>
-                <div className="flex justify-between items-center text-slate-700">
-                  <span className="flex items-center gap-1">Delivery Charges</span>
-                  <span className={globalOrder?.deliveryCharge ? "font-medium text-slate-900" : "text-emerald-600 font-medium"}>
-                    {globalOrder?.deliveryCharge ? `₹${globalOrder.deliveryCharge}` : 'FREE'}
-                  </span>
-                </div>
-             </div>
-             
-             <div className="border-t border-dashed border-slate-300 my-4"></div>
-             
-             <div className="space-y-2 mb-4">
-               <div className="flex justify-between items-center text-[13px] text-slate-600">
-                 <span>Items Total</span>
-                 <span className="font-medium text-slate-800">₹{orderItems.reduce((acc, curr) => acc + curr.price * curr.quantity, 0)}</span>
-               </div>
-               <div className="flex justify-between items-center text-[13px] text-slate-600">
-                 <span>Delivery Charge</span>
-                 {globalOrder?.deliveryCharge > 0 ? (
-                   <span className="font-medium text-slate-800">₹{globalOrder.deliveryCharge}</span>
-                 ) : (
-                   <span className="font-bold text-emerald-600">FREE</span>
-                 )}
-               </div>
-               <div className="border-t border-dashed border-slate-200 my-2"></div>
-               <div className="flex justify-between items-center text-[15px] font-bold text-slate-800">
-                 <span>Total amount</span>
-                 <span>₹{orderTotal}</span>
-               </div>
-             </div>
-
-             <div className="bg-slate-50 rounded-lg p-3 flex justify-between items-center text-[14px]">
-               <span className="text-slate-700">Paid By</span>
-               <div className="flex items-center gap-1 font-semibold text-slate-800">
-                 <div className="border border-slate-300 rounded px-1 text-[10px] font-black tracking-widest uppercase">{globalOrder?.paymentMethod || 'COD'}</div>
-                 {globalOrder?.paymentMethod || 'Cash on Delivery'}
-               </div>
-             </div>
-
-             <button 
-               onClick={handleDownload}
-               disabled={isDownloading}
-               className="w-full mt-4 flex items-center justify-center gap-2 border border-slate-300 rounded-xl py-3 text-[15px] font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-             >
-               <Download className="w-5 h-5" /> 
-               {isDownloading ? 'Downloading...' : 'Download Invoice'}
-             </button>
-          </div>
-
-
-        </div>
-
-        <div className="h-2 bg-slate-100 w-full"></div>
-
-        {/* Order ID bottom */}
-        <div className="p-4 pb-28">
-          <h3 className="text-[14px] font-bold text-slate-800">Order ID</h3>
-          <div className="flex items-center gap-2 text-[13px] text-slate-500 mt-1">
-            <span>{id}</span>
-            <Copy onClick={handleCopyId} className="w-4 h-4 text-[#ee4923] cursor-pointer hover:text-[#ff5c3f]" />
-          </div>
-        </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-2 bg-white border-t border-slate-200 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-50">
+      {/* Bottom Bar (Mobile Only) */}
+      <div className="fixed bottom-0 left-0 right-0 max-w-md mx-auto p-2 bg-white border-t border-slate-200 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-50 md:hidden">
          <button 
            onClick={() => navigate('/')}
-           className="w-full border border-[#ee4923] text-[#ee4923] font-bold text-[13px] py-2.5 rounded-lg hover:bg-[#ee4923]/5 active:bg-[#ee4923]/10 transition-colors"
+           className="w-full border border-[#ee4923] text-[#ee4923] font-bold text-[13px] py-2.5 rounded-lg hover:bg-[#ee4923]/5 active:bg-[#ee4923]/10 transition-colors cursor-pointer"
          >
            Shop more from Mynzo
          </button>
       </div>
 
-      {/* Return Request Bottom Sheet */}
+      {/* Return Request Bottom Sheet Modal */}
       {showReturnSheet && (
-        <div className="fixed inset-0 z-[100] bg-black/50" onClick={() => setShowReturnSheet(false)}>
+        <div 
+          className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" 
+          onClick={() => setShowReturnSheet(false)}
+        >
           <div 
-            className="absolute bottom-0 left-0 right-0 max-w-md mx-auto bg-white rounded-t-3xl max-h-[85vh] overflow-y-auto"
+            className="bg-white rounded-t-3xl sm:rounded-2xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl relative animate-in slide-in-from-bottom-6 duration-300"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Handle bar */}
-            <div className="flex justify-center pt-3 pb-1">
+            {/* Handle bar (Mobile Only) */}
+            <div className="flex justify-center pt-3 pb-1 sm:hidden">
               <div className="w-10 h-1 bg-slate-200 rounded-full"></div>
             </div>
 
-            <div className="p-4 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-[18px] font-bold text-slate-800">Request Return</h2>
-                <button onClick={() => setShowReturnSheet(false)} className="p-1 hover:bg-slate-100 rounded-full transition-colors">
+            <div className="p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <h2 className="text-base font-black text-[#02006c] uppercase tracking-wide">Request Return</h2>
+                <button onClick={() => setShowReturnSheet(false)} className="p-1 hover:bg-slate-100 rounded-full transition-colors cursor-pointer">
                   <X className="w-5 h-5 text-slate-400" />
                 </button>
               </div>
 
               {/* Select items */}
               <div>
-                <p className="text-[14px] font-semibold text-slate-700 mb-2">Select items to return</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Select items to return</p>
                 <div className="space-y-2">
                   {orderItems.map((item, idx) => {
                     const isSelected = returnSelectedItems.find(i => (i.productId || i.id) === (item.productId || item.id));
@@ -660,7 +691,7 @@ Thank you for shopping with Mynzo!
                         key={idx}
                         onClick={() => handleReturnToggleItem(item)}
                         className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
-                          isSelected ? 'border-[#ee4923] bg-orange-50' : 'border-slate-100 bg-slate-50 hover:bg-slate-100'
+                          isSelected ? 'border-[#ee4923] bg-orange-50/40' : 'border-slate-100 bg-slate-50 hover:bg-slate-105'
                         }`}
                       >
                         <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-all ${
@@ -669,13 +700,13 @@ Thank you for shopping with Mynzo!
                           {isSelected && <Check className="w-3 h-3 text-white" />}
                         </div>
                         {item.image && (
-                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border border-slate-200">
+                          <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 border border-slate-200 bg-white">
                             <OptimizedImage src={item.image} alt={item.name} type="product" className="w-full h-full object-cover" />
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-semibold text-slate-800 truncate">{item.name}</p>
-                          <p className="text-[11px] text-slate-500">Qty: {item.quantity} • ₹{item.price}</p>
+                          <p className="text-xs font-bold text-slate-800 truncate">{item.name}</p>
+                          <p className="text-[10px] font-semibold text-slate-555 font-sans">Qty: {item.quantity} • ₹{item.price}</p>
                         </div>
                       </div>
                     );
@@ -685,16 +716,16 @@ Thank you for shopping with Mynzo!
 
               {/* Select reason */}
               <div>
-                <p className="text-[14px] font-semibold text-slate-700 mb-2">Reason for return</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Reason for return</p>
                 <div className="grid grid-cols-2 gap-2">
                   {RETURN_REASONS.map((reason) => (
                     <button
                       key={reason}
                       onClick={() => setReturnReason(reason)}
-                      className={`px-3 py-2.5 rounded-xl text-[12px] font-semibold text-left transition-all border ${
+                      className={`px-3 py-2.5 rounded-xl text-[11px] font-bold text-left transition-all border ${
                         returnReason === reason 
-                          ? 'border-[#ee4923] bg-orange-50 text-[#ee4923]' 
-                          : 'border-slate-100 bg-slate-50 text-slate-600 hover:bg-slate-100'
+                          ? 'border-[#ee4923] bg-orange-50/40 text-[#ee4923]' 
+                          : 'border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100'
                       }`}
                     >
                       {reason}
@@ -705,23 +736,23 @@ Thank you for shopping with Mynzo!
 
               {/* Additional details */}
               <div>
-                <p className="text-[14px] font-semibold text-slate-700 mb-2">Additional details (optional)</p>
+                <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Additional details (optional)</p>
                 <textarea
                   value={returnReasonDetails}
                   onChange={(e) => setReturnReasonDetails(e.target.value)}
                   placeholder="Describe the issue in detail..."
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-[14px] outline-none focus:border-[#ee4923] focus:ring-1 focus:ring-[#ee4923] transition-all resize-none h-[80px]"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs outline-none focus:border-[#ee4923] focus:ring-1 focus:ring-[#ee4923] transition-all resize-none h-[80px]"
                 />
               </div>
 
               {/* Refund summary */}
               {returnSelectedItems.length > 0 && (
-                <div className="bg-green-50 border border-green-100 rounded-xl p-3">
+                <div className="bg-green-50 border border-green-100 rounded-xl p-3 text-xs">
                   <div className="flex justify-between items-center">
-                    <span className="text-[13px] font-semibold text-green-700">Estimated Refund</span>
-                    <span className="text-[16px] font-bold text-green-700">₹{returnSelectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()}</span>
+                    <span className="font-bold text-green-700">Estimated Refund</span>
+                    <span className="text-sm font-black text-green-700">₹{returnSelectedItems.reduce((sum, item) => sum + (item.price * item.quantity), 0).toLocaleString()}</span>
                   </div>
-                  <p className="text-[11px] text-green-600 mt-1">Refund will be credited to your wallet</p>
+                  <p className="text-[10px] text-green-600 mt-1 font-semibold">Refund will be credited back to your wallet</p>
                 </div>
               )}
 
@@ -729,7 +760,7 @@ Thank you for shopping with Mynzo!
               <button
                 onClick={handleSubmitReturn}
                 disabled={submittingReturn || returnSelectedItems.length === 0 || !returnReason}
-                className="w-full bg-[#ee4923] text-white font-bold text-[14px] py-3.5 rounded-xl hover:bg-[#ff5c3f] active:bg-[#d43d1a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="w-full bg-[#ee4923] text-white font-bold text-xs py-3.5 rounded-xl hover:bg-[#ff5c3f] active:bg-[#d43d1a] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 uppercase tracking-wider cursor-pointer"
               >
                 {submittingReturn ? (
                   <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
@@ -738,7 +769,6 @@ Thank you for shopping with Mynzo!
                 )}
               </button>
 
-              <div className="pb-4"></div>
             </div>
           </div>
         </div>
@@ -756,7 +786,7 @@ Thank you for shopping with Mynzo!
           
           <div className="max-w-full max-h-full flex items-center justify-center">
             {selectedMedia.type === 'image' ? (
-              <OptimizedImage src={selectedMedia.url} className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl" alt="Review Media" type="default" />
+              <OptimizedImage src={selectedMedia.url} className="max-w-full max-h-[85vh] object-contain rounded-lg shadow-2xl animate-fade-in" alt="Review Media" type="default" />
             ) : (
               <video src={selectedMedia.url} controls autoPlay className="max-w-full max-h-[85vh] rounded-lg shadow-2xl" />
             )}

@@ -92,5 +92,8 @@ productSchema.index({ status: 1 });
 productSchema.index({ category: 1 });
 productSchema.index({ createdAt: -1 });
 productSchema.index({ name: 'text', brandName: 'text', tags: 'text' });
+productSchema.index({ status: 1, sales: -1 });
+productSchema.index({ status: 1, 'flags.crazyDeals': 1 });
+productSchema.index({ status: 1, 'flags.flashSale': 1 });
 
 module.exports = mongoose.model('Product', productSchema);

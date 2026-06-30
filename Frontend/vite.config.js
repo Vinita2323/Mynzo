@@ -10,6 +10,15 @@ export default defineConfig({
   base: './',
   build: {
     target: 'es2015',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['framer-motion', 'lucide-react'],
+          'vendor-firebase': ['firebase/app', 'firebase/messaging'],
+        }
+      }
+    }
   },
   plugins: [
     react(),

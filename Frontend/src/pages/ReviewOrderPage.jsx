@@ -446,9 +446,9 @@ export default function ReviewOrderPage() {
 
 
   return (
-    <div className="min-h-screen bg-slate-100 font-sans pb-32 animate-fade-in">
-      {/* Header */}
-      <header className="bg-[#fff4f2] px-4 py-3 flex items-center gap-3 sticky top-0 z-50 shadow-sm border-b border-orange-100">
+    <div className="min-h-screen bg-slate-50 font-sans pb-32 md:pb-12 animate-fade-in select-none">
+      {/* Header (Mobile Only) */}
+      <header className="bg-[#fff4f2] px-4 py-3 flex items-center gap-3 sticky top-0 z-50 shadow-sm border-b border-orange-100 md:hidden">
         <button onClick={() => navigate(-1)} className="p-1 hover:bg-white/50 rounded-full transition-colors">
           <ArrowLeft className="w-5 h-5 text-[#02006c]" />
         </button>
@@ -458,265 +458,278 @@ export default function ReviewOrderPage() {
         </div>
       </header>
 
-      <div className="px-3 pt-4 space-y-5">
+      {/* Responsive two-column wrapper */}
+      <div className="max-w-7xl mx-auto w-full px-0 md:px-6 lg:px-8 py-4 md:py-8 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
         
-        {/* Delivery Details Section */}
-        <div>
-          <div className="flex items-center gap-2 mb-2 px-1 text-[#02006c]">
-            <MapPin className="w-4 h-4" />
-            <h2 className="text-xs font-black uppercase tracking-wide">Delivery Details</h2>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-            {selectedAddress ? (
-              <>
-                <p className="text-[13px] leading-snug text-slate-600 mb-3">
-                  <span className="font-bold text-slate-800">{selectedAddress.name}</span> ({selectedAddress.type}) - {selectedAddress.address}, {selectedAddress.pincode}
-                </p>
-                <button 
-                  onClick={() => setIsAddressModalOpen(true)}
-                  className="text-[#ee4923] text-xs font-bold mb-4"
-                >
-                  Change Address <span className="ml-1">›</span>
-                </button>
-              </>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-4 bg-orange-50/50 rounded-lg border border-orange-100 mb-4">
-                <p className="text-sm font-bold text-slate-700 mb-2">Please add shipping info</p>
-                <button 
-                  onClick={() => {
-                    setIsAddingAddress(true);
-                    setIsAddressModalOpen(true);
-                  }}
-                  className="px-4 py-2 bg-[#ee4923] text-white text-xs font-bold rounded-lg shadow-sm hover:scale-105 transition-transform"
-                >
-                  Add New Address
-                </button>
-              </div>
-            )}
-            
-            <div className="space-y-2 mt-2">
-               {cart && cart.map((item, idx) => (
-                <div key={item.id || idx} className="flex items-center gap-3 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-                  <div className="w-12 h-12 relative flex-shrink-0">
-                    <OptimizedImage src={item.image} alt={item.name} type="product" className="absolute inset-0 rounded shadow-sm border border-slate-200" />
-                  </div>
-                  <div className="flex-1 flex flex-col justify-center">
-                    <h3 className="text-xs font-bold text-slate-800 leading-snug line-clamp-2">{item.name}</h3>
-                    {item.attributes && Object.keys(item.attributes).length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 mt-1">
-                        {Object.entries(item.attributes).map(([key, val]) => (
-                          <span key={key} className="text-[9px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-black uppercase">
-                            {key}: {val}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                    <div className="flex items-center justify-between mt-1">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-black text-[#02006c]">₹{item.price * item.quantity}</span>
-                      </div>
-                      <span className="text-[10px] font-bold text-slate-500">Qty: {item.quantity}</span>
-                    </div>
-                    <div className="mt-1.5 flex items-center gap-1 text-[10px] text-emerald-600 font-bold bg-emerald-50 w-fit px-1.5 py-0.5 rounded">
-                      <CheckCircle2 className="w-3 h-3" />
-                      {etd ? `Estimated Delivery: ${etd}` : 'Delivery Tomorrow'}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
+        {/* Left Column: Delivery details, Coupons, Payment Method, Items - Spans 8 cols */}
+        <div className="md:col-span-8 space-y-6">
+          <h2 className="hidden md:block text-xl font-black text-[#02006c] mb-2 uppercase tracking-wide">
+            Review Your Order
+          </h2>
 
-          </div>
-        </div>
-
-        {/* Promo Code Input Block */}
-        <div>
-          <div className="flex items-center gap-2 mb-2 px-1 text-[#02006c]">
-            <Tag className="w-4 h-4" />
-            <h2 className="text-xs font-black uppercase tracking-wide">Promo Code / Coupons</h2>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold text-slate-500">Apply Coupon</span>
-              {appliedCoupon && (
-                <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
-                  Active
-                </span>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <div className="relative flex-grow">
-                <input 
-                  type="text" 
-                  placeholder="Enter Coupon (e.g. FLAT50)" 
-                  value={promoInput}
-                  onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                  className="w-full border border-slate-200 rounded-lg pl-3 pr-8 py-2 text-xs font-bold focus:outline-none focus:border-[#ee4923] uppercase"
-                  disabled={!!appliedCoupon}
-                />
-                {appliedCoupon && (
-                  <button 
-                    onClick={handleRemovePromo}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-1"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-              {!appliedCoupon ? (
-                <button 
-                  onClick={handleApplyPromo}
-                  className="bg-[#ee4923] hover:bg-[#d8401e] text-white px-4 py-2 rounded-lg text-xs font-black transition-all active:scale-95 shadow-sm"
-                >
-                  Apply
-                </button>
-              ) : (
-                <button 
-                  onClick={handleRemovePromo}
-                  className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" /> Applied
-                </button>
-              )}
-            </div>
-            {promoError && <p className="text-[10px] text-rose-500 font-bold">{promoError}</p>}
-            {appliedCoupon && (
-              <p className="text-[10px] text-green-600 font-bold">
-                ✓ Coupon '{appliedCoupon.code}' applied successfully!
-              </p>
-            )}
-          </div>
-        </div>
-
-        {/* Mynzo Wallet Cash Redemption */}
-        {walletBalance > 0 && (
+          {/* Delivery Details Section */}
           <div>
             <div className="flex items-center gap-2 mb-2 px-1 text-[#02006c]">
-              <Landmark className="w-4 h-4 text-emerald-500" />
-              <h2 className="text-xs font-black uppercase tracking-wide">Mynzo Wallet Cash</h2>
+              <MapPin className="w-4 h-4" />
+              <h2 className="text-xs font-black uppercase tracking-wide">Delivery Details</h2>
             </div>
-            <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex items-center justify-between">
-              <div className="flex flex-col">
-                <span className="text-xs font-bold text-slate-800">Use Wallet Balance</span>
-                <span className="text-[10px] text-slate-500 font-medium mt-0.5">
-                  Available Balance: <span className="font-bold text-slate-700">₹{walletBalance.toFixed(2)}</span>
-                </span>
-                {redeemWallet && (
-                  <span className="text-[10px] text-emerald-600 font-bold mt-1">
-                    Paying ₹{walletUsedAmount.toFixed(2)} from wallet!
+            <div className="bg-white rounded-2xl p-4 shadow-3xs border border-slate-100">
+              {selectedAddress ? (
+                <>
+                  <p className="text-[13px] leading-snug text-slate-600 mb-3">
+                    <span className="font-bold text-slate-800">{selectedAddress.name}</span> ({selectedAddress.type}) - {selectedAddress.address}, {selectedAddress.pincode}
+                  </p>
+                  <button 
+                    onClick={() => setIsAddressModalOpen(true)}
+                    className="text-[#ee4923] text-xs font-bold mb-4 cursor-pointer hover:underline"
+                  >
+                    Change Address <span className="ml-1">›</span>
+                  </button>
+                </>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-4 bg-orange-50/50 rounded-lg border border-orange-100 mb-4">
+                  <p className="text-sm font-bold text-slate-700 mb-2">Please add shipping info</p>
+                  <button 
+                    onClick={() => {
+                      setIsAddingAddress(true);
+                      setIsAddressModalOpen(true);
+                    }}
+                    className="px-4 py-2 bg-[#ee4923] text-white text-xs font-bold rounded-lg shadow-sm hover:scale-105 transition-transform cursor-pointer"
+                  >
+                    Add New Address
+                  </button>
+                </div>
+              )}
+              
+              {/* Product items list in checkout */}
+              <div className="space-y-3.5 mt-2">
+                {cart && cart.map((item, idx) => (
+                  <div key={item.id || idx} className="flex items-center gap-3.5 bg-slate-50/70 p-3 rounded-xl border border-slate-150/40">
+                    <div className="w-14 h-14 relative flex-shrink-0">
+                      <OptimizedImage src={item.image} alt={item.name} type="product" className="absolute inset-0 rounded-lg shadow-3xs border border-slate-200" />
+                    </div>
+                    <div className="flex-1 flex flex-col justify-center min-w-0">
+                      <h3 className="text-xs md:text-sm font-bold text-slate-800 leading-snug truncate">{item.name}</h3>
+                      {item.attributes && Object.keys(item.attributes).length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 mt-1">
+                          {Object.entries(item.attributes).map(([key, val]) => (
+                            <span key={key} className="text-[9px] bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded font-black uppercase">
+                              {key}: {val}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between mt-1">
+                        <span className="text-xs md:text-sm font-black text-[#02006c]">₹{item.price * item.quantity}</span>
+                        <span className="text-[10px] md:text-xs font-bold text-slate-400">Qty: {item.quantity}</span>
+                      </div>
+                      <div className="mt-1.5 flex items-center gap-1 text-[10px] text-emerald-600 font-bold bg-emerald-50 w-fit px-1.5 py-0.5 rounded">
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        {etd ? `Estimated Delivery: ${etd}` : 'Delivery Tomorrow'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Promo Code Input Block */}
+          <div>
+            <div className="flex items-center gap-2 mb-2 px-1 text-[#02006c]">
+              <Tag className="w-4 h-4" />
+              <h2 className="text-xs font-black uppercase tracking-wide">Promo Code / Coupons</h2>
+            </div>
+            <div className="bg-white rounded-2xl p-4 shadow-3xs border border-slate-100 flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-bold text-slate-500">Apply Coupon</span>
+                {appliedCoupon && (
+                  <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full border border-green-200">
+                    Active
                   </span>
                 )}
               </div>
-              <button
+              <div className="flex gap-2">
+                <div className="relative flex-grow">
+                  <input 
+                    type="text" 
+                    placeholder="Enter Coupon (e.g. FLAT50)" 
+                    value={promoInput}
+                    onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
+                    className="w-full border border-slate-200 rounded-lg pl-3 pr-8 py-2 text-xs font-bold focus:outline-none focus:border-[#ee4923] uppercase"
+                    disabled={!!appliedCoupon}
+                  />
+                  {appliedCoupon && (
+                    <button 
+                      onClick={handleRemovePromo}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-rose-500 p-1"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+                {!appliedCoupon ? (
+                  <button 
+                    onClick={handleApplyPromo}
+                    className="bg-[#ee4923] hover:bg-[#d8401e] text-white px-4 py-2 rounded-lg text-xs font-black transition-all active:scale-95 shadow-sm cursor-pointer"
+                  >
+                    Apply
+                  </button>
+                ) : (
+                  <button 
+                    onClick={handleRemovePromo}
+                    className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Applied
+                  </button>
+                )}
+              </div>
+              {promoError && <p className="text-[10px] text-rose-500 font-bold">{promoError}</p>}
+              {appliedCoupon && (
+                <p className="text-[10px] text-green-600 font-bold">
+                  ✓ Coupon '{appliedCoupon.code}' applied successfully!
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* Mynzo Wallet Cash Redemption */}
+          {walletBalance > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-2 px-1 text-[#02006c]">
+                <Landmark className="w-4 h-4 text-emerald-500" />
+                <h2 className="text-xs font-black uppercase tracking-wide">Mynzo Wallet Cash</h2>
+              </div>
+              <div className="bg-white rounded-2xl p-4 shadow-3xs border border-slate-100 flex items-center justify-between">
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-slate-800">Use Wallet Balance</span>
+                  <span className="text-[10px] text-slate-500 font-medium mt-0.5">
+                    Available Balance: <span className="font-bold text-slate-700">₹{walletBalance.toFixed(2)}</span>
+                  </span>
+                  {redeemWallet && (
+                    <span className="text-[10px] text-emerald-600 font-bold mt-1">
+                      Paying ₹{walletUsedAmount.toFixed(2)} from wallet!
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRedeemWallet(!redeemWallet)}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                    redeemWallet ? 'bg-emerald-500' : 'bg-slate-200'
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      redeemWallet ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Payment Method Selected Tabs */}
+          <div className="bg-white rounded-2xl shadow-3xs border border-slate-100 p-4">
+            <div className="flex items-center gap-2 mb-3 text-[#02006c]">
+              <Banknote className="w-4 h-4" />
+              <h2 className="text-xs font-black uppercase tracking-wide">Select Payment Method</h2>
+            </div>
+            <div className="flex gap-3">
+              <button 
                 type="button"
-                onClick={() => setRedeemWallet(!redeemWallet)}
-                className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  redeemWallet ? 'bg-emerald-500' : 'bg-slate-200'
+                onClick={() => setPaymentMethod('COD')}
+                className={`flex-1 py-3.5 px-2.5 rounded-xl border transition-all text-center flex flex-col items-center justify-center cursor-pointer ${
+                  paymentMethod === 'COD' 
+                    ? 'border-[#ee4923] bg-orange-50/25 text-[#ee4923] shadow-3xs' 
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
                 }`}
               >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                    redeemWallet ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
+                <span className="text-xs font-black">Cash on Delivery</span>
+              </button>
+              <button 
+                type="button"
+                onClick={() => setPaymentMethod('ONLINE')}
+                className={`flex-1 py-3.5 px-2.5 rounded-xl border transition-all text-center flex flex-col items-center justify-center cursor-pointer ${
+                  paymentMethod === 'ONLINE' 
+                    ? 'border-[#ee4923] bg-orange-50/25 text-[#ee4923] shadow-3xs' 
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                <span className="text-xs font-black">Pay Online (Razorpay)</span>
               </button>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Price Details */}
-        <div>
-          <div className="flex items-center gap-2 mb-2 px-1 text-[#02006c]">
-            <Banknote className="w-4 h-4" />
-            <h2 className="text-xs font-black uppercase tracking-wide">Price Details</h2>
-          </div>
-          <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 space-y-3">
-            <div className="flex justify-between items-center text-[13px]">
-              <span className="text-slate-600">Total MRP</span>
+        {/* Right Column: Order summary breakdown & place order button - Spans 4 cols */}
+        <div className="md:col-span-4 bg-white rounded-2xl border border-slate-100 shadow-3xs p-6 space-y-6 md:sticky md:top-28">
+          <h3 className="text-sm font-black text-[#02006c] uppercase tracking-wide border-b border-slate-100 pb-3">
+            Price Details
+          </h3>
+
+          <div className="space-y-3.5 text-xs text-slate-600 font-semibold">
+            <div className="flex justify-between items-center">
+              <span>Total MRP</span>
               <span className="text-slate-800">₹{mockOriginalTotal}</span>
             </div>
-            <div className="flex justify-between items-center text-[13px]">
-              <span className="text-slate-600">Product Discount</span>
+            <div className="flex justify-between items-center">
+              <span>Product Discount</span>
               <span className="text-emerald-600 font-medium">- ₹{mockSavings}</span>
             </div>
             {appliedCoupon && (
-              <div className="flex justify-between items-center text-[13px]">
-                <span className="text-slate-600">Coupon Discount ({appliedCoupon.code})</span>
+              <div className="flex justify-between items-center">
+                <span>Coupon Discount ({appliedCoupon.code})</span>
                 <span className="text-emerald-600 font-medium">- ₹{discountAmount}</span>
               </div>
             )}
             {redeemWallet && walletUsedAmount > 0 && (
-              <div className="flex justify-between items-center text-[13px]">
-                <span className="text-slate-600">Wallet Balance Used</span>
+              <div className="flex justify-between items-center">
+                <span>Wallet Balance Used</span>
                 <span className="text-emerald-600 font-medium">- ₹{walletUsedAmount.toFixed(2)}</span>
               </div>
             )}
-            <div className="flex justify-between items-center text-[13px]">
-              <span className="text-slate-600">Product GST (18%)</span>
+            <div className="flex justify-between items-center">
+              <span>Product GST (18%)</span>
               <span className="text-slate-800">₹{gstAmount}</span>
             </div>
-            <div className="flex justify-between items-center text-[13px]">
-              <span className="text-slate-600">Platform Commission </span>
+            <div className="flex justify-between items-center">
+              <span>Platform Fee</span>
               <span className="text-slate-800">₹{platformCommission}</span>
             </div>
-           
-            <div className="flex justify-between items-center text-[13px]">
-              <span className="text-slate-600">
-                {paymentMethod === 'COD' ? 'Delivery Charges (COD)' : 'Delivery Charges (Prepaid)'} 
-                <span className="text-[10px] text-slate-400 ml-1">(Cart Weight: {cart.reduce((total, item) => total + ((item.weight || 0.5) * item.quantity), 0)}kg)</span>
+            
+            <div className="flex justify-between items-center">
+              <span className="flex items-center gap-1">
+                Shipping Fee
+                <span className="text-[9.5px] text-slate-400">(Weight: {cart.reduce((total, item) => total + ((item.weight || 0.5) * item.quantity), 0)}kg)</span>
               </span>
               {isEstimatingDelivery ? (
                 <span className="text-slate-400 font-medium">Calculating...</span>
               ) : (
-                <span className={deliveryCharge > 0 ? "text-slate-800" : "text-emerald-600 font-medium"}>
+                <span className={deliveryCharge > 0 ? "text-slate-800" : "text-emerald-600 font-bold"}>
                   {deliveryCharge > 0 ? `₹${deliveryCharge}` : 'FREE'}
                 </span>
               )}
             </div>
             
-            <div className="border-t border-slate-200 pt-3 mt-1 flex justify-between items-center">
-              <span className="font-bold text-[#02006c] text-sm">Total Amount</span>
-              <span className="font-black text-[#02006c] text-base tracking-tight">₹{grandTotal}</span>
+            <div className="border-t border-slate-200 pt-3.5 flex justify-between items-center text-base font-black text-[#02006c]">
+              <span>Total Amount</span>
+              <span>₹{grandTotal}</span>
             </div>
           </div>
-        </div>
-        
-        {/* Payment Method Selected Tabs */}
-        <div className="mt-4 bg-white rounded-xl shadow-sm border border-slate-100 p-4">
-          <div className="flex items-center gap-2 mb-3 text-[#02006c]">
-            <Banknote className="w-4 h-4" />
-            <h2 className="text-xs font-black uppercase tracking-wide">Select Payment Method</h2>
-          </div>
-          <div className="flex gap-3">
-            <button 
-              type="button"
-              onClick={() => setPaymentMethod('COD')}
-              className={`flex-1 py-3 px-2 rounded-xl border transition-all text-center flex flex-col items-center justify-center ${
-                paymentMethod === 'COD' 
-                  ? 'border-[#ee4923] bg-orange-50/20 text-[#ee4923] shadow-xs' 
-                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <span className="text-xs font-black">Cash on Delivery</span>
-            </button>
-            <button 
-              type="button"
-              onClick={() => setPaymentMethod('ONLINE')}
-              className={`flex-1 py-3 px-2 rounded-xl border transition-all text-center flex flex-col items-center justify-center ${
-                paymentMethod === 'ONLINE' 
-                  ? 'border-[#ee4923] bg-orange-50/20 text-[#ee4923] shadow-xs' 
-                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              <span className="text-xs font-black">Pay Online</span>
-            </button>
-          </div>
-        </div>
 
-        {/* Secure marker */}
-        <div className="flex items-center justify-center gap-1.5 pt-6 opacity-50 pb-28">
-           <ShieldCheck className="w-5 h-5 text-slate-500" />
-           <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Safe and Secure Payments</span>
+          {/* Place order button */}
+          <button 
+            onClick={handlePlaceOrder}
+            disabled={isPlacingOrder}
+            className="w-full bg-[#ee4923] hover:bg-orange-600 text-white py-4 rounded-xl font-black text-xs uppercase tracking-wider shadow-md shadow-orange-500/20 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:bg-slate-200"
+          >
+            <ShieldCheck className="w-4 h-4" /> Confirm & Place Order
+          </button>
+
+          <div className="text-[10px] text-slate-450 font-bold text-center leading-relaxed">
+            Safe & secure transactions. 100% money back guarantee.
+          </div>
         </div>
       </div>
 
@@ -728,8 +741,8 @@ export default function ReviewOrderPage() {
         </div>
       )}
 
-      {/* Sticky Bottom Action Bar */}
-      <div className="fixed bottom-0 left-0 right-0 w-full max-w-md mx-auto z-40 bg-white">
+      {/* Sticky Bottom Action Bar (Mobile Only) */}
+      <div className="fixed bottom-0 left-0 right-0 w-full max-w-md mx-auto z-40 bg-white md:hidden">
         <div className="bg-white p-3 border-t border-slate-200 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] rounded-t-2xl relative">
           {/* Place Order Button */}
           <button 
@@ -744,9 +757,9 @@ export default function ReviewOrderPage() {
 
       {/* Address Selection Modal */}
       {isAddressModalOpen && (
-        <div className="fixed inset-0 z-[60] flex flex-col justify-end bg-slate-900/40 backdrop-blur-sm animate-fade-in">
+        <div className="fixed inset-0 z-[60] flex flex-col md:items-center md:justify-center justify-end bg-slate-900/40 backdrop-blur-sm animate-fade-in p-0 md:p-4">
           {/* Modal Content */}
-          <div className="bg-white rounded-t-2xl max-h-[85vh] flex flex-col overflow-hidden animate-slide-up">
+          <div className="bg-white rounded-t-2xl md:rounded-2xl max-h-[85vh] w-full md:max-w-md flex flex-col overflow-hidden animate-slide-up">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-4 border-b border-slate-100 bg-white sticky top-0 z-10">
               <h2 className="text-base font-black text-[#02006c]">Select Delivery Address</h2>

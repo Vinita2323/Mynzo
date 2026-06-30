@@ -1,23 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Sparkles, Gift, Gamepad2, Gem, Heart, LayoutGrid, Compass, HelpCircle, Layers, MapPin, Trophy, ShieldAlert, Truck, RotateCcw, ShieldCheck, Tag, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CATEGORIES, BANNERS, VALUE_PROPS } from '../data/mockData';
 import { useApp } from '../context/AppContext';
 import ProductCard from '../components/ui/ProductCard';
 import OptimizedImage from '../components/ui/OptimizedImage';
+import LazySection from '../components/ui/LazySection';
 import { cachedFetch } from '../utils/apiCache';
 import { getImageUrl } from '../utils/imageHelper';
-
-import CrazyDeals2 from '../assets/CrazyDeals/CrazyDeals2.webp';
-import CrazyDeals3 from '../assets/CrazyDeals/CrazyDeals3.webp';
-import CrazyDeals4 from '../assets/CrazyDeals/CrazyDeals4.webp';
-import CrazyDeals5 from '../assets/CrazyDeals/CrazyDeals5.webp';
-
-import beauty1 from '../assets/BeautyProducts/Beauty1.webp';
-import beauty2 from '../assets/BeautyProducts/Beauty2.webp';
-import beauty3 from '../assets/BeautyProducts/Beauty3.webp';
-import beauty4 from '../assets/BeautyProducts/Beauty4.webp';
-import beauty5 from '../assets/BeautyProducts/Beauty5.webp';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -45,87 +35,53 @@ export default function Home() {
   useEffect(() => {
     const controller = new AbortController();
 
-    const fetchCategoryChips = async () => {
-      try {
-        const data = await cachedFetch('/admin/catalog/chips', { ttl: 5, signal: controller.signal });
-        if (data.success && data.chips && data.chips.length > 0) {
-          const activeChips = data.chips.filter(c => c.active && c.id !== 'for-you');
-          const forYouChip = CATEGORIES.find(c => c.id === 'for-you');
-          const forYouChipWithApproved = { ...forYouChip, approved: true };
-          setCategories([forYouChip, ...activeChips]);
-        }
-      } catch (err) {
-        if (err.name !== 'AbortError') console.error('Error fetching category chips:', err);
-      }
-    };
-
-    const fetchBanners = async () => {
-      try {
-        const data = await cachedFetch('/admin/catalog/banners', { ttl: 5, signal: controller.signal });
-        if (data.success && data.banners) {
-          setDynamicBanners(data.banners.filter(b => b.active));
-        }
-      } catch (err) {
-        if (err.name !== 'AbortError') console.error('Error fetching banners:', err);
-      }
-    };
-
-    const fetchProducts = async () => {
+    const fetchHomepageData = async () => {
       try {
         setProductsLoading(true);
+        const data = await cachedFetch('/homepage', { ttl: 5, signal: controller.signal });
+        if (data.success) {
+          if (data.chips && data.chips.length > 0) {
+            const activeChips = data.chips.filter(c => c.active && c.id !== 'for-you');
+            const forYouChip = CATEGORIES.find(c => c.id === 'for-you') || { id: 'for-you', name: 'For You', active: true };
+            setCategories([forYouChip, ...activeChips]);
+          }
 
-        const [dataProducts, dataTopBuys, dataTrending] = await Promise.all([
-          cachedFetch('/admin/catalog/products?status=Approved', { ttl: 5, signal: controller.signal }),
-          cachedFetch('/admin/catalog/products/top-buys', { ttl: 5, signal: controller.signal }),
-          cachedFetch('/admin/catalog/products/trending-brands', { ttl: 5, signal: controller.signal }),
-        ]);
+          if (data.banners) {
+            setDynamicBanners(data.banners.filter(b => b.active));
+          }
 
-        if (dataProducts.success && dataProducts.products) {
-          const allProducts = dataProducts.products;
-          setRawAllProducts(allProducts);
-          setCrazyDealsProducts(allProducts.filter(p => p.flags?.crazyDeals));
-          setFlashSaleProducts(allProducts.filter(p => p.flags?.flashSale));
-          setTopSelectionProducts(allProducts.filter(p => p.flags?.topSection));
-        }
+          if (data.products) {
+            const allProducts = data.products;
+            setRawAllProducts(allProducts);
+            setCrazyDealsProducts(allProducts.filter(p => p.flags?.crazyDeals));
+            setFlashSaleProducts(allProducts.filter(p => p.flags?.flashSale));
+            setTopSelectionProducts(allProducts.filter(p => p.flags?.topSection));
+          }
 
-        if (dataTopBuys.success && dataTopBuys.products) {
-          setTopBuys(dataTopBuys.products.map(normaliseProduct));
-        }
+          if (data.topBuys) {
+            setTopBuys(data.topBuys);
+          }
 
-        if (dataTrending.success && dataTrending.brands) {
-          setTrendingBrands(dataTrending.brands.map((b, idx) => ({
-            id: idx + 1,
-            brand: b.brand,
-            discount: "Trending Choice",
-            badgeColor: "text-indigo-600",
-            image: getImageUrl(b.image) || "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=200"
-          })));
+          if (data.trendingBrands) {
+            setTrendingBrands(data.trendingBrands);
+          }
+
+          if (data.subchips) {
+            setSubCategoryChips(data.subchips.filter(sc => sc.active));
+          }
         }
       } catch (err) {
-        if (err.name !== 'AbortError') console.error('Error fetching products:', err);
+        if (err.name !== 'AbortError') console.error('Error fetching homepage data:', err);
       } finally {
         setProductsLoading(false);
       }
     };
 
-    const fetchSubCategoryChips = async () => {
-      try {
-        const data = await cachedFetch('/admin/catalog/subchips', { ttl: 600, signal: controller.signal });
-        if (data.success && data.subchips) {
-          setSubCategoryChips(data.subchips.filter(sc => sc.active));
-        }
-      } catch (err) {
-        if (err.name !== 'AbortError') console.error('Error fetching subcategory chips:', err);
-      }
-    };
-
-    fetchCategoryChips();
-    fetchBanners();
-    fetchProducts();
-    fetchSubCategoryChips();
+    fetchHomepageData();
 
     return () => controller.abort(); // cleanup on unmount
   }, []);
+
 
 
 
@@ -314,10 +270,34 @@ export default function Home() {
     sales: p.sales || 0,
   });
 
-  // Dynamic trending brands aggregated from all products, sorted by total sales of the brand's products
-  const getTrendingBrands = () => {
+  const filteredCategoryProducts = useMemo(() => {
+    if (selectedCategory === 'for-you') {
+      return [];
+    }
+    let filtered = rawAllProducts.filter(
+      p => (p.category || '').toLowerCase() === selectedCategory.toLowerCase()
+    );
+    if (selectedSubCategory !== 'all') {
+      const targetSub = selectedSubCategory.toLowerCase();
+      const activeSubObj = subCategoryChips.find(sc => (sc._id || sc.id || '').toLowerCase() === targetSub);
+      const subName = activeSubObj ? activeSubObj.subCategoryName.toLowerCase() : '';
+      filtered = filtered.filter(p => {
+        const prodSub = (p.subCategory || '').toLowerCase();
+        return prodSub === targetSub || prodSub === subName;
+      });
+    }
+    return filtered.map(normaliseProduct);
+  }, [rawAllProducts, selectedCategory, selectedSubCategory, subCategoryChips]);
+
+  const trendingBrandsList = useMemo(() => {
     if (trendingBrands && trendingBrands.length > 0) {
-      return trendingBrands;
+      return trendingBrands.map((b, idx) => ({
+        id: idx + 1,
+        brand: b.brand,
+        discount: "Trending Choice",
+        badgeColor: "text-indigo-600",
+        image: getImageUrl(b.image) || "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=200"
+      }));
     }
     const brandSales = {};
     rawAllProducts.forEach(p => {
@@ -344,179 +324,48 @@ export default function Home() {
         badgeColor: "text-indigo-600",
         image: getImageUrl(b.image) || "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=200"
       }));
-  };
+  }, [trendingBrands, rawAllProducts]);
 
-  // Filter deals in-place on the Home page based on search bar query AND active category tab
-  const getHomeFilteredDeals = () => {
-    let items = crazyDealsProducts.map(normaliseProduct);
+  const normalisedCrazyDeals = useMemo(() => {
+    return crazyDealsProducts.map(normaliseProduct);
+  }, [crazyDealsProducts]);
 
-    // 1. Search Query filter
-    if (searchQuery) {
-      items = items.filter((deal) =>
-        deal.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (deal.desc && deal.desc.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-    }
+  const filteredDeals = useMemo(() => {
+    if (!searchQuery) return normalisedCrazyDeals;
+    const query = searchQuery.toLowerCase();
+    return normalisedCrazyDeals.filter(
+      (deal) =>
+        deal.name.toLowerCase().includes(query) ||
+        (deal.desc && deal.desc.toLowerCase().includes(query))
+    );
+  }, [normalisedCrazyDeals, searchQuery]);
 
-    return items;
-  };
+  const normalisedFlashSale = useMemo(() => {
+    return flashSaleProducts.map(normaliseProduct);
+  }, [flashSaleProducts]);
 
-  const filteredDeals = getHomeFilteredDeals();
-
-  const getFlashFilteredDeals = () => {
-    let items = flashSaleProducts.map(normaliseProduct);
+  const flashDeals = useMemo(() => {
+    const items = normalisedFlashSale;
     switch (activeFlashTab) {
       case 'All':
         return items;
       case 'Newest':
-        return items.slice().reverse();
+        return [...items].reverse();
       case 'Popular':
         return items.filter(d => d.rating >= 4.8);
       default:
+        const tab = activeFlashTab.toLowerCase();
         return items.filter(d =>
-          activeFlashTab === 'All' ||
-          (d.type || '').toLowerCase().includes(activeFlashTab.toLowerCase()) ||
-          (d.name || '').toLowerCase().includes(activeFlashTab.toLowerCase())
+          (d.type || '').toLowerCase().includes(tab) ||
+          (d.name || '').toLowerCase().includes(tab)
         );
     }
-  };
+  }, [normalisedFlashSale, activeFlashTab]);
 
-  const flashDeals = getFlashFilteredDeals();
-  const topSelectionNormalised = topSelectionProducts.map(normaliseProduct);
+  const topSelectionNormalised = useMemo(() => {
+    return topSelectionProducts.map(normaliseProduct);
+  }, [topSelectionProducts]);
 
-  // Helper custom inline vector display for horizontal scrolling slider
-  const renderDealGraphic = (type) => {
-    switch (type) {
-      case 'teddy':
-        return (
-          <svg viewBox="0 0 100 100" className="w-18 h-18 drop-shadow-sm">
-            {/* Ears */}
-            <circle cx="28" cy="30" r="10" fill="#FDA4AF" />
-            <circle cx="28" cy="30" r="6" fill="#F43F5E" />
-            <circle cx="72" cy="30" r="10" fill="#FDA4AF" />
-            <circle cx="72" cy="30" r="6" fill="#F43F5E" />
-            {/* Body */}
-            <circle cx="50" cy="72" r="24" fill="#FECDD3" />
-            <circle cx="50" cy="72" r="16" fill="#FFE4E6" />
-            {/* Head */}
-            <circle cx="50" cy="46" r="20" fill="#FDA4AF" />
-            {/* Snout */}
-            <ellipse cx="50" cy="50" r="8" rx="7" ry="5" fill="#FFE4E6" />
-            <ellipse cx="50" cy="48" r="3" rx="3" ry="2" fill="#475569" />
-            {/* Eyes */}
-            <circle cx="43" cy="42" r="2.5" fill="#0F172A" />
-            <circle cx="43.5" cy="41.5" r="0.8" fill="white" />
-            <circle cx="57" cy="42" r="2.5" fill="#0F172A" />
-            <circle cx="56.5" cy="41.5" r="0.8" fill="white" />
-            {/* Blush */}
-            <circle cx="36" cy="47" r="3" fill="#FB7185" opacity="0.6" />
-            <circle cx="64" cy="47" r="3" fill="#FB7185" opacity="0.6" />
-            {/* Paw Pads */}
-            <circle cx="34" cy="80" r="5" fill="#FB7185" />
-            <circle cx="66" cy="80" r="5" fill="#FB7185" />
-          </svg>
-        );
-      case 'car':
-        return (
-          <svg viewBox="0 0 100 100" className="w-18 h-18 drop-shadow-sm">
-            {/* Ground shadow */}
-            <ellipse cx="50" cy="82" rx="34" ry="6" fill="#E2E8F0" />
-            {/* Antenna */}
-            <line x1="68" y1="52" x2="76" y2="30" stroke="#475569" strokeWidth="2" />
-            <circle cx="76" cy="30" r="2" fill="#EF4444" />
-            {/* Wheels */}
-            <circle cx="28" cy="74" r="12" fill="#1E293B" />
-            <circle cx="28" cy="74" r="6" fill="#F97316" />
-            <circle cx="72" cy="74" r="12" fill="#1E293B" />
-            <circle cx="72" cy="74" r="6" fill="#F97316" />
-            {/* Car body */}
-            <rect x="22" y="52" width="56" height="18" rx="6" fill="#ee4923" />
-            <path d="M32 52L40 38H60L68 52H32Z" fill="#0F172A" />
-            {/* Windshield highlights */}
-            <polygon points="42 40, 58 40, 62 50, 38 50" fill="#38BDF8" opacity="0.5" />
-            {/* Spoiler */}
-            <rect x="16" y="44" width="10" height="4" fill="#0F172A" transform="rotate(-15 16 44)" />
-          </svg>
-        );
-      case 'pendant':
-        return (
-          <svg viewBox="0 0 100 100" className="w-18 h-18 drop-shadow-sm">
-            {/* Chain */}
-            <path d="M25 20C35 40 45 50 50 54C55 50 65 40 75 20" fill="none" stroke="#CBD5E1" strokeWidth="2" strokeLinecap="round" strokeDasharray="3,3" />
-            {/* Pendant loop */}
-            <circle cx="50" cy="53" r="4" fill="none" stroke="#94A3B8" strokeWidth="2" />
-            {/* Heart */}
-            <path d="M50 58 C46 52 32 52 32 68 C32 80 50 90 50 90 C50 90 68 80 68 68 C68 52 54 52 50 58 Z" fill="url(#silverGradDeal)" stroke="#E2E8F0" strokeWidth="1.5" />
-            {/* Inlaid Diamond */}
-            <path d="M50 66 L54 72 L50 78 L46 72 Z" fill="#38BDF8" opacity="0.8" />
-            {/* Sparkles */}
-            <polygon points="34 56, 36 52, 38 56, 36 60" fill="#F59E0B" />
-            <polygon points="64 74, 66 70, 68 74, 66 78" fill="#F59E0B" />
-            
-            <defs>
-              <linearGradient id="silverGradDeal" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#F1F5F9" />
-                <stop offset="50%" stopColor="#94A3B8" />
-                <stop offset="100%" stopColor="#E2E8F0" />
-              </linearGradient>
-            </defs>
-          </svg>
-        );
-      case 'hamper':
-        return (
-          <svg viewBox="0 0 100 100" className="w-18 h-18 drop-shadow-sm">
-            {/* Basket base */}
-            <path d="M22 60 L28 85 A 4 4 0 0 0 32 88 L68 88 A 4 4 0 0 0 72 85 L78 60 Z" fill="#A16207" />
-            {/* Basket weave lines */}
-            <path d="M28 66 H72 M30 74 H70 M32 82 H68 M40 60 V88 M50 60 V88 M60 60 V88" stroke="#78350F" strokeWidth="1" opacity="0.4" />
-            {/* Basket items fillers */}
-            <circle cx="36" cy="50" r="10" fill="#F43F5E" /> {/* Teddy head in hamper */}
-            <rect x="44" y="42" width="14" height="20" rx="2" fill="#3B82F6" /> {/* Choco box */}
-            <ellipse cx="62" cy="52" rx="10" ry="12" fill="#EAB308" /> {/* Fruit */}
-            
-            {/* Wrapping cellophane bow */}
-            <path d="M20 60 C30 50 42 42 50 42 C58 42 70 50 80 60" fill="none" stroke="#E2E8F0" strokeWidth="1.5" />
-            
-            {/* Ribbon Bow */}
-            <path d="M50 42 C44 32 38 42 50 42 C62 42 56 32 50 42 Z" fill="#EF4444" />
-            <circle cx="50" cy="42" r="3.5" fill="#DC2626" />
-          </svg>
-        );
-      default:
-        return null;
-    }
-  };
-
-  const BEAUTY_SUB_CATEGORIES = [
-    { id: 'skin', name: 'Skincare', icon: 'https://images.unsplash.com/photo-1616683693504-3ea7e9ad6fec?w=100&q=80' },
-    { id: 'hair', name: 'Hair care', icon: 'https://images.unsplash.com/photo-1522337660859-02fbefca4702?w=100&q=80' },
-    { id: 'makeup', name: 'Makeup', icon: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?w=100&q=80' },
-    { id: 'fragrance', name: 'Fragrances', icon: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?w=100&q=80' },
-    { id: 'personal', name: 'Personal care', icon: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=100&q=80' },
-    { id: 'derma', name: 'Derma', icon: 'https://images.unsplash.com/photo-1629198688000-71f23e745b6e?w=100&q=80' },
-    { id: 'grooming', name: 'Grooming', icon: 'https://images.unsplash.com/photo-1621607512214-68297480165e?w=100&q=80' }
-  ];
-
-  const TOP_10_BUYS = [
-    { id: 1, name: "MAC Lipstick", discount: "Min. 30% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 1, image: beauty2 },
-    { id: 2, name: "L'Oreal Serum", discount: "Min. 50% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 2, image: beauty3 },
-    { id: 3, name: "Maybelline foundation", discount: "Min. 45% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 3, image: beauty4 },
-    { id: 4, name: "Pond's moisturiser", discount: "Flat 59% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 4, image: beauty5 },
-    { id: 5, name: "Bellavita perfume", discount: "Min. 75% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 5, image: beauty1 },
-    { id: 6, name: "Garnier", discount: "Min. 40% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 6, image: beauty3 },
-    { id: 7, name: "Nykaa Cosmetics", discount: "Up to 60% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 7, image: beauty2 },
-    { id: 8, name: "Plum Green Tea", discount: "Min. 25% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 8, image: beauty4 },
-    { id: 9, name: "Minimalist Serum", discount: "Flat 10% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 9, image: beauty3 },
-    { id: 10, name: "Dot & Key", discount: "Min. 35% Off", bg: "bg-gradient-to-b from-[#FFA781] to-[#F3557A]", rank: 10, image: beauty5 },
-  ];
-
-  const TRENDING_BRANDS = [
-    { id: 1, brand: "sotrue", discount: "Up to 35% Off", badgeColor: "text-blue-600", image: beauty1 },
-    { id: 2, brand: "derma co", discount: "Up to 50% Off", badgeColor: "text-slate-800", image: beauty2 },
-    { id: 3, brand: "medicube", discount: "Up to 60% Off", badgeColor: "text-blue-800", image: beauty3 },
-    { id: 4, brand: "SWISS BEAUTY", discount: "Up to 50% Off", badgeColor: "text-slate-800", image: beauty4 },
-    { id: 5, brand: "PERSONAL TOUCH", discount: "Up to 70% Off", badgeColor: "text-slate-800", image: beauty5 }
-  ];
 
 
 
@@ -580,569 +429,606 @@ export default function Home() {
   }
 
   return (
-    <div className="flex-grow space-y-3.5 pb-6 animate-fade-in">
+    <div className="flex-grow space-y-8 pb-12 animate-fade-in bg-slate-50/50">
       
-      {/* 1. Ultra-Compact Category strip with minimized gaps and in-place active states */}
-      <div className="flex items-center gap-1 overflow-x-auto px-2 py-1.5 bg-white border-b border-slate-50 scrollbar-none scroll-smooth mt-2">
-        {categories.map((cat) => {
-          const catKey = cat._id || cat.id;
-          const isActive = selectedCategory === catKey;
-          const labelText = cat.categoryName || cat.name;
-
-          return (
-            <button
-              key={catKey}
-              onClick={() => {
-                setSelectedCategory(catKey);
-              }}
-              className="flex flex-col items-center gap-1 flex-shrink-0 cursor-pointer transition-all duration-300 w-[72px]"
-            >
-              {/* Image Box */}
-              <div className={`w-14 h-14 flex items-center justify-center rounded-2xl border transition-all duration-300 overflow-hidden ${
-                isActive
-                  ? 'bg-[#ee4923] border-[#ee4923] text-white shadow-sm'
-                  : 'bg-[#FFF0ED] border-[#FFF0ED] text-[#02006c] hover:border-[#ee4923]/40'
-              }`}>
-                {cat.image ? (
-                  <OptimizedImage src={getImageUrl(cat.image)} alt={labelText} type="category" objectFit="contain" className="w-full h-full p-1" />
-                ) : (
-                  renderCategoryIcon(cat.id, isActive)
-                )}
-              </div>
-
-              {/* Label */}
-              <div className="w-full text-center px-1">
-                <span className={`text-[10px] block truncate rounded-full transition-colors py-0.5 ${
-                  isActive 
-                    ? 'font-bold text-[#ee4923] border border-[#ee4923] px-1' 
-                    : 'font-semibold text-[#02006c] border border-transparent'
-                }`} title={labelText}>
-                  {labelText}
-                </span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
-      
-      {/* 2. Banner Slider (Hero Banner Section) */}
-      <div className="px-2 relative">
-        <div className="overflow-hidden rounded-xl shadow-sm relative aspect-[21/9] w-full">
-          <div 
-            className={`flex w-full h-full ${isTransitioning ? 'transition-transform duration-700 ease-in-out' : ''}`}
-            style={{ transform: `translateX(-${activeBanner * 100}%)` }}
-          >
-            {activeBannersList.length > 0 && [...activeBannersList, activeBannersList[0]].map((banner, idx) => (
-              <div
-                key={`banner-${banner.id || banner._id || idx}-${idx}`}
-                className="w-full h-full flex-shrink-0 cursor-pointer"
-                onClick={() => navigate(banner.link || '/categories')}
-              >
-                <OptimizedImage src={getImageUrl(banner.image)} alt="Banner" type="banner" className="w-full h-full" />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Indicators */}
-        {activeBannersList.length > 1 && (
-          <div className="flex justify-center items-center gap-1.5 mt-1">
-            {activeBannersList.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  setIsTransitioning(true);
-                  setActiveBanner(idx);
-                }}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  idx === (activeBanner % activeBannersList.length) ? 'w-4 bg-[#ee4923]' : 'w-1.5 bg-slate-200'
-                }`}
-              ></button>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* CONDITIONAL RENDER: "For You" vs Other Categories */}
-      {selectedCategory === 'for-you' ? (
-        <>
-
-
-      {/* 4. Crazy Deals Horizontal Scroll List (Custom Compact & Soft Orange Canvas Layout) */}
-      <div className="px-4 space-y-2.5">
+      {/* Container wrapper for centering content on desktop */}
+      <div className="max-w-7xl mx-auto px-4 lg:px-8 space-y-8">
         
-        {/* Title Header Row */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <span 
-              className="text-[22px] font-extrabold text-[#02006c] flex items-center gap-1.5 font-sans"
-            >
-              Crazy Deals
-            </span>
-            <span className="text-[10px] text-slate-400 font-bold tracking-tight">
-              (Like, really crazy!)
-            </span>
-          </div>
-          <button 
-            onClick={() => navigate('/crazy-deals')}
-            className="text-xs font-black text-[#ee4923] hover:underline"
-          >
-            See All
-          </button>
-        </div>
+        {/* 1. Category strip - Horizontal scroll on mobile, clean grid on desktop */}
+        <div className="flex items-center gap-1.5 overflow-x-auto py-3 bg-white md:bg-transparent rounded-2xl md:rounded-none border-b border-slate-100 md:border-b-0 scrollbar-none mt-4 md:grid md:grid-cols-9 md:gap-4 md:overflow-visible">
+          {categories.map((cat) => {
+            const catKey = cat._id || cat.id;
+            const isActive = selectedCategory === catKey;
+            const labelText = cat.categoryName || cat.name;
 
-        {/* Ticking Countdown Timer */}
-        <div className="flex items-center gap-1 text-[13px] font-black text-[#ee4923] tracking-wide -mt-1.5 font-sans">
-          <span>{hrs}</span>
-          <span className="animate-pulse">:</span>
-          <span>{mins}</span>
-          <span className="animate-pulse">:</span>
-          <span>{secs}</span>
-        </div>
-
-        {/* Horizontal Scrolling Items Slider */}
-        {filteredDeals.length > 0 ? (
-          <div className="flex gap-3 overflow-x-auto pb-2.5 scrollbar-none scroll-smooth -mt-1">
-            {filteredDeals.map((deal) => (
-              <div 
-                key={deal.id}
-                onClick={() => navigate(`/product/${deal.id}`)}
-                className="flex-shrink-0 w-24 flex flex-col justify-between cursor-pointer group"
+            return (
+              <button
+                key={catKey}
+                onClick={() => {
+                  setSelectedCategory(catKey);
+                }}
+                className="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer transition-all duration-300 w-[72px] md:w-auto hover:scale-105"
               >
-                <div>
-                  {/* Compact Light Orange image display box */}
-                  <div className="w-24 h-24 bg-orange-50/80 border border-orange-100/50 rounded-2xl flex items-center justify-center relative overflow-hidden group-hover:scale-[1.02] transition-all duration-300 animate-fade-in">
-                    {/* Discount Pill */}
-                    <span className="absolute top-0 left-0 bg-[#ee4923] text-white text-[9px] font-black px-2.5 py-1 rounded-br-lg shadow-3xs z-10">
-                      {deal.discount}
-                    </span>
-
-                    {/* Real Image loaded from assets/CrazyDeals */}
-                    <OptimizedImage
-                      src={deal.image}
-                      alt={deal.name}
-                      type="product"
-                      className="absolute inset-0 group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-
-                  {/* Title */}
-                  <h4 className="text-[10.5px] font-bold text-[#02006c] truncate mt-1.5 px-0.5 tracking-tight">
-                    {deal.name}
-                  </h4>
+                {/* Image Box */}
+                <div className={`w-13 h-13 md:w-16 md:h-16 flex items-center justify-center rounded-2xl border transition-all duration-300 overflow-hidden ${
+                  isActive
+                    ? 'bg-[#ee4923] border-[#ee4923] text-white shadow-md'
+                    : 'bg-[#FFF0ED] border-[#FFF0ED] text-[#02006c] hover:border-[#ee4923]/40'
+                }`}>
+                  {cat.image ? (
+                    <OptimizedImage src={getImageUrl(cat.image)} alt={labelText} type="category" objectFit="contain" className="w-full h-full p-1" />
+                  ) : (
+                    renderCategoryIcon(cat.id, isActive)
+                  )}
                 </div>
 
-                {/* Pricing row (No cart button, no description) */}
-                <div className="flex items-center gap-1.5 mt-0.5 px-0.5 leading-none">
-                  <span className="text-[10.5px] font-extrabold text-[#ee4923]">₹{deal.price}</span>
-                  <span className="text-[8.5px] text-slate-400 font-bold line-through">₹{deal.originalPrice}</span>
+                {/* Label */}
+                <div className="w-full text-center px-1">
+                  <span className={`text-[10px] md:text-xs block truncate rounded-full transition-colors py-0.5 ${
+                    isActive 
+                      ? 'font-bold text-[#ee4923] md:text-[#ee4923]' 
+                      : 'font-semibold text-[#02006c]'
+                  }`} title={labelText}>
+                    {labelText}
+                  </span>
                 </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          /* Fallback empty state */
-          <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-6 text-center space-y-2">
-            <ShieldAlert className="w-8 h-8 text-[#ee4923] mx-auto opacity-75" />
-            <h4 className="text-xs font-bold text-[#0F172A]">No Matching Deals</h4>
-            <p className="text-[10px] text-slate-400 leading-tight">
-              Try searching for something else like "teddy" or "car"
-            </p>
-          </div>
-        )}
-      </div>
-
-
-
-      {/* 5.5 Top Selection Section (Transparent with Brand Orange Card Borders) */}
-      <div className="px-4 py-1">
-        <div className="space-y-4">
-          
-          {/* Header Row */}
-          <div className="flex items-center justify-between px-1">
-            <h3 className="text-[19px] font-bold tracking-wide text-[#02006c] font-sans">
-              TOP SELECTION
-            </h3>
-            <button 
-              onClick={() => navigate('/top-selection')}
-              className="bg-slate-50 border border-slate-200 text-[#02006c] w-7 h-7 rounded-xl flex items-center justify-center shadow-2xs cursor-pointer hover:bg-slate-100 hover:scale-105 active:scale-95 transition-all"
+              </button>
+            );
+          })}
+        </div>
+        
+        {/* 2. Banner Slider (Hero Banner Section) */}
+        <div className="relative group">
+          <div className="overflow-hidden rounded-2xl shadow-sm relative aspect-[21/9] md:aspect-[3/1] md:max-h-[350px] w-full">
+            <div 
+              className={`flex w-full h-full ${isTransitioning ? 'transition-transform duration-700 ease-in-out' : ''}`}
+              style={{ transform: `translateX(-${activeBanner * 100}%)` }}
             >
-              <ChevronRight className="w-4 h-4 stroke-[3]" />
-            </button>
-          </div>
-
-          {/* 2x2 Premium Grid */}
-          <div className="grid grid-cols-2 gap-3">
-            {topSelectionNormalised.length > 0 ? (
-              topSelectionNormalised.slice(0, 4).map((deal) => (
-                <div 
-                  key={deal.id}
-                  onClick={() => navigate(`/product/${deal.id}`)}
-                  className="bg-white border border-[#ee4923] rounded-lg p-2.5 pb-3.5 flex flex-col justify-between shadow-2xs cursor-pointer hover:scale-[1.01] active:scale-95 transition-all duration-300 group"
+              {activeBannersList.length > 0 && [...activeBannersList, activeBannersList[0]].map((banner, idx) => (
+                <div
+                  key={`banner-${banner.id || banner._id || idx}-${idx}`}
+                  className="w-full h-full flex-shrink-0 cursor-pointer"
+                  onClick={() => navigate(banner.link || '/categories')}
                 >
-                  <div>
-                    <div className="bg-[#F8F9FD] rounded-md w-full aspect-square flex items-center justify-center mb-2 relative overflow-hidden">
-                      <OptimizedImage
-                        src={getImageUrl(deal.image)}
-                        alt={deal.name}
-                        type="product"
-                        className="absolute inset-0 group-hover:scale-105 transition-transform duration-500"
-                      />
-                    </div>
-                    <span className="text-[9.5px] font-medium text-slate-400 tracking-tight leading-normal px-1 block truncate">
-                      {deal.brandName}
-                    </span>
-                  </div>
-                  <h4 className="text-[12.5px] font-bold text-slate-800 leading-tight mt-0.5 px-1 truncate">
-                    {deal.name}
-                  </h4>
-                  <div className="flex items-center gap-1.5 mt-0.5 px-1">
-                    <span className="text-[13px] font-black text-[#ee4923]">₹{deal.price}</span>
-                    {deal.originalPrice && deal.originalPrice > deal.price && (
-                      <span className="text-[10px] text-slate-400 font-semibold line-through mt-0.5">₹{deal.originalPrice}</span>
-                    )}
-                  </div>
+                  <OptimizedImage src={getImageUrl(banner.image)} alt="Banner" type="banner" className="w-full h-full object-cover" />
                 </div>
-              ))
-            ) : (
-              <div className="col-span-2 py-6 text-center text-slate-400 text-xs font-medium border border-dashed border-slate-200 rounded-xl">
-                No top selections found
-              </div>
+              ))}
+            </div>
+
+            {/* Desktop Navigation Arrows */}
+            {activeBannersList.length > 1 && (
+              <>
+                <button 
+                  onClick={() => {
+                    setIsTransitioning(true);
+                    setActiveBanner(prev => prev === 0 ? activeBannersList.length - 1 : prev - 1);
+                  }}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/80 hover:bg-white text-slate-800 rounded-full flex items-center justify-center shadow-md cursor-pointer transition-opacity opacity-0 group-hover:opacity-100 hidden md:flex"
+                >
+                  <ChevronRight className="w-5 h-5 rotate-180 stroke-[2.5]" />
+                </button>
+                <button 
+                  onClick={() => {
+                    setIsTransitioning(true);
+                    setActiveBanner(prev => (prev + 1) % activeBannersList.length);
+                  }}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/80 hover:bg-white text-slate-800 rounded-full flex items-center justify-center shadow-md cursor-pointer transition-opacity opacity-0 group-hover:opacity-100 hidden md:flex"
+                >
+                  <ChevronRight className="w-5 h-5 stroke-[2.5]" />
+                </button>
+              </>
             )}
           </div>
 
-        </div>
-      </div>
-
-      {/* 6. Flash Sale Section */}
-      <div className="px-4 py-2 space-y-3">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h3 className="text-[19px] font-bold text-[#02006c] font-sans">Flash Sale</h3>
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-slate-400 font-medium mr-1">Closing in :</span>
-            <div className="flex items-center gap-0.5 text-[11px] font-bold text-[#ee4923] font-sans">
-              <span className="bg-orange-50 px-1 py-0.5 rounded-sm">{hrs}</span>
-              <span className="text-slate-300 px-0.5">:</span>
-              <span className="bg-orange-50 px-1 py-0.5 rounded-sm">{mins}</span>
-              <span className="text-slate-300 px-0.5">:</span>
-              <span className="bg-orange-50 px-1 py-0.5 rounded-sm">{secs}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1 -mx-4 px-4">
-          {['All', 'Newest', 'Popular', 'Clothes', 'Beauty', 'Gifts', 'Electronics', 'Toys'].map((tab) => (
-            <button 
-              key={tab}
-              onClick={() => setActiveFlashTab(tab)}
-              className={`px-3.5 py-1.5 rounded-full text-[11px] font-semibold whitespace-nowrap transition-colors cursor-pointer ${
-                activeFlashTab === tab 
-                  ? 'bg-[#ee4923] text-white shadow-sm' 
-                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
-
-        {/* Products Grid (2 columns) */}
-        <div className="grid grid-cols-2 gap-3">
-          {flashDeals.length > 0 ? (
-            flashDeals.slice(0, 4).map((deal) => (
-              <div key={deal.id} onClick={() => navigate(`/product/${deal.id}`)} className="bg-[#F8F9FD] rounded-xl p-2 relative cursor-pointer hover:bg-slate-100 transition-colors group">
-                {/* Heart Icon */}
-                <button 
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    if (!user) {
-                      navigate('/login');
-                      return;
-                    }
-                    toggleWishlist(deal);
+          {/* Indicators */}
+          {activeBannersList.length > 1 && (
+            <div className="flex justify-center items-center gap-1.5 mt-2">
+              {activeBannersList.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => {
+                    setIsTransitioning(true);
+                    setActiveBanner(idx);
                   }}
-                  className={`absolute top-2 right-2 w-6 h-6 bg-white rounded-full flex items-center justify-center shadow-sm z-10 transition-colors ${
-                    isInWishlist(deal.id) ? 'text-[#ee4923]' : 'text-slate-300 hover:text-[#ee4923]'
+                  className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                    idx === (activeBanner % activeBannersList.length) ? 'w-5 bg-[#ee4923]' : 'w-1.5 bg-slate-200 hover:bg-slate-350'
                   }`}
-                >
-                  <Heart className={`w-3.5 h-3.5 ${isInWishlist(deal.id) ? 'fill-current' : ''}`} />
-                </button>
-                
-                <div className="aspect-square bg-transparent rounded-lg mb-2 relative overflow-hidden">
-                  <OptimizedImage src={getImageUrl(deal.image)} alt={deal.name} type="product" className="absolute inset-0 group-hover:scale-105 transition-transform duration-500" />
-                </div>
-                <div className="px-1">
-                  <h4 className="text-[11px] font-bold text-[#02006c] truncate">{deal.name}</h4>
-                  <div className="flex items-center gap-1.5 mt-1">
-                    <span className="text-[12px] font-extrabold text-[#ee4923]">₹{deal.price}</span>
-                    <span className="text-[9px] text-slate-400 line-through">₹{deal.originalPrice}</span>
-                  </div>
-                </div>
-              </div>
-            ))
-          ) : (
-            <div className="col-span-2 py-6 text-center text-slate-400 text-xs font-medium border border-dashed border-slate-200 rounded-xl">
-              No deals found in this category
+                ></button>
+              ))}
             </div>
           )}
         </div>
-      </div>
 
-      {/* 6.5 Top 10 Buys Section (Sorted by Sales) */}
-      <div className="px-4 py-2 space-y-3">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-[19px] font-bold text-[#02006c] font-sans">
-            TOP 10 BUYS
-          </h3>
-          <span className="text-[10px] bg-orange-50 text-[#ee4923] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-            Most Popular
-          </span>
-        </div>
-
-        <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2 -mx-4 px-4">
-          {(topBuys.length > 0 ? topBuys : rawAllProducts
-            .map(normaliseProduct)
-            .filter((p, index, self) => self.findIndex(t => t.id === p.id) === index)
-            .sort((a, b) => (b.sales || 0) - (a.sales || 0))
-            .slice(0, 10))
-            .map((buy, idx) => {
-              const gradients = [
-                'bg-gradient-to-b from-[#FFA781] to-[#F3557A]',
-                'bg-gradient-to-b from-[#81F5FF] to-[#0A5FA6]',
-                'bg-gradient-to-b from-[#E2F5FF] to-[#3B82F6]',
-                'bg-gradient-to-b from-[#FFF5C6] to-[#D97706]',
-                'bg-gradient-to-b from-[#D1FAE5] to-[#059669]',
-                'bg-gradient-to-b from-[#F3E8FF] to-[#7C3AED]',
-                'bg-gradient-to-b from-[#FFF1F2] to-[#E11D48]',
-                'bg-gradient-to-b from-[#F0FDF4] to-[#16A34A]',
-                'bg-gradient-to-b from-[#ECFDF5] to-[#047857]',
-                'bg-gradient-to-b from-[#FFFBEB] to-[#D97706]'
-              ];
-              const bgGradient = gradients[idx % gradients.length];
-              return (
-                <div 
-                  key={`top-buy-${buy.id}`} 
-                  onClick={() => navigate(`/product/${buy.id}`)}
-                  className={`flex-shrink-0 w-32 h-44 rounded-xl p-2.5 flex flex-col justify-between ${bgGradient} text-white relative shadow-sm cursor-pointer hover:-translate-y-1 transition-transform`}
+        {/* CONDITIONAL RENDER: "For You" vs Other Categories */}
+        {selectedCategory === 'for-you' ? (
+          <>
+            {/* 4. Crazy Deals Grid Layout (Responsive: Grid on Desktop/Tablet, Horizontal on Mobile) */}
+            <div className="space-y-3">
+              
+              {/* Title Header Row */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-xl md:text-2xl font-extrabold text-[#02006c] font-sans">
+                    Crazy Deals
+                  </span>
+                  <span className="text-[10px] md:text-xs text-slate-400 font-bold bg-slate-100 px-2 py-0.5 rounded-md">
+                    (Like, really crazy!)
+                  </span>
+                </div>
+                <button 
+                  onClick={() => navigate('/crazy-deals')}
+                  className="text-xs md:text-sm font-black text-[#ee4923] hover:underline cursor-pointer"
                 >
-                  <div className="absolute top-1 left-2.5 text-[42px] font-black opacity-90 leading-none" style={{ fontFamily: 'sans-serif' }}>
-                    {idx + 1}.
-                  </div>
-                  
-                  <div className="mt-8 flex-grow flex items-center justify-center relative z-10">
-                    <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-inner overflow-hidden">
-                      {buy.image ? (
-                        <OptimizedImage src={getImageUrl(buy.image)} alt={buy.name} type="product" className="w-full h-full" />
-                      ) : (
-                        <Sparkles className="w-8 h-8 text-white/80" />
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="z-10 mt-2">
-                    <h4 className="text-[10px] font-medium leading-tight truncate">{buy.name}</h4>
-                    <p className="text-[11px] font-black">{buy.discount} OFF</p>
-                  </div>
-                </div>
-              );
-            })}
-        </div>
-      </div>
-
-      {/* 6.7 Trending Brands Section */}
-      <div className="px-4 py-2 space-y-3">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-[19px] font-bold text-[#02006c] font-sans">
-            TRENDING BRANDS
-          </h3>
-          <span className="text-[10px] bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-            Featured
-          </span>
-        </div>
-
-        <div className="grid grid-cols-2 gap-x-3 gap-y-4">
-          {getTrendingBrands().map(brand => (
-            <div key={`home-brand-${brand.id}`} className="flex flex-col cursor-pointer group" onClick={() => navigate('/categories')}>
-              <div className="w-full aspect-[4/3] rounded-xl bg-slate-100 relative shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center overflow-hidden border border-slate-100">
-                {/* Brand Badge */}
-                <div className="absolute top-0 left-2 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-b-lg shadow-sm z-10">
-                  <span className={`text-[10px] font-black ${brand.badgeColor}`}>{brand.brand.toUpperCase()}</span>
-                </div>
-
-                {/* Real Product Image Covering the Card */}
-                <OptimizedImage src={brand.image} alt={brand.brand} type="product" className="absolute inset-0 group-hover:scale-110 transition-transform duration-500" />
+                  See All
+                </button>
               </div>
-              <div className="mt-1.5 text-center">
-                <p className="text-[11px] font-black text-slate-800">{brand.discount}</p>
+
+              {/* Ticking Countdown Timer */}
+              <div className="flex items-center gap-1 text-[13px] md:text-sm font-black text-[#ee4923] tracking-wide -mt-1 font-sans">
+                <span className="bg-orange-50 px-1.5 py-0.5 rounded-md border border-orange-100">{hrs}</span>
+                <span className="animate-pulse">:</span>
+                <span className="bg-orange-50 px-1.5 py-0.5 rounded-md border border-orange-100">{mins}</span>
+                <span className="animate-pulse">:</span>
+                <span className="bg-orange-50 px-1.5 py-0.5 rounded-md border border-orange-100">{secs}</span>
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      </>
-      ) : (
-        <div className="px-4 py-2 animate-fade-in pb-10 mt-1 space-y-6">
-          {/* Sub-categories row */}
-          {(() => {
-            const subs = subCategoryChips.filter(
-              sc => sc.categoryId === selectedCategory
-            );
-            if (subs.length === 0) return null;
 
-            return (
-              <div className="flex gap-4 overflow-x-auto scrollbar-none pb-2 -mx-4 px-4 mt-2">
-                {/* 'All' option for subcategory filter */}
-                <div 
-                  className="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer"
-                  onClick={() => setSelectedSubCategory('all')}
-                >
-                  <div className={`w-14 h-14 rounded-xl overflow-hidden border transition-all flex items-center justify-center bg-slate-50 ${selectedSubCategory === 'all' ? 'border-[#ee4923] ring-2 ring-orange-100 scale-105' : 'border-slate-100'}`}>
-                    <LayoutGrid className="w-6 h-6 text-slate-400" />
-                  </div>
-                  <span className={`text-[10px] font-bold ${selectedSubCategory === 'all' ? 'text-[#ee4923]' : 'text-slate-700'}`}>All</span>
-                </div>
-
-                {subs.map(sub => {
-                  const subKey = sub._id || sub.id;
-                  const isSubActive = selectedSubCategory.toLowerCase() === subKey.toLowerCase();
-                  return (
+              {/* Responsive Container */}
+              {filteredDeals.length > 0 ? (
+                <div className="flex gap-3 overflow-x-auto pb-2.5 scrollbar-none md:grid md:grid-cols-4 lg:grid-cols-6 md:gap-4 md:overflow-visible">
+                  {filteredDeals.map((deal) => (
                     <div 
-                      key={subKey} 
-                      className="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer w-16 text-center"
-                      onClick={() => setSelectedSubCategory(subKey)}
+                      key={deal.id}
+                      onClick={() => navigate(`/product/${deal.id}`)}
+                      className="flex-shrink-0 w-24 md:w-auto flex flex-col justify-between cursor-pointer group bg-white p-2 rounded-2xl border border-slate-100/50 hover:shadow-md transition-all duration-300"
                     >
-                      <div className={`w-14 h-14 rounded-xl overflow-hidden border transition-all relative ${isSubActive ? 'border-[#ee4923] ring-2 ring-orange-100 scale-105' : 'border-orange-100 shadow-sm'}`}>
-                        <OptimizedImage src={getImageUrl(sub.image)} alt={sub.subCategoryName} type="subcategory" className="absolute inset-0" />
+                      <div>
+                        {/* Image display box */}
+                        <div className="w-24 h-24 md:w-auto md:h-auto md:aspect-square bg-orange-50/80 border border-orange-100/50 rounded-xl flex items-center justify-center relative overflow-hidden">
+                          {/* Discount Pill */}
+                          <span className="absolute top-0 left-0 bg-[#ee4923] text-white text-[8.5px] md:text-[9.5px] font-black px-2 py-0.5 rounded-br-lg z-10">
+                            {deal.discount}
+                          </span>
+
+                          <OptimizedImage
+                            src={deal.image}
+                            alt={deal.name}
+                            type="product"
+                            className="absolute inset-0 group-hover:scale-105 transition-transform duration-300"
+                          />
+                        </div>
+
+                        {/* Title */}
+                        <h4 className="text-[10.5px] md:text-xs font-bold text-[#02006c] truncate mt-2 px-0.5 tracking-tight group-hover:text-[#ee4923] transition-colors">
+                          {deal.name}
+                        </h4>
                       </div>
-                      <span className={`text-[10px] font-bold block truncate w-full ${isSubActive ? 'text-[#ee4923]' : 'text-slate-700'}`} title={sub.subCategoryName}>
-                        {sub.subCategoryName}
-                      </span>
+
+                      {/* Pricing row */}
+                      <div className="flex items-center gap-1.5 mt-1 px-0.5 leading-none">
+                        <span className="text-xs md:text-sm font-extrabold text-[#ee4923]">₹{deal.price}</span>
+                        <span className="text-[9px] md:text-xs text-slate-400 font-bold line-through">₹{deal.originalPrice}</span>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            );
-          })()}
- 
-          {/* Category UI: Filtered Product Grid */}
-          <div>
-            <div className="flex items-center justify-between mb-4 mt-2 px-1">
-              {(() => {
-                const selectedCatObj = categories.find(c => c._id === selectedCategory || c.id === selectedCategory);
-                const displayCatName = selectedCatObj ? (selectedCatObj.categoryName || selectedCatObj.name) : selectedCategory;
-                const selectedSubObj = subCategoryChips.find(sc => sc.id === selectedSubCategory);
-                const displaySubName = selectedSubObj ? selectedSubObj.subCategoryName : selectedSubCategory;
-                return (
-                  <h3 className="text-[17px] font-bold text-[#02006c] capitalize">
-                    {displayCatName.replace('-', ' ')} {selectedSubCategory !== 'all' ? `> ${displaySubName}` : ''}
-                  </h3>
-                );
-              })()}
-              <span className="text-[10px] text-[#ee4923] font-bold bg-orange-50 border border-orange-100 px-2.5 py-1 rounded-lg">
-                {getFilteredCategoryProducts().length} Items
-              </span>
-            </div>
-            
-            <div className="grid grid-cols-2 gap-3 px-1">
-              {getFilteredCategoryProducts().length > 0 ? (
-                getFilteredCategoryProducts().map((deal) => (
-                  <ProductCard key={deal.id} product={deal} />
-                ))
+                  ))}
+                </div>
               ) : (
-                <div className="col-span-2 py-12 flex flex-col items-center justify-center text-center border border-dashed border-slate-200 rounded-2xl bg-slate-50/50">
-                  <LayoutGrid className="w-8 h-8 text-slate-300 mb-3" />
-                  <h4 className="text-xs font-bold text-slate-800 mb-1">Nothing here yet</h4>
-                  <p className="text-[10px] text-slate-400 max-w-[200px]">
-                    We are updating our catalog for this category. Check back soon!
+                /* Fallback empty state */
+                <div className="bg-slate-50 border border-dashed border-slate-200 rounded-2xl p-8 text-center space-y-2">
+                  <ShieldAlert className="w-8 h-8 text-[#ee4923] mx-auto opacity-75" />
+                  <h4 className="text-xs font-bold text-[#0F172A]">No Matching Deals</h4>
+                  <p className="text-[10px] text-slate-400 leading-tight">
+                    Try searching for something else like "teddy" or "car"
                   </p>
                 </div>
               )}
             </div>
-          </div>
 
-          {/* Dynamically append Top 10 Buys and Trending Brands */}
-          
-          {/* Top 10 Buys Section */}
-          <div className="space-y-3 pt-4 border-t border-slate-100">
-            <div className="flex items-center justify-between px-1">
-              <h3 className="text-[17px] font-bold text-[#02006c] font-sans">
-                TOP 10 BUYS
-              </h3>
-              <span className="text-[9px] bg-orange-50 text-[#ee4923] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                Popular
-              </span>
-            </div>
+            {/* 5.5 Top Selection Section (Responsive Grid) */}
+            <LazySection placeholderHeight="250px">
+              <div className="space-y-4">
+                
+                {/* Header Row */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl md:text-2xl font-bold tracking-wide text-[#02006c] font-sans">
+                    TOP SELECTION
+                  </h3>
+                  <button 
+                    onClick={() => navigate('/top-selection')}
+                    className="bg-white border border-slate-200 text-[#02006c] w-8 h-8 rounded-xl flex items-center justify-center shadow-3xs cursor-pointer hover:bg-slate-50 hover:scale-105 transition-all"
+                  >
+                    <ChevronRight className="w-4 h-4 stroke-[3]" />
+                  </button>
+                </div>
 
-            <div className="flex gap-3 overflow-x-auto scrollbar-none pb-2 -mx-4 px-4">
-              {(topBuys.length > 0 ? topBuys : [...crazyDealsProducts, ...flashSaleProducts, ...topSelectionProducts]
-                .map(normaliseProduct)
-                .filter((p, index, self) => self.findIndex(t => t.id === p.id) === index)
-                .sort((a, b) => (b.sales || 0) - (a.sales || 0))
-                .slice(0, 10))
-                .map((buy, idx) => {
-                  const gradients = [
-                    'bg-gradient-to-b from-[#FFA781] to-[#F3557A]',
-                    'bg-gradient-to-b from-[#81F5FF] to-[#0A5FA6]',
-                    'bg-gradient-to-b from-[#E2F5FF] to-[#3B82F6]'
-                  ];
-                  return (
-                    <div 
-                      key={`cat-top-buy-${buy.id}`} 
-                      onClick={() => navigate(`/product/${buy.id}`)}
-                      className={`flex-shrink-0 w-28 h-40 rounded-xl p-2 flex flex-col justify-between ${gradients[idx % gradients.length]} text-white relative shadow-sm cursor-pointer`}
-                    >
-                      <div className="absolute top-1 left-2 text-[32px] font-black opacity-90 leading-none">
-                        {idx + 1}.
-                      </div>
-                      <div className="mt-6 flex-grow flex items-center justify-center overflow-hidden">
-                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center relative overflow-hidden">
-                          <OptimizedImage src={getImageUrl(buy.image)} alt={buy.name} type="product" className="absolute inset-0" />
+                {/* Responsive Grid - 2x2 on Mobile, 4 columns inline on Desktop */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {topSelectionNormalised.length > 0 ? (
+                    topSelectionNormalised.slice(0, 4).map((deal) => (
+                      <div 
+                        key={deal.id}
+                        onClick={() => navigate(`/product/${deal.id}`)}
+                        className="bg-white border border-[#ee4923]/35 rounded-2xl p-3 flex flex-col justify-between shadow-2xs hover:shadow-md cursor-pointer hover:scale-[1.01] active:scale-95 transition-all duration-300 group"
+                      >
+                        <div>
+                          <div className="bg-[#F8F9FD] rounded-xl w-full aspect-square flex items-center justify-center mb-2.5 relative overflow-hidden">
+                            <OptimizedImage
+                              src={getImageUrl(deal.image)}
+                              alt={deal.name}
+                              type="product"
+                              className="absolute inset-0 group-hover:scale-105 transition-transform duration-500"
+                            />
+                          </div>
+                          <span className="text-[9.5px] md:text-xs font-bold text-slate-400 tracking-tight leading-normal px-1 block truncate">
+                            {deal.brandName}
+                          </span>
+                        </div>
+                        <h4 className="text-xs md:text-sm font-bold text-slate-800 leading-tight mt-0.5 px-1 truncate group-hover:text-[#ee4923]">
+                          {deal.name}
+                        </h4>
+                        <div className="flex items-center gap-1.5 mt-1 px-1">
+                          <span className="text-sm md:text-base font-black text-[#ee4923]">₹{deal.price}</span>
+                          {deal.originalPrice && deal.originalPrice > deal.price && (
+                            <span className="text-[10px] md:text-xs text-slate-400 font-semibold line-through">₹{deal.originalPrice}</span>
+                          )}
                         </div>
                       </div>
-                      <div>
-                        <h4 className="text-[9px] font-medium leading-tight truncate">{buy.name}</h4>
-                        <p className="text-[10px] font-black">{buy.discount} OFF</p>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-2 md:col-span-4 py-8 text-center text-slate-400 text-xs font-medium border border-dashed border-slate-200 rounded-xl">
+                      No top selections found
                     </div>
-                  );
-                })}
-            </div>
-          </div>
+                  )}
+                </div>
+              </div>
+            </LazySection>
 
-          {/* Trending Brands Section */}
-          <div className="space-y-3 pt-4 border-t border-slate-100">
-            <div className="flex items-center justify-between px-1">
-              <h3 className="text-[17px] font-bold text-[#02006c] font-sans">
-                TRENDING BRANDS
-              </h3>
-              <span className="text-[9px] bg-blue-50 text-blue-600 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
-                Featured
-              </span>
-            </div>
-
-            <div className="grid grid-cols-2 gap-x-3 gap-y-4">
-              {getTrendingBrands().map(brand => (
-                <div key={`cat-brand-${brand.id}`} className="flex flex-col cursor-pointer group" onClick={() => navigate('/categories')}>
-                  <div className="w-full aspect-[4/3] rounded-xl bg-slate-100 relative overflow-hidden">
-                    <div className="absolute top-0 left-2 bg-white/95 backdrop-blur-md px-2 py-1 rounded-b-lg shadow-sm z-10">
-                      <span className={`text-[9px] font-black ${brand.badgeColor}`}>{brand.brand.toUpperCase()}</span>
+            {/* 6. Flash Sale Section (Responsive layout tabs & grids) */}
+            <LazySection placeholderHeight="300px">
+              <div className="space-y-4">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl md:text-2xl font-bold text-[#02006c] font-sans">Flash Sale</h3>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[10px] md:text-xs text-slate-400 font-bold mr-1">Closing in:</span>
+                    <div className="flex items-center gap-1 text-[11px] md:text-xs font-bold text-[#ee4923] font-sans">
+                      <span className="bg-orange-50 border border-orange-100 px-1.5 py-0.5 rounded-md">{hrs}</span>
+                      <span className="text-slate-300">:</span>
+                      <span className="bg-orange-50 border border-orange-100 px-1.5 py-0.5 rounded-md">{mins}</span>
+                      <span className="text-slate-300">:</span>
+                      <span className="bg-orange-50 border border-orange-100 px-1.5 py-0.5 rounded-md">{secs}</span>
                     </div>
-                    <OptimizedImage src={brand.image} alt={brand.brand} type="product" className="absolute inset-0 group-hover:scale-110 transition-transform duration-500" />
-                  </div>
-                  <div className="mt-1.5 text-center">
-                    <p className="text-[10px] font-black text-slate-800">{brand.discount}</p>
                   </div>
                 </div>
-              ))}
+
+                {/* Tabs */}
+                <div className="flex items-center gap-2 overflow-x-auto scrollbar-none pb-1 md:overflow-visible">
+                  {['All', 'Newest', 'Popular', 'Clothes', 'Beauty', 'Gifts', 'Electronics', 'Toys'].map((tab) => (
+                    <button 
+                      key={tab}
+                      onClick={() => setActiveFlashTab(tab)}
+                      className={`px-4 py-2 rounded-full text-[11px] md:text-xs font-bold whitespace-nowrap transition-colors cursor-pointer ${
+                        activeFlashTab === tab 
+                          ? 'bg-[#ee4923] text-white shadow-md' 
+                          : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+                      }`}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Products Grid - 2 columns on Mobile, 4 columns on Tablet, 5 columns on Desktop */}
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {flashDeals.length > 0 ? (
+                    flashDeals.slice(0, 5).map((deal) => (
+                      <div 
+                        key={deal.id} 
+                        onClick={() => navigate(`/product/${deal.id}`)} 
+                        className="bg-white rounded-2xl border border-slate-100 p-2.5 relative cursor-pointer hover:shadow-md transition-shadow group flex flex-col justify-between"
+                      >
+                        {/* Heart Icon */}
+                        <button 
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (!user) {
+                              navigate('/login');
+                              return;
+                            }
+                            toggleWishlist(deal);
+                          }}
+                          className={`absolute top-3.5 right-3.5 w-7 h-7 bg-white rounded-full flex items-center justify-center shadow-md z-10 transition-transform hover:scale-105 active:scale-95 cursor-pointer ${
+                            isInWishlist(deal.id) ? 'text-[#ee4923]' : 'text-slate-300 hover:text-[#ee4923]'
+                          }`}
+                        >
+                          <Heart className={`w-3.5 h-3.5 ${isInWishlist(deal.id) ? 'fill-[#ee4923] text-[#ee4923]' : ''}`} />
+                        </button>
+                        
+                        <div>
+                          <div className="aspect-square bg-[#F8F9FD] rounded-xl mb-2 relative overflow-hidden">
+                            <OptimizedImage src={getImageUrl(deal.image)} alt={deal.name} type="product" className="absolute inset-0 group-hover:scale-105 transition-transform duration-500" />
+                          </div>
+                          <div className="px-1">
+                            <h4 className="text-xs md:text-sm font-bold text-[#02006c] truncate group-hover:text-[#ee4923]">{deal.name}</h4>
+                          </div>
+                        </div>
+                        <div className="px-1 mt-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs md:text-sm font-extrabold text-[#ee4923]">₹{deal.price}</span>
+                            <span className="text-[10px] md:text-xs text-slate-400 line-through">₹{deal.originalPrice}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="col-span-2 md:col-span-5 py-8 text-center text-slate-400 text-xs font-medium border border-dashed border-slate-200 rounded-xl">
+                      No deals found in this category
+                    </div>
+                  )}
+                </div>
+              </div>
+            </LazySection>
+
+            {/* 6.5 Top 10 Buys Section (Responsive Scroll) */}
+            <LazySection placeholderHeight="200px">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl md:text-2xl font-bold text-[#02006c] font-sans">
+                    TOP 10 BUYS
+                  </h3>
+                  <span className="text-[10px] md:text-xs bg-orange-50 border border-orange-100 text-[#ee4923] font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                    Most Popular
+                  </span>
+                </div>
+
+                {/* Responsive Container - Horizontal scroll on mobile, 5 columns or inline grid on Desktop */}
+                <div className="flex gap-4 overflow-x-auto scrollbar-none pb-2 md:grid md:grid-cols-5 lg:grid-cols-10 md:gap-4 md:overflow-visible">
+                  {(topBuys.length > 0 ? topBuys : rawAllProducts
+                    .map(normaliseProduct)
+                    .filter((p, index, self) => self.findIndex(t => t.id === p.id) === index)
+                    .sort((a, b) => (b.sales || 0) - (a.sales || 0))
+                    .slice(0, 10))
+                    .map((buy, idx) => {
+                      const gradients = [
+                        'bg-gradient-to-b from-[#FFA781] to-[#F3557A]',
+                        'bg-gradient-to-b from-[#81F5FF] to-[#0A5FA6]',
+                        'bg-gradient-to-b from-[#E2F5FF] to-[#3B82F6]',
+                        'bg-gradient-to-b from-[#FFF5C6] to-[#D97706]',
+                        'bg-gradient-to-b from-[#D1FAE5] to-[#059669]',
+                        'bg-gradient-to-b from-[#F3E8FF] to-[#7C3AED]',
+                        'bg-gradient-to-b from-[#FFF1F2] to-[#E11D48]',
+                        'bg-gradient-to-b from-[#F0FDF4] to-[#16A34A]',
+                        'bg-gradient-to-b from-[#ECFDF5] to-[#047857]',
+                        'bg-gradient-to-b from-[#FFFBEB] to-[#D97706]'
+                      ];
+                      const bgGradient = gradients[idx % gradients.length];
+                      return (
+                        <div 
+                          key={`top-buy-${buy.id}`} 
+                          onClick={() => navigate(`/product/${buy.id}`)}
+                          className={`flex-shrink-0 w-32 h-44 md:w-auto md:h-auto md:aspect-[3/4.2] rounded-2xl p-3.5 flex flex-col justify-between ${bgGradient} text-white relative shadow-sm cursor-pointer hover:-translate-y-1 transition-transform`}
+                        >
+                          <div className="absolute top-1 left-2.5 text-[32px] md:text-[38px] font-black opacity-90 leading-none" style={{ fontFamily: 'sans-serif' }}>
+                            {idx + 1}.
+                          </div>
+                          
+                          <div className="mt-8 flex-grow flex items-center justify-center relative z-10">
+                            <div className="w-18 h-18 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-inner overflow-hidden">
+                              {buy.image ? (
+                                <OptimizedImage src={getImageUrl(buy.image)} alt={buy.name} type="product" className="w-full h-full" />
+                              ) : (
+                                <Sparkles className="w-7 h-7 text-white/80" />
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="z-10 mt-2">
+                            <h4 className="text-[10px] md:text-xs font-semibold leading-tight truncate">{buy.name}</h4>
+                            <p className="text-[11px] md:text-xs font-black">{buy.discount} OFF</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            </LazySection>
+
+            {/* 6.7 Trending Brands Section (Responsive grids) */}
+            <LazySection placeholderHeight="200px">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl md:text-2xl font-bold text-[#02006c] font-sans">
+                    TRENDING BRANDS
+                  </h3>
+                  <span className="text-[10px] md:text-xs bg-blue-50 border border-blue-100 text-blue-600 font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+                    Featured
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  {trendingBrandsList.map(brand => (
+                    <div key={`home-brand-${brand.id}`} className="flex flex-col cursor-pointer group" onClick={() => navigate('/categories')}>
+                      <div className="w-full aspect-[4/3] rounded-2xl bg-slate-100 relative shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center overflow-hidden border border-slate-100">
+                        {/* Brand Badge */}
+                        <div className="absolute top-0 left-2.5 bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-b-lg shadow-sm z-10">
+                          <span className={`text-[9.5px] md:text-[10.5px] font-black ${brand.badgeColor}`}>{brand.brand.toUpperCase()}</span>
+                        </div>
+
+                        {/* Real Product Image Covering the Card */}
+                        <OptimizedImage src={brand.image} alt={brand.brand} type="product" className="absolute inset-0 group-hover:scale-115 transition-transform duration-500" />
+                      </div>
+                      <div className="mt-2 text-center">
+                        <p className="text-xs font-black text-slate-800">{brand.discount}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </LazySection>
+          </>
+        ) : (
+          <div className="space-y-6">
+            {/* Sub-categories row */}
+            {(() => {
+              const subs = subCategoryChips.filter(
+                sc => sc.categoryId === selectedCategory
+              );
+              if (subs.length === 0) return null;
+
+              return (
+                <div className="flex gap-4 overflow-x-auto scrollbar-none pb-2 mt-2 md:grid md:grid-cols-8 md:gap-4 md:overflow-visible">
+                  {/* 'All' option for subcategory filter */}
+                  <div 
+                    className="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer"
+                    onClick={() => setSelectedSubCategory('all')}
+                  >
+                    <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl overflow-hidden border transition-all flex items-center justify-center bg-white shadow-2xs hover:scale-102 ${selectedSubCategory === 'all' ? 'border-[#ee4923] ring-2 ring-orange-100' : 'border-slate-100'}`}>
+                      <LayoutGrid className="w-6 h-6 text-slate-400" />
+                    </div>
+                    <span className={`text-[10px] md:text-xs font-bold ${selectedSubCategory === 'all' ? 'text-[#ee4923]' : 'text-slate-700'}`}>All</span>
+                  </div>
+
+                  {subs.map(sub => {
+                    const subKey = sub._id || sub.id;
+                    const isSubActive = selectedSubCategory.toLowerCase() === subKey.toLowerCase();
+                    return (
+                      <div 
+                        key={subKey} 
+                        className="flex flex-col items-center gap-1.5 flex-shrink-0 cursor-pointer w-16 md:w-auto text-center hover:scale-102"
+                        onClick={() => setSelectedSubCategory(subKey)}
+                      >
+                        <div className={`w-14 h-14 md:w-16 md:h-16 rounded-2xl overflow-hidden border transition-all relative bg-white shadow-2xs ${isSubActive ? 'border-[#ee4923] ring-2 ring-orange-100' : 'border-slate-100'}`}>
+                          <OptimizedImage src={getImageUrl(sub.image)} alt={sub.subCategoryName} type="subcategory" className="absolute inset-0" />
+                        </div>
+                        <span className={`text-[10px] md:text-xs font-bold block truncate w-full ${isSubActive ? 'text-[#ee4923]' : 'text-slate-700'}`} title={sub.subCategoryName}>
+                          {sub.subCategoryName}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+   
+            {/* Category UI: Filtered Product Grid */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                {(() => {
+                  const selectedCatObj = categories.find(c => c._id === selectedCategory || c.id === selectedCategory);
+                  const displayCatName = selectedCatObj ? (selectedCatObj.categoryName || selectedCatObj.name) : selectedCategory;
+                  const selectedSubObj = subCategoryChips.find(sc => sc.id === selectedSubCategory);
+                  const displaySubName = selectedSubObj ? selectedSubObj.subCategoryName : selectedSubCategory;
+                  return (
+                    <h3 className="text-xl md:text-2xl font-bold text-[#02006c] capitalize">
+                      {displayCatName.replace('-', ' ')} {selectedSubCategory !== 'all' ? `> ${displaySubName}` : ''}
+                    </h3>
+                  );
+                })()}
+                <span className="text-[10px] md:text-xs text-[#ee4923] font-bold bg-orange-50 border border-orange-100 px-3 py-1 rounded-full">
+                  {filteredCategoryProducts.length} Items
+                </span>
+              </div>
+              
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {filteredCategoryProducts.length > 0 ? (
+                  filteredCategoryProducts.map((deal) => (
+                    <ProductCard key={deal.id} product={deal} />
+                  ))
+                ) : (
+                  <div className="col-span-2 md:col-span-4 py-16 flex flex-col items-center justify-center text-center border border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+                    <LayoutGrid className="w-8 h-8 text-slate-300 mb-3" />
+                    <h4 className="text-sm font-bold text-slate-800 mb-1">Nothing here yet</h4>
+                    <p className="text-xs text-slate-400 max-w-[220px]">
+                      We are updating our catalog for this category. Check back soon!
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* Dynamically append Top 10 Buys and Trending Brands */}
+            
+            {/* Top 10 Buys Section */}
+            <LazySection placeholderHeight="200px">
+              <div className="space-y-4 pt-6 border-t border-slate-200/80">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl md:text-2xl font-bold text-[#02006c] font-sans">
+                    TOP 10 BUYS
+                  </h3>
+                  <span className="text-[9px] md:text-xs bg-orange-50 border border-orange-100 text-[#ee4923] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                    Popular
+                  </span>
+                </div>
+
+                <div className="flex gap-4 overflow-x-auto scrollbar-none pb-2 md:grid md:grid-cols-5 lg:grid-cols-10 md:gap-4 md:overflow-visible">
+                  {(topBuys.length > 0 ? topBuys : [...crazyDealsProducts, ...flashSaleProducts, ...topSelectionProducts]
+                    .map(normaliseProduct)
+                    .filter((p, index, self) => self.findIndex(t => t.id === p.id) === index)
+                    .sort((a, b) => (b.sales || 0) - (a.sales || 0))
+                    .slice(0, 10))
+                    .map((buy, idx) => {
+                      const gradients = [
+                        'bg-gradient-to-b from-[#FFA781] to-[#F3557A]',
+                        'bg-gradient-to-b from-[#81F5FF] to-[#0A5FA6]',
+                        'bg-gradient-to-b from-[#E2F5FF] to-[#3B82F6]'
+                      ];
+                      return (
+                        <div 
+                          key={`cat-top-buy-${buy.id}`} 
+                          onClick={() => navigate(`/product/${buy.id}`)}
+                          className={`flex-shrink-0 w-28 h-40 md:w-auto md:h-auto md:aspect-[3/4.2] rounded-2xl p-3 flex flex-col justify-between ${gradients[idx % gradients.length]} text-white relative shadow-sm cursor-pointer hover:-translate-y-1 transition-transform`}
+                        >
+                          <div className="absolute top-1 left-2 text-[32px] font-black opacity-90 leading-none">
+                            {idx + 1}.
+                          </div>
+                          <div className="mt-6 flex-grow flex items-center justify-center overflow-hidden">
+                            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center relative overflow-hidden">
+                              <OptimizedImage src={getImageUrl(buy.image)} alt={buy.name} type="product" className="absolute inset-0" />
+                            </div>
+                          </div>
+                          <div>
+                            <h4 className="text-[9px] md:text-xs font-semibold leading-tight truncate">{buy.name}</h4>
+                            <p className="text-[10px] md:text-xs font-black">{buy.discount} OFF</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+            </LazySection>
+
+            {/* Trending Brands Section */}
+            <LazySection placeholderHeight="180px">
+              <div className="space-y-4 pt-6 border-t border-slate-200/80">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xl md:text-2xl font-bold text-[#02006c] font-sans">
+                    TRENDING BRANDS
+                  </h3>
+                  <span className="text-[9px] md:text-xs bg-blue-50 border border-blue-100 text-blue-600 font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                    Featured
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  {trendingBrandsList.map(brand => (
+                    <div key={`cat-brand-${brand.id}`} className="flex flex-col cursor-pointer group" onClick={() => navigate('/categories')}>
+                      <div className="w-full aspect-[4/3] rounded-2xl bg-slate-100 relative overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-slate-100">
+                        <div className="absolute top-0 left-2.5 bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-b-lg shadow-sm z-10">
+                          <span className={`text-[9px] md:text-[10px] font-black ${brand.badgeColor}`}>{brand.brand.toUpperCase()}</span>
+                        </div>
+                        <OptimizedImage src={brand.image} alt={brand.brand} type="product" className="absolute inset-0 group-hover:scale-110 transition-transform duration-500" />
+                      </div>
+                      <div className="mt-2 text-center">
+                        <p className="text-[10px] md:text-xs font-black text-slate-800">{brand.discount}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </LazySection>
           </div>
-
-        </div>
-      )}
-
+        )}
+      </div>
     </div>
   );
 }

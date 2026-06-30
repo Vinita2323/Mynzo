@@ -120,9 +120,9 @@ export default function TrackOrderPage() {
   }
 
   return (
-    <div className="min-h-[100dvh] bg-slate-50 flex flex-col font-sans pb-20">
-      {/* Header */}
-      <div className="bg-[#fff4f2] px-4 py-3 sticky top-0 z-50 shadow-sm flex items-center gap-3">
+    <div className="min-h-screen bg-slate-50 flex flex-col font-sans pb-20 select-none">
+      {/* Header (Mobile Only) */}
+      <div className="bg-[#fff4f2] px-4 py-3 sticky top-0 z-50 shadow-sm flex items-center gap-3 md:hidden">
         <button 
           onClick={() => navigate(-1)}
           className="p-2 -ml-2 hover:bg-slate-100 rounded-full transition-colors active:scale-95"
@@ -135,14 +135,30 @@ export default function TrackOrderPage() {
         </div>
       </div>
       
-      <div className="p-4 space-y-4">
+      {/* Centered tracking block on desktop */}
+      <div className="max-w-xl mx-auto w-full px-4 py-6 md:py-10 space-y-6">
         
+        <div className="hidden md:flex justify-between items-center border-b border-slate-200 pb-3">
+          <div className="flex flex-col">
+            <h2 className="text-lg font-black text-[#02006c] uppercase tracking-wide">
+              Live Order Tracker
+            </h2>
+            <span className="text-xs text-slate-400 font-bold mt-1">Order ID: #{orderId}</span>
+          </div>
+          <button 
+            onClick={() => navigate(-1)}
+            className="px-3.5 py-1.5 bg-white hover:bg-slate-55 border border-slate-200 rounded-lg text-slate-600 text-xs font-bold transition-all shadow-3xs cursor-pointer"
+          >
+            Go Back
+          </button>
+        </div>
+
         {/* Estimated Delivery & Courier Card */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 flex flex-col gap-3">
+        <div className="bg-white rounded-2xl p-5 shadow-3xs border border-slate-100 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">Estimated Delivery</p>
-              <p className="text-lg font-black text-[#02006c]">{estDeliveryDate.toDateString()}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Estimated Delivery</p>
+              <p className="text-base md:text-lg font-black text-[#02006c]">{estDeliveryDate.toDateString()}</p>
             </div>
             <div className="w-10 h-10 bg-[#ee4923]/10 rounded-full flex items-center justify-center">
               <Truck className="w-5 h-5 text-[#ee4923]" />
@@ -150,22 +166,22 @@ export default function TrackOrderPage() {
           </div>
           
           {order.awbCode && (
-            <div className="pt-3 border-t border-slate-50 flex justify-between items-center">
+            <div className="pt-3.5 border-t border-slate-100 flex justify-between items-center text-xs">
               <div>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Courier</p>
-                <p className="text-sm font-black text-slate-700">{order.courierName || 'Shiprocket Partner'}</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Courier Partner</p>
+                <p className="text-xs font-black text-slate-750">{order.courierName || 'Shiprocket Partner'}</p>
               </div>
               <div className="text-right">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Tracking Number</p>
-                <p className="text-sm font-black text-blue-600">{order.awbCode}</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">AWB Number</p>
+                <p className="text-xs font-black text-blue-600">{order.awbCode}</p>
               </div>
             </div>
           )}
         </div>
 
         {/* Tracking Timeline */}
-        <div className="bg-white rounded-xl p-4 shadow-sm border border-slate-100">
-          <h3 className="text-[14px] font-bold text-slate-800 mb-4">Order Status</h3>
+        <div className="bg-white rounded-2xl p-5 shadow-3xs border border-slate-100">
+          <h3 className="text-sm font-black text-[#02006c] uppercase tracking-wide mb-4">Order Status</h3>
           
           <div className="relative">
             {/* Vertical Line */}
@@ -179,7 +195,7 @@ export default function TrackOrderPage() {
                 const isPending = step.status === 'pending';
                 
                 return (
-                  <div key={step.id} className="flex gap-3">
+                  <div key={step.id} className="flex gap-4">
                     {/* Status Icon */}
                     <div className="relative">
                       {isActive && (
@@ -195,9 +211,9 @@ export default function TrackOrderPage() {
                     </div>
                     
                     {/* Details */}
-                    <div className="pt-1 flex-1">
-                      <div className="flex justify-between items-start">
-                        <p className={`text-[13px] font-bold leading-tight ${
+                    <div className="pt-1.5 flex-1 min-w-0">
+                      <div className="flex justify-between items-start gap-2">
+                        <p className={`text-xs md:text-sm font-black leading-tight ${
                           isActive ? 'text-[#ee4923]' : (isCompleted ? 'text-slate-800' : 'text-slate-400')
                         }`}>
                           {step.title}
@@ -206,8 +222,8 @@ export default function TrackOrderPage() {
                           {step.date}
                         </p>
                       </div>
-                      <p className={`text-[11px] mt-0.5 ${
-                        isActive ? 'text-slate-600 font-medium' : 'text-slate-400'
+                      <p className={`text-[10px] md:text-xs mt-1 ${
+                        isActive ? 'text-slate-600 font-bold' : 'text-slate-400'
                       }`}>
                         {step.desc}
                       </p>

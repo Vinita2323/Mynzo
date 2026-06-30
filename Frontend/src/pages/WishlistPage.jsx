@@ -12,9 +12,9 @@ export default function WishlistPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex-grow flex flex-col bg-white min-h-screen">
-      {/* Elevated Sticky Header */}
-      <header className="sticky top-0 bg-orange-100 border-b border-orange-200/50 px-4 py-3 flex items-center justify-between z-40">
+    <div className="flex-grow flex flex-col bg-slate-50 min-h-screen select-none">
+      {/* Elevated Sticky Header (Mobile Only) */}
+      <header className="sticky top-0 bg-orange-100 border-b border-orange-200/50 px-4 py-3 flex items-center justify-between z-40 md:hidden">
         <div className="flex items-center gap-3">
           <button 
             onClick={() => navigate(-1)}
@@ -41,12 +41,16 @@ export default function WishlistPage() {
       </header>
 
       {/* Main Content */}
-      <div className="p-4 space-y-6 pb-24 flex-grow animate-fade-in">
+      <div className="max-w-7xl mx-auto w-full p-4 md:px-6 lg:px-8 py-6 md:py-10 space-y-6 pb-24 flex-grow animate-fade-in">
+        <h2 className="hidden md:block text-xl font-black text-[#02006c] uppercase tracking-wide border-b border-slate-200 pb-3.5 mb-4">
+          My Wishlist ({wishlist.length} {wishlist.length === 1 ? 'item' : 'items'})
+        </h2>
+
         <AnimatePresence mode="popLayout">
           {wishlist.length > 0 ? (
             <motion.div 
               layout
-              className="grid grid-cols-2 gap-3"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6"
             >
               {wishlist.map((product) => (
                 <motion.div
@@ -66,21 +70,21 @@ export default function WishlistPage() {
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
-              className="bg-slate-50 border border-slate-100 rounded-3xl p-10 text-center space-y-4 max-w-sm mx-auto shadow-inner mt-12"
+              className="bg-white border border-slate-100 rounded-3xl p-12 text-center space-y-4 max-w-md mx-auto shadow-3xs mt-12 animate-scale-in"
             >
               <div className="w-16 h-16 bg-rose-50 text-[#ee4923] rounded-full flex items-center justify-center mx-auto shadow-md shadow-rose-500/10">
                 <Heart className="w-8 h-8 animate-pulse fill-current text-[#ee4923]" />
               </div>
               <div className="space-y-1">
-                <h4 className="text-sm font-black text-[#02006c] font-syne">Nothing saved yet!</h4>
-                <p className="text-[10px] text-slate-400 font-medium leading-relaxed font-sans">
+                <h4 className="text-sm font-black text-[#02006c] font-syne">Your wishlist is empty</h4>
+                <p className="text-[10px] md:text-xs text-slate-400 font-medium leading-relaxed font-sans max-w-[280px] mx-auto">
                   Start browsing our collections and click the heart icon on your favorite gifts to save them here.
                 </p>
               </div>
 
               <button
                 onClick={() => navigate('/')}
-                className="bg-[#ee4923] hover:bg-orange-600 active:scale-95 text-white text-[10px] font-black px-6 py-3 rounded-2xl shadow-md shadow-orange-500/25 transition-all duration-300 font-sans cursor-pointer"
+                className="bg-[#ee4923] hover:bg-orange-600 active:scale-95 text-white text-[10px] font-black px-6 py-3.5 rounded-xl shadow-md shadow-orange-500/25 transition-all duration-300 font-sans cursor-pointer"
               >
                 EXPLORE PRODUCTS
               </button>

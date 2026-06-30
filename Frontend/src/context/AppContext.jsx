@@ -225,7 +225,6 @@ export const AppProvider = ({ children }) => {
       const apiBase = import.meta.env.VITE_API_URL;
       const socketUrl = apiBase.replace('/api', '');
       const token = localStorage.getItem('userToken');
-      console.log('🔌 [Socket] Initializing connection to URL:', socketUrl, 'with token length:', token ? token.length : 0);
       const socket = io(socketUrl, {
         path: socketUrl.includes('localhost') || socketUrl.includes('127.0.0.1') ? '/socket.io' : '/api/socket.io',
         auth: {
@@ -235,10 +234,7 @@ export const AppProvider = ({ children }) => {
       socketRef.current = socket;
 
       socket.on('connect', () => {
-        console.log('🔌 [Socket] Connected successfully. Socket ID:', socket.id);
-        console.log('🔌 [Socket] Emitting join event for user:', user.id);
         socket.emit('join', user.id);
-        console.log('🔌 [Socket] Emitting get_wishlist event');
         socket.emit('get_wishlist');
       });
 
@@ -251,7 +247,6 @@ export const AppProvider = ({ children }) => {
       });
 
       socket.on('wishlist_data', (products) => {
-        console.log('🔌 [Socket] Received wishlist_data:', products);
         const normalised = products.map((p) => ({
           id: p._id || p.id,
           name: p.name,
@@ -269,7 +264,6 @@ export const AppProvider = ({ children }) => {
       });
 
       socket.on('like_status', ({ productId, isLiked, product }) => {
-        console.log('🔌 [Socket] Received like_status update:', { productId, isLiked, product });
         if (isLiked && product) {
           setWishlist((prev) => {
             const exists = prev.some((item) => item.id === productId);
@@ -294,14 +288,12 @@ export const AppProvider = ({ children }) => {
           setWishlist((prev) => prev.filter((item) => item.id !== productId));
         }
       });
-//
+
       return () => {
-        console.log('🔌 [Socket] Cleaning up connection, disconnecting...');
         socket.disconnect();
         socketRef.current = null;
       };
     } else {
-      console.log('🔌 [Socket] No user logged in, resetting wishlist');
       setWishlist([]);
     }
   }, [user]);
