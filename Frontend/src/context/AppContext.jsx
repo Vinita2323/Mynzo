@@ -227,6 +227,7 @@ export const AppProvider = ({ children }) => {
       const token = localStorage.getItem('userToken');
       console.log('🔌 [Socket] Initializing connection to URL:', socketUrl, 'with token length:', token ? token.length : 0);
       const socket = io(socketUrl, {
+        path: socketUrl.includes('localhost') || socketUrl.includes('127.0.0.1') ? '/socket.io' : '/api/socket.io',
         auth: {
           token: token
         }
