@@ -410,21 +410,134 @@ const getCombinedCatalog = async (req, res) => {
   try {
     const CategoryChip = require('../Models/CategoryChip');
     const SubCategoryChip = require('../Models/SubCategoryChip');
+    const mongoose = require('mongoose');
 
-    const [chips, subchips, products] = await Promise.all([
-      CategoryChip.find({}).sort({ order: 1 }).lean(),
-      SubCategoryChip.find({}).lean(),
-      Product.find({ status: 'Approved' })
-        .select('-highlights -technicalSpecs -description -variations -shippingSpecs')
-        .sort({ createdAt: -1 })
-        .lean()
+    // Extract query parameters
+    const { 
+      page = 1, 
+      limit = 20, 
+      category = 'for-you', 
+      subCategory = 'all', 
+      sortBy = 'none', 
+      search = '' 
+    } = req.query;
+
+    const parsedPage = Math.max(1, parseInt(page, 10) || 1);
+    const parsedLimit = Math.max(1, parseInt(limit, 10) || 20);
+    const skip = (parsedPage - 1) * parsedLimit;
+
+    // Base query: only approved products
+    const andConditions = [{ status: 'Approved' }];
+
+    // 1. Category filter
+    if (category && category !== 'for-you') {
+      const foundChip = await CategoryChip.findOne({
+        $or: [
+          { id: category },
+          { _id: mongoose.Types.ObjectId.isValid(category) ? category : null },
+          { categoryName: { $regex: new RegExp(`^${category.trim()}$`, 'i') } }
+        ]
+      }).lean();
+
+      if (foundChip) {
+        andConditions.push({
+          $or: [
+            { category: foundChip._id.toString() },
+            { category: foundChip.id },
+            { category: { $regex: new RegExp(`^${foundChip.categoryName.trim()}$`, 'i') } },
+            { category: category }
+          ]
+        });
+      } else {
+        andConditions.push({
+          category: { $regex: new RegExp(`^${category.trim()}$`, 'i') }
+        });
+      }
+    }
+
+    // 2. Subcategory filter
+    if (subCategory && subCategory !== 'all') {
+      const foundSubChip = await SubCategoryChip.findOne({
+        $or: [
+          { id: subCategory },
+          { _id: mongoose.Types.ObjectId.isValid(subCategory) ? subCategory : null },
+          { subCategoryName: { $regex: new RegExp(`^${subCategory.trim()}$`, 'i') } }
+        ]
+      }).lean();
+
+      if (foundSubChip) {
+        andConditions.push({
+          $or: [
+            { subCategory: foundSubChip._id.toString() },
+            { subCategory: foundSubChip.id },
+            { subCategory: { $regex: new RegExp(`^${foundSubChip.subCategoryName.trim()}$`, 'i') } },
+            { subCategory: subCategory }
+          ]
+        });
+      } else {
+        andConditions.push({
+          subCategory: { $regex: new RegExp(`^${subCategory.trim()}$`, 'i') }
+        });
+      }
+    }
+
+    // 3. Search query
+    if (search && search.trim() !== '') {
+      const escapedSearch = search.trim().replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+      andConditions.push({
+        $or: [
+          { name: { $regex: escapedSearch, $options: 'i' } },
+          { description: { $regex: escapedSearch, $options: 'i' } }
+        ]
+      });
+    }
+
+    const finalQuery = { $and: andConditions };
+
+    // 4. Sorting option
+    let sortOption = { createdAt: -1 };
+    if (sortBy === 'price-low') {
+      sortOption = { sellingPrice: 1 };
+    } else if (sortBy === 'price-high') {
+      sortOption = { sellingPrice: -1 };
+    } else if (sortBy === 'rating') {
+      sortOption = { rating: -1 };
+    }
+
+    // Run queries in parallel
+    const chipsPromise = (parsedPage === 1)
+      ? CategoryChip.find({}).sort({ order: 1 }).lean()
+      : Promise.resolve([]);
+
+    const subchipsPromise = (parsedPage === 1)
+      ? SubCategoryChip.find({}).lean()
+      : Promise.resolve([]);
+
+    const productsPromise = Product.find(finalQuery)
+      .select('-highlights -technicalSpecs -description -variations -shippingSpecs')
+      .sort(sortOption)
+      .skip(skip)
+      .limit(parsedLimit)
+      .lean();
+
+    const countPromise = Product.countDocuments(finalQuery);
+
+    const [chips, subchips, products, totalProducts] = await Promise.all([
+      chipsPromise,
+      subchipsPromise,
+      productsPromise,
+      countPromise
     ]);
 
     res.status(200).json({
       success: true,
-      chips,
-      subchips,
-      products
+      chips: parsedPage === 1 ? chips : undefined,
+      subchips: parsedPage === 1 ? subchips : undefined,
+      products,
+      totalProducts,
+      totalPages: Math.ceil(totalProducts / parsedLimit),
+      currentPage: parsedPage,
+      hasMore: skip + products.length < totalProducts
     });
   } catch (error) {
     console.error('Get Combined Catalog Error:', error);

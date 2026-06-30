@@ -33,50 +33,13 @@ export default function CategoriesPage() {
   const [subCategories, setSubCategories] = useState([]);
   const [rawProducts, setRawProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery);
 
-  useEffect(() => {
-    let active = true;
-
-    // Clear search query on mount so it doesn't carry over from home search and hide all items
-    setSearchQuery('');
-
-    const loadAll = async () => {
-      setLoading(true);
-
-      try {
-        const data = await cachedFetch('/admin/catalog/products/combined', { ttl: 5 });
-        if (active && data && data.success) {
-          const activeChips = (data.chips || []).filter(c => c.active && c.id !== 'for-you');
-          const forYouChip = CATEGORIES.find(c => c.id === 'for-you');
-          const finalCategories = [forYouChip, ...activeChips];
-          const finalSubCategories = (data.subchips || []).filter(sc => sc.active);
-          const finalProducts = data.products || [];
-
-          setCategories(finalCategories);
-          setSubCategories(finalSubCategories);
-          setRawProducts(finalProducts);
-        }
-      } catch (err) {
-        console.error('Error fetching combined catalog:', err);
-      } finally {
-        if (active) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadAll();
-
-    return () => {
-      active = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    setSelectedSubCategory('all');
-  }, [selectedCategory]);
-
-
+  const containerRef = useRef(null);
+  const sentinelRef = useRef(null);
 
   // Sync with URL parameter (e.g. when navigated from Home category capsule)
   useEffect(() => {
@@ -85,6 +48,122 @@ export default function CategoriesPage() {
       setSelectedCategory(catParam);
     }
   }, [searchParams, categories]);
+
+  // Clear search query on mount
+  useEffect(() => {
+    setSearchQuery('');
+  }, []);
+
+  // Debounce search query
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 400);
+    return () => clearTimeout(handler);
+  }, [searchQuery]);
+
+  // Reset page and products when filters change
+  const prevFiltersRef = useRef({ selectedCategory, selectedSubCategory, sortBy, debouncedSearchQuery });
+  const activeRequestRef = useRef(null);
+
+  const loadProducts = async (pageNum, isReset) => {
+    const requestId = Math.random().toString(36).substring(7);
+    activeRequestRef.current = requestId;
+
+    if (isReset) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+
+    try {
+      const queryParams = new URLSearchParams({
+        page: pageNum.toString(),
+        limit: '20',
+        category: selectedCategory,
+        subCategory: selectedSubCategory,
+        sortBy,
+        search: debouncedSearchQuery
+      });
+
+      const data = await cachedFetch(`/admin/catalog/products/combined?${queryParams.toString()}`, { ttl: 5 });
+
+      if (activeRequestRef.current === requestId && data && data.success) {
+        if (isReset) {
+          if (data.chips) {
+            const activeChips = (data.chips || []).filter(c => c.active && c.id !== 'for-you');
+            const forYouChip = CATEGORIES.find(c => c.id === 'for-you');
+            setCategories([forYouChip, ...activeChips]);
+          }
+          if (data.subchips) {
+            const finalSubCategories = (data.subchips || []).filter(sc => sc.active);
+            setSubCategories(finalSubCategories);
+          }
+          setRawProducts(data.products || []);
+        } else {
+          setRawProducts((prev) => {
+            const existingIds = new Set(prev.map(p => p._id || p.id));
+            const newProducts = (data.products || []).filter(p => !existingIds.has(p._id || p.id));
+            return [...prev, ...newProducts];
+          });
+        }
+        setHasMore(data.hasMore);
+      }
+    } catch (err) {
+      console.error('Error fetching combined catalog page:', pageNum, err);
+    } finally {
+      if (activeRequestRef.current === requestId) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    }
+  };
+
+  useEffect(() => {
+    const prev = prevFiltersRef.current;
+    const filtersChanged = 
+      prev.selectedCategory !== selectedCategory ||
+      prev.selectedSubCategory !== selectedSubCategory ||
+      prev.sortBy !== sortBy ||
+      prev.debouncedSearchQuery !== debouncedSearchQuery;
+
+    if (filtersChanged) {
+      prevFiltersRef.current = { selectedCategory, selectedSubCategory, sortBy, debouncedSearchQuery };
+      setPage(1);
+      if (page === 1) {
+        loadProducts(1, true);
+      }
+    } else {
+      loadProducts(page, page === 1);
+    }
+  }, [page, selectedCategory, selectedSubCategory, sortBy, debouncedSearchQuery]);
+
+  useEffect(() => {
+    setSelectedSubCategory('all');
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      {
+        root: containerRef.current,
+        threshold: 0.1,
+        rootMargin: '100px',
+      }
+    );
+
+    observer.observe(sentinelRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [hasMore, loading, loadingMore]);
 
   // Category Image drawer
   const renderCatIcon = (id, isActive) => {
@@ -131,51 +210,7 @@ export default function CategoriesPage() {
     sales: p.sales || 0,
   });
 
-  // Category product filter mapper
-  const getFilteredProducts = () => {
-    let items = rawProducts.map(normaliseProduct);
-    if (searchQuery) {
-      items = items.filter((p) =>
-        p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.desc.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    let filtered = [];
-    if (selectedCategory === 'for-you') {
-      filtered = items;
-    } else {
-      filtered = items.filter((p) => p.type.toLowerCase() === selectedCategory.toLowerCase());
-    }
-
-    // Filter by subcategory if one is active
-    if (selectedSubCategory !== 'all') {
-      const activeSubChip = subCategories.find(sc => sc._id === selectedSubCategory || sc.id === selectedSubCategory);
-      if (activeSubChip) {
-        const targetName = activeSubChip.subCategoryName.toLowerCase();
-        filtered = filtered.filter(
-          (p) => (p.subCategory || '').toLowerCase() === targetName || (p.subCategory || '').toLowerCase() === selectedSubCategory.toLowerCase()
-        );
-      } else {
-        filtered = filtered.filter(
-          (p) => (p.subCategory || '').toLowerCase() === selectedSubCategory.toLowerCase()
-        );
-      }
-    }
-
-    // Apply sorting
-    if (sortBy === 'price-low') {
-      return [...filtered].sort((a, b) => a.price - b.price);
-    } else if (sortBy === 'price-high') {
-      return [...filtered].sort((a, b) => b.price - a.price);
-    } else if (sortBy === 'rating') {
-      return [...filtered].sort((a, b) => b.rating - a.rating);
-    }
-
-    return filtered;
-  };
-
-  const filteredProducts = getFilteredProducts();
+  const filteredProducts = rawProducts.map(normaliseProduct);
 
   return (
     <div className="h-full flex flex-col bg-slate-50 overflow-hidden select-none">
@@ -271,7 +306,7 @@ export default function CategoriesPage() {
         </div>
 
         {/* 2. Main filtered products catalog grid */}
-        <div className="flex-grow p-2.5 md:p-6 overflow-y-auto space-y-4 bg-[#ff7400]/5 md:bg-slate-50 relative">
+        <div ref={containerRef} className="flex-grow p-2.5 md:p-6 overflow-y-auto space-y-4 bg-[#ff7400]/5 md:bg-slate-50 relative">
 
           {/* Title bar */}
           <div className="flex items-center justify-between border-b border-slate-100 pb-2 relative z-20 px-1">
@@ -392,17 +427,35 @@ export default function CategoriesPage() {
               ))}
             </div>
           ) : filteredProducts.length > 0 ? (
-            <motion.div
-              key={selectedCategory + sortBy}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-8"
-            >
-              {filteredProducts.map((product) => (
-                <ProductCard key={product.id} product={product} />
-              ))}
-            </motion.div>
+            <>
+              <motion.div
+                key={selectedCategory + sortBy}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
+                className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4"
+              >
+                {filteredProducts.map((product) => (
+                  <ProductCard key={product.id} product={product} />
+                ))}
+              </motion.div>
+
+              {/* Skeleton loader for subsequent page fetches */}
+              {loadingMore && (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={`skeleton-more-${i}`} className="bg-white flex flex-col items-center pb-3 animate-pulse shadow-sm border border-slate-100 rounded-lg overflow-hidden">
+                      <div className="w-full aspect-[4/5] bg-slate-200 mb-2" />
+                      <div className="w-3/4 h-3 bg-slate-200 rounded mb-1.5" />
+                      <div className="w-1/2 h-2.5 bg-slate-200 rounded" />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Sentinel element for infinite scroll */}
+              <div ref={sentinelRef} className="h-10 w-full" />
+            </>
           ) : (
             /* Empty state if search parameters yield nothing */
             <motion.div
