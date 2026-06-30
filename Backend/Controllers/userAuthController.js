@@ -76,7 +76,7 @@ const sendOtp = async (req, res) => {
         const senderId = process.env.SMS_SENDER_ID;
         const peId = process.env.SMS_PE_ID;
         const templateId = process.env.SMS_TEMPLATE_ID;
-        const message = `Welcome to Mynzo Powered by IIDMTB. Use OTP ${otp} to verify your login.`;
+        const message = `Welcome to the Mynzo powered by Appzeto.Your OTP for registration is ${otp}.BGADEC`;
         const encodedMsg = encodeURIComponent(message);
 
         let smsUrl = `https://cloud.smsindiahub.in/vendorsms/pushsms.aspx?APIKey=${apiKey}&msisdn=91${phone}&sid=${senderId}&msg=${encodedMsg}&fl=0&gwid=2`;
