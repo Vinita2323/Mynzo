@@ -223,16 +223,64 @@ export default function StudioPage() {
     }
   };
 
-  // WebSocket Reel Like Trigger
-  const handleLike = (postId) => {
+  // WebSocket / HTTP Reel Like Trigger
+  const handleLike = async (postId) => {
     analytics.trackStudioAction('greeting_liked', { reelId: postId });
     if (!user) {
       navigate('/login');
       return;
     }
-    if (socketRef && socketRef.current) {
+
+    // 1. Optimistic UI update for instant feedback
+    setPosts(prev => prev.map(p => {
+      if (p.id === postId) {
+        const nextLiked = !p.isLiked;
+        return {
+          ...p,
+          isLiked: nextLiked,
+          likes: nextLiked ? p.likes + 1 : Math.max(0, p.likes - 1)
+        };
+      }
+      return p;
+    }));
+
+    // 2. Try sending via WebSockets first
+    let viaSocket = false;
+    if (socketRef && socketRef.current && socketRef.current.connected) {
       const userId = user._id || user.id;
       socketRef.current.emit('toggle_reel_like', { userId, reelId: postId });
+      viaSocket = true;
+    }
+
+    // 3. HTTP Fallback if Socket is not connected
+    if (!viaSocket) {
+      try {
+        const token = localStorage.getItem('userToken');
+        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${apiBase}/reels/${postId}/like`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          // Sync with backend confirmed state
+          setPosts(prev => prev.map(p => p.id === postId ? {
+            ...p,
+            isLiked: data.isLiked,
+            likes: data.likesCount
+          } : p));
+        } else {
+          // Revert optimistic update
+          fetchReels();
+        }
+      } catch (err) {
+        console.error('HTTP reel like fallback error:', err);
+        // Revert optimistic update
+        fetchReels();
+      }
     }
   };
 
