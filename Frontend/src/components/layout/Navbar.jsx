@@ -565,7 +565,7 @@ export default function Navbar() {
 
         {/* Sub-header with Category Nav */}
         <div className="bg-white text-[#02006c] border-b border-slate-200">
-          <div className="max-w-7xl mx-auto px-4 lg:px-8 py-2.5 flex items-center justify-between text-xs font-black tracking-wide">
+          <div className="max-w-7xl mx-auto px-12 lg:px-24 py-2.5 flex items-center justify-between text-xs font-bold tracking-wide">
             {/* Category horizontal list */}
             <div className="flex items-center gap-6 lg:gap-8">
               <button 

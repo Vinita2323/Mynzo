@@ -435,7 +435,7 @@ export default function Home() {
       <div className="max-w-7xl mx-auto px-4 lg:px-8 space-y-8">
         
         {/* 1. Category strip - Horizontal scroll on mobile, clean grid on desktop */}
-        <div className="flex items-center gap-1.5 overflow-x-auto py-3 bg-white md:bg-transparent rounded-2xl md:rounded-none border-b border-slate-100 md:border-b-0 scrollbar-none mt-4 md:grid md:grid-cols-9 md:gap-4 md:overflow-visible">
+        <div className="flex items-center gap-1.5 overflow-x-auto py-3 bg-white md:bg-transparent rounded-2xl md:rounded-none border-b border-slate-100 md:border-b-0 scrollbar-none mt-4 md:grid md:grid-cols-10 md:gap-2 lg:gap-3 md:overflow-visible">
           {categories.map((cat) => {
             const catKey = cat._id || cat.id;
             const isActive = selectedCategory === catKey;

@@ -477,7 +477,7 @@ export default function StudioPage() {
     <div 
       ref={containerRef}
       onScroll={handleScroll}
-      className="bg-black w-full h-[100dvh] overflow-y-scroll snap-y snap-mandatory scrollbar-hide text-white relative select-none"
+      className="bg-black w-full md:max-w-md md:mx-auto h-[100dvh] overflow-y-scroll snap-y snap-mandatory scrollbar-hide text-white relative select-none md:shadow-2xl md:border-x md:border-slate-800"
       style={{ WebkitOverflowScrolling: 'touch', scrollBehavior: 'auto' }}
     >
       

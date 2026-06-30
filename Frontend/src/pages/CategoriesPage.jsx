@@ -44,8 +44,16 @@ export default function CategoriesPage() {
   // Sync with URL parameter (e.g. when navigated from Home category capsule)
   useEffect(() => {
     const catParam = searchParams.get('cat');
-    if (catParam && categories.some(c => c.id === catParam)) {
-      setSelectedCategory(catParam);
+    if (catParam) {
+      const matchedCat = categories.find(
+        c => c.id === catParam || c._id === catParam
+      ) || categories.find(
+        c => (c.name || '').toLowerCase() === catParam.toLowerCase() || 
+             (c.categoryName || '').toLowerCase() === catParam.toLowerCase()
+      );
+      if (matchedCat) {
+        setSelectedCategory(matchedCat._id || matchedCat.id);
+      }
     }
   }, [searchParams, categories]);
 
@@ -243,7 +251,7 @@ export default function CategoriesPage() {
       <div className="flex-grow flex animate-fade-in overflow-hidden">
 
         {/* 1. Vertical Sidebar Category Navigation (Responsive sidebar) */}
-        <div className="w-[72px] md:w-64 bg-[#02006c]/[0.02] md:bg-white border-r border-slate-100 flex flex-col items-center md:items-stretch pt-2 pb-2 md:p-4 overflow-y-auto scrollbar-none gap-3 flex-shrink-0">
+        <div className="w-[72px] md:w-64 bg-[#02006c]/[0.02] md:bg-white border-r border-slate-100 flex flex-col items-center md:items-stretch pt-2 pb-2 md:p-4 overflow-y-auto scrollbar-none gap-3 flex-shrink-0 md:sticky md:top-[110px] md:h-[calc(100vh-110px)] md:self-start">
           {categories.map((cat) => {
             const catKey = cat._id || cat.id;
             const isActive = selectedCategory === catKey;
@@ -286,7 +294,7 @@ export default function CategoriesPage() {
                 {/* Text Label */}
                 <span className={`text-[10px] md:text-sm leading-tight font-bold tracking-tight select-none px-1 text-center md:text-left mt-1 md:mt-0 transition-colors relative z-10 ${
                   isActive 
-                    ? 'text-[#0F172A] md:text-white font-bold' 
+                    ? 'text-[#0F172A] md:text-[#ee4923] font-bold' 
                     : 'text-slate-500 md:text-slate-700 font-semibold group-hover:text-[#ee4923]'
                 }`}>
                   {labelText}

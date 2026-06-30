@@ -67,18 +67,19 @@ export default function Layout({ children }) {
   // Desktop/Tablet overrides:
   // - Show Top Navbar on all pages except login
   // - Hide Bottom MobileNav on all pages
-  const hideNavbar = isMobile ? hideNavbarMobile : isLoginPage;
+  const isStudioPage = location.pathname.toLowerCase().startsWith('/studio');
+  const hideNavbar = isMobile ? hideNavbarMobile : (isLoginPage || isStudioPage);
   const hideMobileNav = isMobile ? hideMobileNavMobile : true;
 
-  const isStudio = location.pathname.toLowerCase().startsWith('/studio');
+  const isFixedLayoutPage = location.pathname.toLowerCase().startsWith('/studio') || location.pathname.toLowerCase().startsWith('/categories');
 
   return (
     <div className="min-h-screen md:h-auto bg-slate-100 md:bg-slate-50 flex justify-center md:block items-start text-slate-800 antialiased font-sans overflow-x-hidden">
       {/* Centered Mobile Phone Frame on mobile, full width on desktop */}
-      <div className={`w-full max-w-md md:max-w-none h-[100dvh] md:h-auto md:min-h-screen bg-white md:bg-transparent shadow-2xl md:shadow-none flex flex-col relative ${hideMobileNav ? 'pb-0' : 'pb-16 md:pb-0'}`}>
+      <div className={`w-full max-w-md md:max-w-none ${isFixedLayoutPage ? 'h-[100dvh] md:h-[100dvh]' : 'h-[100dvh] md:h-auto md:min-h-screen'} bg-white md:bg-transparent shadow-2xl md:shadow-none flex flex-col relative ${hideMobileNav ? 'pb-0' : 'pb-16 md:pb-0'}`}>
         <main 
           id="main-scroll-container" 
-          className={`flex-grow flex flex-col bg-white md:bg-transparent relative scrollbar-none ${isStudio ? 'overflow-hidden' : 'overflow-y-auto md:overflow-y-visible overflow-x-hidden'}`}
+          className={`flex-grow flex flex-col bg-white md:bg-transparent relative scrollbar-none ${isFixedLayoutPage ? 'overflow-hidden' : 'overflow-y-auto md:overflow-y-visible overflow-x-hidden'}`}
         >
           {!hideNavbar && <Navbar />}
           {children}

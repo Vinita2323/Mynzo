@@ -242,7 +242,7 @@ export default function LoginPage() {
   );
 
   return (
-    <div className="h-[100dvh] w-full flex flex-col justify-between overflow-hidden relative bg-[#F8F9FD]">
+    <div className="h-[100dvh] w-full md:max-w-md md:mx-auto flex flex-col justify-between overflow-hidden relative bg-[#F8F9FD] md:shadow-2xl md:border-x md:border-slate-100">
 
       {/* Curved Orange top banner */}
       <div className="relative h-[28%] bg-gradient-to-br from-orange-300 via-orange-400 to-[#FF8E4D] flex flex-col items-center justify-center pt-4">
