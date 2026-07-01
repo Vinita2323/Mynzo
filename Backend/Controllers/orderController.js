@@ -7,7 +7,7 @@ const shiprocketService = require('../Router/shiprocketService');
 const axios = require('axios');
 const mongoose = require('mongoose');
 const CouponUsage = require('../Models/CouponUsage');
-const { handleOrderCancellationStockAndCoupon, checkAndTriggerReferral } = require('../utils/orderHelper');
+const { handleOrderCancellationStockAndCoupon, handleOrderCancellationRefunds, checkAndTriggerReferral } = require('../utils/orderHelper');
 // @desc    Create a new order
 // @route   POST /api/orders
 // @access  Private
@@ -601,18 +601,7 @@ exports.updateOrderStatus = async (req, res) => {
 
     if (status === 'Cancelled' && order.status !== 'Cancelled') {
       await handleOrderCancellationStockAndCoupon(order);
-      if (order.walletUsed && order.walletUsed > 0) {
-        await User.findByIdAndUpdate(order.userId, {
-          $inc: { walletBalance: order.walletUsed }
-        });
-        const WalletTransaction = require('../Models/WalletTransaction');
-        await WalletTransaction.create({
-          userId: order.userId,
-          type: 'Order Cancellation',
-          amount: order.walletUsed,
-          description: `Refund for Cancelled Order #${order._id.toString().substring(order._id.toString().length - 6).toUpperCase()}`
-        });
-      }
+      await handleOrderCancellationRefunds(order);
     }
 
     if (status && status !== order.status) {
@@ -852,19 +841,8 @@ exports.cancelOrder = async (req, res) => {
     // Restore stock & coupon usage
     await handleOrderCancellationStockAndCoupon(order);
 
-    // Refund wallet balance if wallet was used
-    if (order.walletUsed && order.walletUsed > 0) {
-      await User.findByIdAndUpdate(order.userId, {
-        $inc: { walletBalance: order.walletUsed }
-      });
-      const WalletTransaction = require('../Models/WalletTransaction');
-      await WalletTransaction.create({
-        userId: order.userId,
-        type: 'Order Cancellation',
-        amount: order.walletUsed,
-        description: `Refund for Cancelled Order #${order._id.toString().substring(order._id.toString().length - 6).toUpperCase()}`
-      });
-    }
+    // Refund wallet balance, coins, and online payments
+    await handleOrderCancellationRefunds(order);
 
     // Try to cancel on Shiprocket if shiprocketOrderId exists
     if (order.shiprocketOrderId && order.shipmentStatus !== 'Cancelled') {
@@ -886,7 +864,6 @@ exports.cancelOrder = async (req, res) => {
     }
 
     order.status = 'Cancelled';
-    order.paymentStatus = 'Refunded'; // For COD or online, mark payment refunded/voided
     await order.save();
 
     // Create notification

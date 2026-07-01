@@ -2,7 +2,7 @@ const shiprocketService = require('../Router/shiprocketService');
 const Order = require('../Models/Order');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
-const { handleOrderCancellationStockAndCoupon, checkAndTriggerReferral } = require('../utils/orderHelper');
+const { handleOrderCancellationStockAndCoupon, handleOrderCancellationRefunds, checkAndTriggerReferral } = require('../utils/orderHelper');
 
 exports.checkServiceability = async (req, res) => {
     try {
@@ -307,6 +307,8 @@ exports.cancelShiprocketOrder = async (req, res) => {
 
         // Restore stock & coupon usage
         await handleOrderCancellationStockAndCoupon(order);
+        // Process refunds (wallet, coins, and online payments)
+        await handleOrderCancellationRefunds(order);
 
         // Update order status
         order.status = 'Cancelled';
@@ -375,6 +377,7 @@ exports.syncOrderStatus = async (req, res) => {
                 if (mappedStatus === 'Cancelled' && !wasAlreadyCancelled) {
                     try {
                         await handleOrderCancellationStockAndCoupon(order);
+                        await handleOrderCancellationRefunds(order);
                     } catch (err) {
                         console.error('Failed to restore stock on Shiprocket sync cancel:', err.message);
                     }
@@ -486,6 +489,7 @@ exports.webhookReceiver = async (req, res) => {
             } else if (['CANCELLED', 'RTO INITIATED', 'RTO DELIVERED', 'RTO_INITIATED', 'RTO_DELIVERED', 'CANCELED'].includes(srStatus)) {
                 if (order.status !== 'Cancelled') {
                     await handleOrderCancellationStockAndCoupon(order);
+                    await handleOrderCancellationRefunds(order);
                 }
                 mappedStatus = 'Cancelled';
             } else if (['NEW', 'PICKUP SCHEDULED', 'AWB ASSIGNED', 'PICKUP GENERATED', 'OUT FOR PICKUP', 'PICKED UP', 'READY TO SHIP', 'AWB_ASSIGNED', 'PICKUP_SCHEDULED', 'PICKUP_GENERATED', 'OUT_FOR_PICKUP', 'PICKED_UP', 'READY_TO_SHIP'].includes(srStatus)) {
