@@ -193,6 +193,11 @@ export default function ReviewOrderPage() {
       alert("Phone number must be exactly 10 digits");
       return;
     }
+    const pincodeRegex = /^[0-9]{6}$/;
+    if (!pincodeRegex.test(newAddrPincode)) {
+      alert("Pincode must be exactly 6 digits");
+      return;
+    }
     try {
       const token = localStorage.getItem('userToken');
       const res = await fetch(`${API_BASE}/addresses`, {
@@ -885,7 +890,7 @@ export default function ReviewOrderPage() {
                       type="text" 
                       placeholder="e.g. 452001" 
                       value={newAddrPincode} 
-                      onChange={(e) => setNewAddrPincode(e.target.value)}
+                      onChange={(e) => setNewAddrPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       className="mt-1 w-full border border-slate-200 rounded-lg p-2.5 text-xs font-semibold focus:outline-none focus:border-[#ee4923]"
                       required 
                     />
