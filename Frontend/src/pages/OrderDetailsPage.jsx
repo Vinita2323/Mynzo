@@ -93,6 +93,36 @@ export default function OrderDetailsPage() {
     }
   };
 
+  const [cancelling, setCancelling] = useState(false);
+
+  const handleCancelOrder = async () => {
+    const confirmCancel = window.confirm("Are you sure you want to cancel this order?");
+    if (!confirmCancel) return;
+
+    const token = localStorage.getItem('userToken');
+    if (!token) return;
+
+    try {
+      setCancelling(true);
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/orders/${id}/cancel`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success('Order cancelled successfully!');
+        fetchOrderDetails(false);
+      } else {
+        toast.error(data.message || 'Failed to cancel order');
+      }
+    } catch (err) {
+      toast.error('Could not cancel order');
+    } finally {
+      setCancelling(false);
+    }
+  };
+
   useEffect(() => {
     addOrderReview(id, {
       isEditingReview,
@@ -535,6 +565,20 @@ Thank you for shopping with Mynzo!
                   </div>
                   <p className="text-amber-600 font-bold mt-1.5">Refund: ₹{existingReturn.refundAmount?.toLocaleString()} • Reason: {existingReturn.reason}</p>
                 </div>
+              )}
+
+              {globalOrder && ['Pending', 'Processing', 'Shipped'].includes(globalOrder.status) && (
+                <button 
+                  onClick={handleCancelOrder}
+                  disabled={cancelling}
+                  className="w-full py-3.5 text-xs font-black text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors flex items-center justify-center gap-2 border-t border-slate-100 uppercase tracking-wider cursor-pointer"
+                >
+                  {cancelling ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Cancelling...</>
+                  ) : (
+                    'Cancel Order'
+                  )}
+                </button>
               )}
             </div>
 

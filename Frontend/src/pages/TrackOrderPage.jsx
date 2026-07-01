@@ -72,7 +72,12 @@ export default function TrackOrderPage() {
   // Dynamic tracking steps
   let steps = [];
   
-  if (liveTracking && liveTracking.activities && liveTracking.activities.length > 0) {
+  if (isCancelled) {
+    steps = [
+      { id: 'placed', title: 'Order Placed', desc: 'We have received your order', date: new Date(order.createdAt).toLocaleString(), icon: CheckCircle2, status: 'completed' },
+      { id: 'cancelled', title: 'Order Cancelled', desc: 'Your order has been cancelled', date: order.updatedAt ? new Date(order.updatedAt).toLocaleString() : '', icon: AlertCircle, status: 'active' }
+    ];
+  } else if (liveTracking && liveTracking.activities && liveTracking.activities.length > 0) {
     // Merge live tracking data
     steps = [
       { id: 'placed', title: 'Order Placed', desc: 'We have received your order', date: new Date(order.createdAt).toLocaleString(), icon: CheckCircle2, status: 'completed' },
@@ -157,11 +162,19 @@ export default function TrackOrderPage() {
         <div className="bg-white rounded-2xl p-5 shadow-3xs border border-slate-100 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">Estimated Delivery</p>
-              <p className="text-base md:text-lg font-black text-[#02006c]">{estDeliveryDate.toDateString()}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-0.5">
+                {isCancelled ? 'Order Status' : 'Estimated Delivery'}
+              </p>
+              <p className={`text-base md:text-lg font-black ${isCancelled ? 'text-red-600' : 'text-[#02006c]'}`}>
+                {isCancelled ? 'Cancelled' : estDeliveryDate.toDateString()}
+              </p>
             </div>
-            <div className="w-10 h-10 bg-[#ee4923]/10 rounded-full flex items-center justify-center">
-              <Truck className="w-5 h-5 text-[#ee4923]" />
+            <div className={`w-10 h-10 ${isCancelled ? 'bg-red-50' : 'bg-[#ee4923]/10'} rounded-full flex items-center justify-center`}>
+              {isCancelled ? (
+                <AlertCircle className="w-5 h-5 text-red-600" />
+              ) : (
+                <Truck className="w-5 h-5 text-[#ee4923]" />
+              )}
             </div>
           </div>
           

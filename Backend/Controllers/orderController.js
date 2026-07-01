@@ -319,7 +319,7 @@ exports.createOrder = async (req, res) => {
       deliveryAddress,
       paymentMethod,
       paymentStatus: paymentMethod === 'Online' ? 'Paid' : 'Pending',
-      status: 'Processing',
+      status: 'Pending',
       couponCode: couponCodeClean || null,
       deliveryCharge: calculatedDeliveryCharge,
       etd: etd || ''
@@ -821,6 +821,100 @@ exports.deleteOrder = async (req, res) => {
     res.status(200).json({ success: true, message: 'Order deleted and cancelled on Shiprocket successfully' });
   } catch (error) {
     console.error("Error deleting order:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// @desc    Cancel order (User only)
+// @route   POST /api/orders/:id/cancel
+// @access  Private (User)
+exports.cancelOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Order not found' });
+    }
+
+    // Verify ownership
+    if (order.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: 'Not authorized to cancel this order' });
+    }
+
+    // A user can cancel an order unless it is Out for Delivery or Delivered or already Cancelled
+    const nonCancellableStates = ['Out for Delivery', 'Delivered', 'Cancelled', 'Return Requested', 'Refunded', 'Partially Refunded'];
+    if (nonCancellableStates.includes(order.status)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: `Cannot cancel order. Current status is ${order.status}` 
+      });
+    }
+
+    // Restore stock & coupon usage
+    await handleOrderCancellationStockAndCoupon(order);
+
+    // Refund wallet balance if wallet was used
+    if (order.walletUsed && order.walletUsed > 0) {
+      await User.findByIdAndUpdate(order.userId, {
+        $inc: { walletBalance: order.walletUsed }
+      });
+      const WalletTransaction = require('../Models/WalletTransaction');
+      await WalletTransaction.create({
+        userId: order.userId,
+        type: 'Order Cancellation',
+        amount: order.walletUsed,
+        description: `Refund for Cancelled Order #${order._id.toString().substring(order._id.toString().length - 6).toUpperCase()}`
+      });
+    }
+
+    // Try to cancel on Shiprocket if shiprocketOrderId exists
+    if (order.shiprocketOrderId && order.shipmentStatus !== 'Cancelled') {
+      try {
+        const token = await shiprocketService.getShiprocketToken();
+        if (token) {
+          const axios = require('axios');
+          const SHIPROCKET_API_BASE = process.env.SHIPROCKET_API_BASE || 'https://apiv2.shiprocket.in';
+          await axios.post(`${SHIPROCKET_API_BASE}/v1/external/orders/cancel`, {
+            ids: [order.shiprocketOrderId]
+          }, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          console.log(`Shiprocket order ${order.shiprocketOrderId} cancelled successfully.`);
+        }
+      } catch (srErr) {
+        console.error('Shiprocket cancel failed (ignored):', srErr.response?.data || srErr.message);
+      }
+    }
+
+    order.status = 'Cancelled';
+    order.paymentStatus = 'Refunded'; // For COD or online, mark payment refunded/voided
+    await order.save();
+
+    // Create notification
+    try {
+      const Notification = require('../Models/Notification');
+      const { sendNotificationToUser } = require('../Router/firebaseAdmin');
+
+      const title = `Order Cancelled`;
+      const body = `Your order #${order._id.toString().substring(order._id.toString().length - 6).toUpperCase()} has been cancelled successfully.`;
+
+      const newNotification = new Notification({
+        title,
+        body,
+        target: 'Selected Users',
+        targetUserIds: [order.userId],
+        status: 'Delivered',
+        sentAt: new Date()
+      });
+      await newNotification.save();
+
+      sendNotificationToUser(order.userId, { title, body }).catch(e => console.error('Push notification failed:', e));
+    } catch (notifErr) {
+      console.error('Error creating order cancellation notification:', notifErr);
+    }
+
+    res.status(200).json({ success: true, message: 'Order cancelled successfully', order });
+  } catch (error) {
+    console.error("Error cancelling order:", error);
     res.status(500).json({ success: false, message: error.message });
   }
 };
