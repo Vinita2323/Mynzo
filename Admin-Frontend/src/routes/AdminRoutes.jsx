@@ -8,6 +8,7 @@ import CategoryManager from '../modules/admin/catalog/CategoryManager';
 import BannerManager from '../modules/admin/catalog/BannerManager';
 import CategoryChipsManager from '../modules/admin/catalog/CategoryChipsManager';
 import SubCategoryChipsManager from '../modules/admin/catalog/SubCategoryChipsManager';
+import BrandsManager from '../modules/admin/catalog/BrandsManager';
 import HomeSectionsManager from '../modules/admin/catalog/HomeSectionsManager';
 import InventoryList from '../pages/admin/inventory/InventoryList';
 import ProductDetails from '../pages/admin/inventory/ProductDetails';
@@ -67,6 +68,7 @@ const AdminRoutes = () => {
         <Route path="storefront/banners" element={<BannerManager />} />
         <Route path="storefront/chips" element={<CategoryChipsManager />} />
         <Route path="storefront/subchips" element={<SubCategoryChipsManager />} />
+        <Route path="storefront/brands" element={<BrandsManager />} />
         <Route path="storefront/sections/:section" element={<HomeSectionsManager />} />
         
         {/* Business Ops */}

@@ -63,7 +63,7 @@ exports.getCoupons = async (req, res) => {
 // @access Private (Admin only)
 exports.createCoupon = async (req, res) => {
   try {
-    const { code, type, value, minOrder, usageLimit, expiry } = req.body;
+    const { code, type, value, minOrder, usageLimit, perUserLimit, expiry } = req.body;
 
     if (!code || !value || !expiry) {
       return res.status(400).json({
@@ -88,7 +88,8 @@ exports.createCoupon = async (req, res) => {
       type,
       value: Number(value),
       minOrder: minOrder ? Number(minOrder) : 0,
-      usageLimit: usageLimit ? Number(usageLimit) : 1,
+      usageLimit: usageLimit ? Number(usageLimit) : 1000,
+      perUserLimit: perUserLimit ? Number(perUserLimit) : 1,
       expiry: new Date(expiry),
       status: 'Active'
     });
@@ -178,7 +179,7 @@ exports.deleteCoupon = async (req, res) => {
 // @access Private (Admin only)
 exports.updateCoupon = async (req, res) => {
   try {
-    const { code, type, value, minOrder, usageLimit, expiry } = req.body;
+    const { code, type, value, minOrder, usageLimit, perUserLimit, expiry } = req.body;
 
     const uppercaseCode = code ? code.toUpperCase().trim() : undefined;
 
@@ -199,6 +200,7 @@ exports.updateCoupon = async (req, res) => {
       ...(value !== undefined && { value: Number(value) }),
       ...(minOrder !== undefined && { minOrder: Number(minOrder) }),
       ...(usageLimit !== undefined && { usageLimit: Number(usageLimit) }),
+      ...(perUserLimit !== undefined && { perUserLimit: Number(perUserLimit) }),
       ...(expiry && { expiry: new Date(expiry) })
     };
 

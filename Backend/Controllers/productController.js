@@ -1,4 +1,5 @@
 const Product = require('../Models/Product');
+const Brand = require('../Models/Brand');
 
 const parseJsonField = (field, defaultVal = {}) => {
   if (!field) return defaultVal;
@@ -22,12 +23,17 @@ const resolveCategoryAndSubcategory = async (categoryInput, subCategoryInput) =>
   // Resolve Category
   if (categoryInput && !mongoose.Types.ObjectId.isValid(categoryInput)) {
     const foundCat = await CategoryChip.findOne({
-      categoryName: { $regex: new RegExp(`^${categoryInput.trim()}$`, 'i') }
+      $or: [
+        { id: categoryInput.trim() },
+        { categoryName: { $regex: new RegExp(`^${categoryInput.trim()}$`, 'i') } }
+      ]
     });
     if (foundCat) {
       categoryId = foundCat._id.toString();
     } else {
+      const generatedId = categoryInput.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
       const newCat = await CategoryChip.create({
+        id: generatedId,
         categoryName: categoryInput.trim(),
         active: true
       });
@@ -37,18 +43,33 @@ const resolveCategoryAndSubcategory = async (categoryInput, subCategoryInput) =>
 
   // Resolve Subcategory
   if (subCategoryInput && !mongoose.Types.ObjectId.isValid(subCategoryInput)) {
-    const query = {
-      subCategoryName: { $regex: new RegExp(`^${subCategoryInput.trim()}$`, 'i') }
-    };
+    // Find parent category slug/id
+    let parentSlug = '';
     if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
-      query.categoryId = categoryId;
+      const parentCat = await CategoryChip.findById(categoryId);
+      if (parentCat) {
+        parentSlug = parentCat.id;
+      }
     }
+
+    const query = {
+      $or: [
+        { id: subCategoryInput.trim() },
+        { subCategoryName: { $regex: new RegExp(`^${subCategoryInput.trim()}$`, 'i') } }
+      ]
+    };
+    if (parentSlug) {
+      query.categoryId = parentSlug;
+    }
+
     const foundSub = await SubCategoryChip.findOne(query);
     if (foundSub) {
       subCategoryId = foundSub._id.toString();
-    } else if (categoryId && mongoose.Types.ObjectId.isValid(categoryId)) {
+    } else if (parentSlug) {
+      const generatedSubId = `${parentSlug}-${subCategoryInput.trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`;
       const newSub = await SubCategoryChip.create({
-        categoryId,
+        id: generatedSubId,
+        categoryId: parentSlug,
         subCategoryName: subCategoryInput.trim(),
         active: true
       });
@@ -110,6 +131,8 @@ const createProduct = async (req, res) => {
       gstCategory,
       hsnCode,
       brandName,
+      brandId,
+      isTrending,
       manufacturerInfo,
       status,
       subCategory
@@ -138,6 +161,14 @@ const createProduct = async (req, res) => {
 
     const { categoryId, subCategoryId } = await resolveCategoryAndSubcategory(category, subCategory);
 
+    let resolvedBrandName = brandName || 'Generic';
+    if (brandId) {
+      const brand = await Brand.findById(brandId);
+      if (brand) {
+        resolvedBrandName = brand.name;
+      }
+    }
+
     const newProduct = new Product({
       name,
       category: categoryId,
@@ -155,7 +186,9 @@ const createProduct = async (req, res) => {
       gstCategory,
       hsnCode,
       images: imageUrls,
-      brandName: brandName || 'Generic',
+      brandId: brandId || undefined,
+      brandName: resolvedBrandName,
+      isTrending: isTrending === 'true' || isTrending === true,
       tags: parseJsonField(req.body.tags, []),
       manufacturerInfo,
       status: status || 'Pending',
@@ -200,7 +233,7 @@ const updateProduct = async (req, res) => {
     const fields = [
       'name', 'category', 'subCategory', 'description', 'sellingPrice',
       'mrp', 'stock', 'discountLabel', 'sku', 'gstCategory', 'hsnCode',
-      'brandName', 'manufacturerInfo', 'status'
+      'manufacturerInfo', 'status'
     ];
 
     fields.forEach(f => {
@@ -212,6 +245,25 @@ const updateProduct = async (req, res) => {
         }
       }
     });
+
+    if (req.body.brandId !== undefined) {
+      if (req.body.brandId && req.body.brandId !== 'null' && req.body.brandId !== '') {
+        product.brandId = req.body.brandId;
+        const brand = await Brand.findById(req.body.brandId);
+        if (brand) {
+          product.brandName = brand.name;
+        }
+      } else {
+        product.brandId = undefined;
+        product.brandName = req.body.brandName || 'Generic';
+      }
+    } else if (req.body.brandName !== undefined) {
+      product.brandName = req.body.brandName;
+    }
+
+    if (req.body.isTrending !== undefined) {
+      product.isTrending = req.body.isTrending === 'true' || req.body.isTrending === true;
+    }
 
     // Handle parsed nested objects/arrays if present in req.body
     if (req.body.highlights !== undefined) product.highlights = parseJsonField(req.body.highlights);
@@ -336,19 +388,39 @@ const getTopBuys = async (req, res) => {
 // @access  Public
 const getTrendingBrands = async (req, res) => {
   try {
-    const brands = await Product.aggregate([
-      { $match: { status: 'Approved' } },
-      {
-        $group: {
-          _id: '$brandName',
-          brand: { $first: '$brandName' },
-          sales: { $sum: '$sales' },
-          image: { $first: { $arrayElemAt: ['$images', 0] } }
-        }
-      },
-      { $sort: { sales: -1 } },
-      { $limit: 6 }
-    ]);
+    const Brand = require('../Models/Brand');
+    let brands = await Brand.find({ isTrending: true, status: 'Active' }).limit(6).lean();
+
+    if (brands.length === 0) {
+      const Product = require('../Models/Product');
+      const aggregated = await Product.aggregate([
+        { $match: { status: 'Approved' } },
+        {
+          $group: {
+            _id: '$brandName',
+            brand: { $first: '$brandName' },
+            sales: { $sum: '$sales' },
+            image: { $first: { $arrayElemAt: ['$images', 0] } }
+          }
+        },
+        { $sort: { sales: -1 } },
+        { $limit: 6 }
+      ]);
+      brands = aggregated.map(b => ({
+        _id: b._id,
+        brand: b.brand,
+        sales: b.sales,
+        image: b.image
+      }));
+    } else {
+      // Map new model properties to properties expected by existing integrations
+      brands = brands.map(b => ({
+        _id: b._id,
+        brand: b.name,
+        image: b.logo
+      }));
+    }
+
     res.status(200).json({ success: true, brands });
   } catch (error) {
     console.error('Get Trending Brands Error:', error);
@@ -361,8 +433,9 @@ const getHomepageData = async (req, res) => {
     const CategoryChip = require('../Models/CategoryChip');
     const SubCategoryChip = require('../Models/SubCategoryChip');
     const Banner = require('../Models/Banner');
+    const Brand = require('../Models/Brand');
 
-    const [chips, subchips, banners, products, topBuys, trendingBrands] = await Promise.all([
+    const [chips, subchips, banners, products, topBuys, dbTrendingBrands] = await Promise.all([
       CategoryChip.find({}).sort({ order: 1 }).lean(),
       SubCategoryChip.find({}).lean(),
       Banner.find({}).sort({ createdAt: -1 }).lean(),
@@ -375,20 +448,15 @@ const getHomepageData = async (req, res) => {
         .sort({ sales: -1 })
         .limit(10)
         .lean(),
-      Product.aggregate([
-        { $match: { status: 'Approved' } },
-        {
-          $group: {
-            _id: '$brandName',
-            brand: { $first: '$brandName' },
-            sales: { $sum: '$sales' },
-            image: { $first: { $arrayElemAt: ['$images', 0] } }
-          }
-        },
-        { $sort: { sales: -1 } },
-        { $limit: 6 }
-      ])
+      Brand.find({ isTrending: true, status: 'Active' }).lean()
     ]);
+
+    const trendingBrands = dbTrendingBrands.map(b => ({
+      _id: b._id,
+      brand: b.name,
+      logo: b.logo,
+      image: b.logo
+    }));
 
     res.status(200).json({
       success: true,

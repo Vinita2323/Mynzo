@@ -65,6 +65,15 @@ const productSchema = new mongoose.Schema({
     type: String,
     default: 'Generic'
   },
+  brandId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Brand',
+    required: false
+  },
+  isTrending: {
+    type: Boolean,
+    default: false
+  },
   tags: [{
     type: String
   }],
@@ -95,5 +104,7 @@ productSchema.index({ name: 'text', brandName: 'text', tags: 'text' });
 productSchema.index({ status: 1, sales: -1 });
 productSchema.index({ status: 1, 'flags.crazyDeals': 1 });
 productSchema.index({ status: 1, 'flags.flashSale': 1 });
+productSchema.index({ brandId: 1 });
+productSchema.index({ isTrending: 1 });
 
 module.exports = mongoose.model('Product', productSchema);

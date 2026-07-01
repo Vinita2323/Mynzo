@@ -117,10 +117,45 @@ const processImages = async (req, res, next) => {
   }
 };
 
+const uploadBrandFiles = upload.fields([
+  { name: 'logo', maxCount: 1 }
+]);
+
+const processBrandFiles = async (req, res, next) => {
+  if (!req.files) {
+    return next();
+  }
+
+  try {
+    const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
+
+    if (req.files.logo && req.files.logo[0]) {
+      const file = req.files.logo[0];
+      const filename = `brand-logo-${Date.now()}-${Math.round(Math.random() * 1e9)}.webp`;
+      const outputPath = path.join(uploadDir, filename);
+
+      await sharp(file.buffer)
+        .resize(300, 300, { fit: 'inside', withoutEnlargement: true })
+        .sharpen({ sigma: 0.5 })
+        .webp({ quality: 85 })
+        .toFile(outputPath);
+
+      req.logoUrl = `${backendUrl}/uploads/${filename}`;
+    }
+
+    next();
+  } catch (err) {
+    console.error('Sharp brand files processing error:', err);
+    return res.status(500).json({ success: false, message: 'Image conversion failed: ' + err.message });
+  }
+};
+
 module.exports = {
   uploadImage: upload.single('image'),
   uploadImages: upload.array('images', 5),
+  uploadBrandFiles,
   processImage,
   processImages,
+  processBrandFiles,
   handleUploadError
 };

@@ -328,17 +328,28 @@ export default function OrderDetailsPage() {
   const orderTotal = globalOrder ? globalOrder.total : (product.selling + 7 - 150);
 
   const subtotal = orderItems.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
-  const gstAmount = Math.round(subtotal * 0.18);
   const platformCommission = 15;
   const deliveryCharge = globalOrder?.deliveryCharge || 0;
   const coinsRedeemed = globalOrder?.coinsRedeemed || 0;
   const walletUsed = globalOrder?.walletUsed || 0;
 
-  // Deduce coupon discount from order total
-  const deducedDiscount = Math.max(
-    0,
-    Math.round(subtotal + gstAmount + platformCommission + deliveryCharge - coinsRedeemed - walletUsed - orderTotal)
-  );
+  // Mathematically solve for coupon discount:
+  // (subtotal - discountAmount) * 1.18 + platformCommission + deliveryCharge - coinsRedeemed - walletUsed = orderTotal
+  // (subtotal - discountAmount) * 1.18 = orderTotal - platformCommission - deliveryCharge + coinsRedeemed + walletUsed
+  // subtotal - discountAmount = (orderTotal - platformCommission - deliveryCharge + coinsRedeemed + walletUsed) / 1.18
+  // discountAmount = subtotal - (orderTotal - platformCommission - deliveryCharge + coinsRedeemed + walletUsed) / 1.18
+  let deducedDiscount = 0;
+  let gstAmount = 0;
+
+  if (globalOrder?.couponCode) {
+    const targetValue = orderTotal - platformCommission - deliveryCharge + coinsRedeemed + walletUsed;
+    const discountedSubtotal = targetValue / 1.18;
+    deducedDiscount = Math.max(0, Math.round(subtotal - discountedSubtotal));
+    gstAmount = Math.round((subtotal - deducedDiscount) * 0.18);
+  } else {
+    deducedDiscount = 0;
+    gstAmount = Math.round(subtotal * 0.18);
+  }
 
   const returnWindowExpiry = globalOrder?.createdAt ? (() => {
     const expiry = new Date(globalOrder.createdAt);

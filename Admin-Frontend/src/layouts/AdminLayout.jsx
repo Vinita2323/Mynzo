@@ -4,7 +4,7 @@ import {
   LayoutDashboard, Package, ShoppingCart, Users, LogOut,
   Bell, Search, Menu, ShieldCheck, Briefcase, Layers, Star,
   Truck, Store, Key, Settings, ChevronDown, ChevronRight,
-  UserPlus, DollarSign, BarChart3, HelpCircle, FileText, Image, LayoutGrid, Layout,
+  UserPlus, DollarSign, BarChart3, HelpCircle, FileText, Image, LayoutGrid, Layout, Bookmark,
   Tag, Zap, MessageSquare, RotateCcw, Inbox, Gamepad2,
   Banknote, Percent, AlertCircle, CheckCircle2, GitBranch
 } from 'lucide-react';
@@ -88,6 +88,7 @@ const AdminLayout = () => {
         { name: 'Banner Manager', path: '/admin/storefront/banners', icon: <Image size={18} /> },
         { name: 'Category Chips', path: '/admin/storefront/chips', icon: <LayoutGrid size={18} /> },
         { name: 'Subcatgeory Chips', path: '/admin/storefront/subchips', icon: <LayoutGrid size={18} /> },
+        { name: 'Brands Manager', path: '/admin/storefront/brands', icon: <Tag size={18} /> },
       ]
     },
     {

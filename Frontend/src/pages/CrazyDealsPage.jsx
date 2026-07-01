@@ -29,6 +29,7 @@ export default function CrazyDealsPage() {
             rating: p.rating || 0,
             image: (p.images && p.images[0]) ? p.images[0] : '',
             brandName: p.brandName || 'Mynzo Originals',
+            stock: p.stock || 0,
             sales: p.sales || 0
           })));
         }
@@ -77,9 +78,9 @@ export default function CrazyDealsPage() {
           deals.map((deal) => {
             const isWished = isInWishlist(deal.id);
             return (
-              <div 
+               <div 
                 key={deal.id} 
-                className="bg-white rounded-lg shadow-sm border border-slate-100 relative cursor-pointer hover:shadow-md transition-shadow group overflow-hidden flex flex-col"
+                className={`bg-white rounded-lg shadow-sm border border-slate-100 relative cursor-pointer hover:shadow-md transition-shadow group overflow-hidden flex flex-col ${deal.stock === 0 ? 'opacity-70 grayscale' : ''}`}
                 onClick={() => navigate(`/product/${deal.id}`)} 
               >  
                 {/* Discount Badge */}
@@ -108,6 +109,14 @@ export default function CrazyDealsPage() {
                 {/* Image */}
                 <div className="aspect-square w-full bg-[#F8F9FD] relative overflow-hidden">
                   <OptimizedImage src={getImageUrl(deal.image)} alt={deal.name} type="product" className="absolute inset-0 group-hover:scale-105 transition-transform duration-500" />
+                  {/* Out of Stock Overlay */}
+                  {deal.stock === 0 && (
+                    <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[0.5px] flex items-center justify-center z-20">
+                      <span className="bg-red-650 text-white text-[8px] font-black uppercase tracking-wider px-2 py-1 rounded-full shadow-md border border-red-500">
+                        Out of Stock
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Product Details */}

@@ -40,16 +40,25 @@ function ProductCard({ product }) {
   return (
     <div 
       onClick={() => navigate(`/product/${product.id}`)}
-      className="flex flex-col group cursor-pointer w-full bg-white rounded-xl shadow-xs hover:shadow-md border border-slate-100/80 overflow-hidden transition-shadow duration-300"
+      className={`flex flex-col group cursor-pointer w-full bg-white rounded-xl shadow-xs hover:shadow-md border border-slate-100/80 overflow-hidden transition-shadow duration-300 ${product.stock === 0 ? 'opacity-70 grayscale' : ''}`}
     >
       {/* Image container */}
-      <div className="relative aspect-[1/1.1] w-full bg-slate-100">
+      <div className={`relative aspect-[1/1.1] w-full bg-slate-100 ${product.stock === 0 ? 'grayscale' : ''}`}>
         <OptimizedImage
           src={product.image}
           alt={product.name}
           type="product"
           className="absolute inset-0 group-hover:scale-105 transition-transform duration-500 ease-out"
         />
+        
+        {/* Out of Stock Overlay */}
+        {product.stock === 0 && (
+          <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[0.5px] flex items-center justify-center z-25">
+            <span className="bg-red-650 text-white text-[9px] font-black uppercase tracking-wider px-2.5 py-1.5 rounded-full shadow-md border border-red-500">
+              Out of Stock
+            </span>
+          </div>
+        )}
         
         {/* Top Left Badge */}
         <div className="absolute top-0 left-0 bg-[#6b52a3] text-white text-[8px] font-bold px-2 py-1 rounded-br-lg shadow-sm z-10 uppercase tracking-wide">
@@ -114,5 +123,5 @@ function ProductCard({ product }) {
   );
 }
 
-// Only re-render when the product id or wishlist state changes
-export default memo(ProductCard, (prev, next) => prev.product.id === next.product.id);
+// Only re-render when the product id or stock/wishlist state changes
+export default memo(ProductCard, (prev, next) => prev.product.id === next.product.id && prev.product.stock === next.product.stock);

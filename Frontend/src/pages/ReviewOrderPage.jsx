@@ -437,7 +437,8 @@ export default function ReviewOrderPage() {
   };
 
 
-  const mockSavings = 2458;
+  const originalTotal = cart.reduce((sum, item) => sum + (item.originalPrice || item.price) * item.quantity, 0);
+  const productDiscount = Math.max(0, originalTotal - totalCartPrice);
   const platformCommission = 15;
   
   const gstAmount = Math.round(Math.max(0, totalCartPrice - discountAmount) * 0.18);
@@ -445,8 +446,6 @@ export default function ReviewOrderPage() {
   
   const walletUsedAmount = redeemWallet ? Math.min(walletBalance, grandTotalBeforeCoins) : 0;
   const grandTotal = Math.max(0, grandTotalBeforeCoins - walletUsedAmount);
-  
-  const mockOriginalTotal = totalCartPrice + mockSavings;
 
   const firstItem = cart && cart.length > 0 ? cart[0] : null;
 
@@ -460,7 +459,7 @@ export default function ReviewOrderPage() {
         </button>
         <div className="flex flex-col leading-tight">
           <h1 className="text-base font-black text-[#02006c] tracking-tight">Review Order</h1>
-          <span className="text-[11px] font-bold text-emerald-600">You're saving ₹{mockSavings + discountAmount}</span>
+          <span className="text-[11px] font-bold text-emerald-600">You're saving ₹{productDiscount + discountAmount}</span>
         </div>
       </header>
 
@@ -677,11 +676,11 @@ export default function ReviewOrderPage() {
           <div className="space-y-3.5 text-xs text-slate-600 font-semibold">
             <div className="flex justify-between items-center">
               <span>Total MRP</span>
-              <span className="text-slate-800">₹{mockOriginalTotal}</span>
+              <span className="text-slate-800">₹{originalTotal}</span>
             </div>
             <div className="flex justify-between items-center">
               <span>Product Discount</span>
-              <span className="text-emerald-600 font-medium">- ₹{mockSavings}</span>
+              <span className="text-emerald-600 font-medium">- ₹{productDiscount}</span>
             </div>
             {appliedCoupon && (
               <div className="flex justify-between items-center">

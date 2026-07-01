@@ -22,7 +22,8 @@ const Coupons = () => {
   const [type, setType] = useState('Percentage');
   const [value, setValue] = useState('');
   const [minOrder, setMinOrder] = useState('');
-  const [usageLimit, setUsageLimit] = useState('1');
+  const [usageLimit, setUsageLimit] = useState('1000');
+  const [perUserLimit, setPerUserLimit] = useState('1');
   const [expiry, setExpiry] = useState('');
 
   // Confirm Modal state
@@ -105,6 +106,7 @@ const Coupons = () => {
           value,
           minOrder,
           usageLimit,
+          perUserLimit,
           expiry
         })
       });
@@ -118,7 +120,8 @@ const Coupons = () => {
         setType('Percentage');
         setValue('');
         setMinOrder('');
-        setUsageLimit('1');
+        setUsageLimit('1000');
+        setPerUserLimit('1');
         setExpiry('');
         fetchCoupons();
       } else {
@@ -378,9 +381,14 @@ const Coupons = () => {
                       </div>
                     </td>
                     <td className="px-6 py-5">
-                      <span className="px-2.5 py-1 bg-slate-50 text-slate-600 rounded-lg text-[10px] font-black border border-slate-100">
-                        {coupon.usage || 0} / {coupon.usageLimit || '∞'} Times
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className="px-2 py-0.5 bg-slate-50 text-slate-600 rounded text-[9.5px] font-black border border-slate-100 w-fit">
+                          Global: {coupon.usage || 0} / {coupon.usageLimit || '∞'}
+                        </span>
+                        <span className="text-[9.5px] font-black text-slate-450 uppercase tracking-tight">
+                          Per User: {coupon.perUserLimit || 1}
+                        </span>
+                      </div>
                     </td>
                     <td className="px-6 py-5">
                       <StatusBadge status={coupon.status} />
@@ -401,7 +409,8 @@ const Coupons = () => {
                             setType(coupon.type);
                             setValue(coupon.value);
                             setMinOrder(coupon.minOrder || '');
-                            setUsageLimit(String(coupon.usageLimit || 1));
+                            setUsageLimit(String(coupon.usageLimit || 1000));
+                            setPerUserLimit(String(coupon.perUserLimit || 1));
                             setExpiry(new Date(coupon.expiry).toISOString().split('T')[0]);
                             setIsAdding(true);
                           }}
@@ -447,7 +456,8 @@ const Coupons = () => {
                     setType('Percentage');
                     setValue('');
                     setMinOrder('');
-                    setUsageLimit('1');
+                    setUsageLimit('1000');
+                    setPerUserLimit('1');
                     setExpiry('');
                   }} 
                   className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-slate-900 transition-all"
@@ -508,16 +518,29 @@ const Coupons = () => {
                     />
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Usage Limit per User</label>
-                    <input 
-                      type="number" 
-                      placeholder="1" 
-                      className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 text-sm font-bold outline-none" 
-                      value={usageLimit}
-                      onChange={e => setUsageLimit(e.target.value)}
-                      min="1"
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Global Usage Limit</label>
+                      <input 
+                        type="number" 
+                        placeholder="1000" 
+                        className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 text-sm font-bold outline-none" 
+                        value={usageLimit}
+                        onChange={e => setUsageLimit(e.target.value)}
+                        min="1"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Usage Limit per User</label>
+                      <input 
+                        type="number" 
+                        placeholder="1" 
+                        className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 text-sm font-bold outline-none" 
+                        value={perUserLimit}
+                        onChange={e => setPerUserLimit(e.target.value)}
+                        min="1"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
@@ -543,7 +566,8 @@ const Coupons = () => {
                       setType('Percentage');
                       setValue('');
                       setMinOrder('');
-                      setUsageLimit('1');
+                      setUsageLimit('1000');
+                      setPerUserLimit('1');
                       setExpiry('');
                     }} 
                     className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl text-[10px] font-black uppercase tracking-widest"

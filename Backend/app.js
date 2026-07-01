@@ -130,6 +130,8 @@ app.use('/admin/catalog/chips', require('./Router/categoryChipRoutes'));
 app.use('/admin/catalog/subchips', require('./Router/subCategoryChipRoutes'));
 app.use('/admin/catalog/banners', require('./Router/bannerRoutes'));
 app.use('/admin/catalog/products', require('./Router/productRoutes'));
+app.use('/admin/catalog/brands', require('./Router/brandRoutes'));
+app.use('/catalog/brands', require('./Router/brandRoutes'));
 app.use('/homepage', require('./Router/homepageRoutes'));
 app.use('/admin/settings', require('./Router/settingsRoutes'));
 app.use('/admin/promotions/coupons', require('./Router/couponRoutes'));

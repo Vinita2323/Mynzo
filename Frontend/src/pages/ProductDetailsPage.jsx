@@ -454,13 +454,13 @@ export default function ProductDetailsPage() {
       </header>
 
       {/* Main Content wrapper */}
-      <div className="max-w-7xl mx-auto w-full px-0 md:px-6 lg:px-8 md:py-8 grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+      <div className={`max-w-7xl mx-auto w-full px-0 md:px-6 lg:px-8 md:py-8 grid grid-cols-1 md:grid-cols-12 gap-8 items-start ${product.stock === 0 ? 'grayscale opacity-90' : ''}`}>
         
         {/* Left Column: Image Gallery on desktop */}
         <div className="md:col-span-7 bg-white p-0 md:p-6 md:rounded-2xl md:border md:border-slate-100 md:shadow-xs space-y-6">
           {/* Hero Image Section */}
           <div className="relative bg-white border-b border-slate-100 md:border-b-0">
-            <div className="w-full aspect-square relative overflow-hidden rounded-none md:rounded-2xl">
+            <div className={`w-full aspect-square relative overflow-hidden rounded-none md:rounded-2xl ${product.stock === 0 ? 'grayscale opacity-75' : ''}`}>
               {/* Main Product Images Slider */}
               <div 
                 id="product-image-slider"
@@ -482,6 +482,15 @@ export default function ProductDetailsPage() {
                   </div>
                 ))}
               </div>
+
+              {/* Out of Stock Overlay Badge */}
+              {product.stock === 0 && (
+                <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[0.5px] flex items-center justify-center z-25">
+                  <span className="bg-red-650 text-white text-xs font-black uppercase tracking-wider px-4 py-2 rounded-full shadow-lg border border-red-500">
+                    Out of Stock
+                  </span>
+                </div>
+              )}
 
               {/* Dots Indicator Overlay */}
               {product.images && product.images.length > 1 && (
@@ -559,7 +568,7 @@ export default function ProductDetailsPage() {
 
             {/* Image Thumbnails Row */}
             {product.images && product.images.length > 1 && (
-              <div className="flex justify-center gap-2 mt-4 px-4 overflow-x-auto scrollbar-none">
+              <div className={`flex justify-center gap-2 mt-4 px-4 overflow-x-auto scrollbar-none ${product.stock === 0 ? 'grayscale opacity-70' : ''}`}>
                 {product.images.map((img, idx) => (
                   <button
                     key={idx}
@@ -601,12 +610,25 @@ export default function ProductDetailsPage() {
           </div>
 
           {/* Pricing */}
-          <div className="border-b border-slate-100 pb-4">
-            <div className="flex items-baseline gap-2">
-              <span className="text-[#ee4923] font-bold text-lg">{product.discount} OFF</span>
-              <span className="text-2xl md:text-3xl font-black text-[#02006c] tracking-tight">₹{product.price}</span>
+          <div className="border-b border-slate-100 pb-4 flex items-center justify-between">
+            <div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-[#ee4923] font-bold text-lg">{product.discount} OFF</span>
+                <span className="text-2xl md:text-3xl font-black text-[#02006c] tracking-tight">₹{product.price}</span>
+              </div>
+              <p className="text-xs text-slate-400 line-through mt-1">MRP ₹{product.originalPrice}</p>
             </div>
-            <p className="text-xs text-slate-400 line-through mt-1">MRP ₹{product.originalPrice}</p>
+            <div>
+              {product.stock === 0 ? (
+                <span className="text-xs font-black text-red-650 bg-red-50 border border-red-250 px-3 py-1.5 rounded-full uppercase tracking-wider animate-pulse">
+                  Out of Stock
+                </span>
+              ) : (
+                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                  In Stock ({product.stock} available)
+                </span>
+              )}
+            </div>
           </div>
 
           {/* Size Selector */}
@@ -617,6 +639,7 @@ export default function ProductDetailsPage() {
                 <button 
                   onClick={() => setIsSizeChartOpen(true)}
                   className="text-[#ee4923] font-bold text-[11px] cursor-pointer hover:underline"
+                  disabled={product.stock === 0}
                 >
                   Size Chart
                 </button>
@@ -625,7 +648,7 @@ export default function ProductDetailsPage() {
               <div className="flex gap-2.5">
                 {['XS', 'S', 'M', 'L', 'XL'].map((size) => {
                   const isSelected = selectedSize === size;
-                  const isOutOfStock = size === 'S';
+                  const isOutOfStock = size === 'S' || product.stock === 0;
                   
                   return (
                     <button
@@ -696,15 +719,25 @@ export default function ProductDetailsPage() {
           <div className="hidden md:flex gap-3 pt-2">
             <button 
               onClick={handleAddToCart}
-              className="flex-1 bg-white hover:bg-slate-50 border border-[#02006c] rounded-xl text-[#02006c] font-black text-xs uppercase tracking-wider py-3.5 transition-colors cursor-pointer"
+              disabled={product.stock === 0}
+              className={`flex-1 rounded-xl font-black text-xs uppercase tracking-wider py-3.5 transition-colors flex items-center justify-center gap-1.5
+                ${product.stock === 0 
+                  ? 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed opacity-60' 
+                  : 'bg-white hover:bg-slate-50 border border-[#02006c] text-[#02006c] cursor-pointer'
+                }`}
             >
               Add to cart
             </button>
             <button 
               onClick={handleBuyNow}
-              className="flex-1 bg-[#ee4923] hover:bg-orange-600 rounded-xl text-white font-black text-xs uppercase tracking-wider py-3.5 shadow-md shadow-orange-500/20 transition-colors cursor-pointer"
+              disabled={product.stock === 0}
+              className={`flex-1 rounded-xl font-black text-xs uppercase tracking-wider py-3.5 shadow-md transition-colors flex items-center justify-center gap-1.5
+                ${product.stock === 0 
+                  ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60 shadow-none' 
+                  : 'bg-[#ee4923] hover:bg-orange-600 text-white shadow-orange-500/20 cursor-pointer'
+                }`}
             >
-              Buy at ₹{product.price}
+              {product.stock === 0 ? 'Out of Stock' : `Buy at ₹${product.price}`}
             </button>
           </div>
         </div>
@@ -1011,19 +1044,29 @@ export default function ProductDetailsPage() {
       </div>
 
       {/* Sticky Bottom Action Bar (Mobile Only) */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-2.5 z-40 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] max-w-md mx-auto w-full md:hidden">
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-2.5 z-45 shadow-[0_-4px_10px_rgba(0,0,0,0.05)] max-w-md mx-auto w-full md:hidden">
         <div className="flex gap-2 h-12">
           <button 
             onClick={handleAddToCart}
-            className="flex-1 bg-white border border-[#02006c] rounded text-[#02006c] font-bold text-[13px] flex items-center justify-center active:bg-slate-50 transition-colors"
+            disabled={product.stock === 0}
+            className={`flex-1 rounded font-bold text-[13px] flex items-center justify-center transition-colors
+              ${product.stock === 0 
+                ? 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed opacity-60' 
+                : 'bg-white border border-[#02006c] text-[#02006c] active:bg-slate-50'
+              }`}
           >
             Add to cart
           </button>
           <button 
             onClick={handleBuyNow}
-            className="flex-1 bg-[#ee4923] rounded text-white font-bold text-[13px] flex items-center justify-center active:bg-orange-600 shadow-sm transition-colors"
+            disabled={product.stock === 0}
+            className={`flex-1 rounded font-bold text-[13px] flex items-center justify-center transition-colors
+              ${product.stock === 0 
+                ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60' 
+                : 'bg-[#ee4923] text-white active:bg-orange-600 shadow-sm'
+              }`}
           >
-            Buy at ₹{product.price}
+            {product.stock === 0 ? 'Out of Stock' : `Buy at ₹${product.price}`}
           </button>
         </div>
       </div>

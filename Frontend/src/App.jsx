@@ -31,6 +31,7 @@ const ReferEarnPage      = lazy(() => import('./pages/ReferEarnPage'));
 const SavedAddressesPage = lazy(() => import('./pages/SavedAddressesPage'));
 const TrackOrderPage     = lazy(() => import('./pages/TrackOrderPage'));
 const OrderDetailsPage   = lazy(() => import('./pages/OrderDetailsPage'));
+const BrandPage          = lazy(() => import('./pages/BrandPage'));
 
 // Minimal route-level loading skeleton (shown while a page chunk loads)
 const PageSkeleton = () => (
@@ -83,6 +84,7 @@ function AppContent() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/categories" element={<CategoriesPage />} />
+        <Route path="/brand/:brandId" element={<BrandPage />} />
         <Route path="/studio" element={<StudioPage />} />
         <Route path="/games" element={<GamesPage />} />
         <Route path="/cart" element={<CartPage />} />
@@ -108,6 +110,7 @@ function AppContent() {
         <Route path="/saved-addresses" element={<SavedAddressesPage />} />
         <Route path="/track-order/:orderId" element={<TrackOrderPage />} />
         <Route path="/order-details/:orderId" element={<OrderDetailsPage />} />
+        <Route path="/brand/:brandId" element={<BrandPage />} />
       </Routes>
       </Suspense>
     </Layout>

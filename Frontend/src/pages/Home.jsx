@@ -291,12 +291,12 @@ export default function Home() {
 
   const trendingBrandsList = useMemo(() => {
     if (trendingBrands && trendingBrands.length > 0) {
-      return trendingBrands.map((b, idx) => ({
-        id: idx + 1,
-        brand: b.brand,
+      return trendingBrands.map((b) => ({
+        id: b._id,
+        brand: b.brand || b.name,
         discount: "Trending Choice",
         badgeColor: "text-indigo-600",
-        image: getImageUrl(b.image) || "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=200"
+        image: getImageUrl(b.logo || b.image) || "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=200"
       }));
     }
     const brandSales = {};
@@ -318,7 +318,7 @@ export default function Home() {
       .sort((a, b) => b.sales - a.sales)
       .slice(0, 6)
       .map((b, idx) => ({
-        id: idx + 1,
+        id: b.brand,
         brand: b.brand,
         discount: "Trending Choice",
         badgeColor: "text-indigo-600",
@@ -579,7 +579,7 @@ export default function Home() {
                     <div 
                       key={deal.id}
                       onClick={() => navigate(`/product/${deal.id}`)}
-                      className="flex-shrink-0 w-24 md:w-auto flex flex-col justify-between cursor-pointer group bg-white p-2 rounded-2xl border border-slate-100/50 hover:shadow-md transition-all duration-300"
+                      className={`flex-shrink-0 w-24 md:w-auto flex flex-col justify-between cursor-pointer group bg-white p-2 rounded-2xl border border-slate-100/50 hover:shadow-md transition-all duration-300 ${deal.stock === 0 ? 'opacity-70 grayscale' : ''}`}
                     >
                       <div>
                         {/* Image display box */}
@@ -595,6 +595,15 @@ export default function Home() {
                             type="product"
                             className="absolute inset-0 group-hover:scale-105 transition-transform duration-300"
                           />
+
+                          {/* Out of Stock Overlay */}
+                          {deal.stock === 0 && (
+                            <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[0.5px] flex items-center justify-center z-20">
+                              <span className="bg-red-650 text-white text-[8px] font-black uppercase tracking-wider px-2 py-1 rounded-full shadow-md border border-red-500">
+                                Out of Stock
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Title */}
@@ -647,7 +656,7 @@ export default function Home() {
                       <div 
                         key={deal.id}
                         onClick={() => navigate(`/product/${deal.id}`)}
-                        className="bg-white border border-[#ee4923]/35 rounded-2xl p-3 flex flex-col justify-between shadow-2xs hover:shadow-md cursor-pointer hover:scale-[1.01] active:scale-95 transition-all duration-300 group"
+                        className={`bg-white border border-[#ee4923]/35 rounded-2xl p-3 flex flex-col justify-between shadow-2xs hover:shadow-md cursor-pointer hover:scale-[1.01] active:scale-95 transition-all duration-300 group ${deal.stock === 0 ? 'opacity-70 grayscale' : ''}`}
                       >
                         <div>
                           <div className="bg-[#F8F9FD] rounded-xl w-full aspect-square flex items-center justify-center mb-2.5 relative overflow-hidden">
@@ -657,6 +666,14 @@ export default function Home() {
                               type="product"
                               className="absolute inset-0 group-hover:scale-105 transition-transform duration-500"
                             />
+                            {/* Out of Stock Overlay */}
+                            {deal.stock === 0 && (
+                              <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[0.5px] flex items-center justify-center z-20">
+                                <span className="bg-red-650 text-white text-[8px] font-black uppercase tracking-wider px-2 py-1 rounded-full shadow-md border border-red-500">
+                                  Out of Stock
+                                </span>
+                              </div>
+                            )}
                           </div>
                           <span className="text-[9.5px] md:text-xs font-bold text-slate-400 tracking-tight leading-normal px-1 block truncate">
                             {deal.brandName}
@@ -724,7 +741,7 @@ export default function Home() {
                       <div 
                         key={deal.id} 
                         onClick={() => navigate(`/product/${deal.id}`)} 
-                        className="bg-white rounded-2xl border border-slate-100 p-2.5 relative cursor-pointer hover:shadow-md transition-shadow group flex flex-col justify-between"
+                        className={`bg-white rounded-2xl border border-slate-100 p-2.5 relative cursor-pointer hover:shadow-md transition-shadow group flex flex-col justify-between ${deal.stock === 0 ? 'opacity-70 grayscale' : ''}`}
                       >
                         {/* Heart Icon */}
                         <button 
@@ -747,6 +764,14 @@ export default function Home() {
                         <div>
                           <div className="aspect-square bg-[#F8F9FD] rounded-xl mb-2 relative overflow-hidden">
                             <OptimizedImage src={getImageUrl(deal.image)} alt={deal.name} type="product" className="absolute inset-0 group-hover:scale-105 transition-transform duration-500" />
+                            {/* Out of Stock Overlay */}
+                            {deal.stock === 0 && (
+                              <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[0.5px] flex items-center justify-center z-20">
+                                <span className="bg-red-650 text-white text-[8px] font-black uppercase tracking-wider px-2 py-1 rounded-full shadow-md border border-red-500">
+                                  Out of Stock
+                                </span>
+                              </div>
+                            )}
                           </div>
                           <div className="px-1">
                             <h4 className="text-xs md:text-sm font-bold text-[#02006c] truncate group-hover:text-[#ee4923]">{deal.name}</h4>
@@ -806,16 +831,25 @@ export default function Home() {
                         <div 
                           key={`top-buy-${buy.id}`} 
                           onClick={() => navigate(`/product/${buy.id}`)}
-                          className={`flex-shrink-0 w-32 h-44 md:w-auto md:h-auto md:aspect-[3/4.2] rounded-2xl p-3.5 flex flex-col justify-between ${bgGradient} text-white relative shadow-sm cursor-pointer hover:-translate-y-1 transition-transform`}
+                          className={`flex-shrink-0 w-32 h-44 md:w-auto md:h-auto md:aspect-[3/4.2] rounded-2xl p-3.5 flex flex-col justify-between ${bgGradient} text-white relative shadow-sm cursor-pointer hover:-translate-y-1 transition-transform ${buy.stock === 0 ? 'opacity-70 grayscale' : ''}`}
                         >
                           <div className="absolute top-1 left-2.5 text-[32px] md:text-[38px] font-black opacity-90 leading-none" style={{ fontFamily: 'sans-serif' }}>
                             {idx + 1}.
                           </div>
                           
                           <div className="mt-8 flex-grow flex items-center justify-center relative z-10">
-                            <div className="w-18 h-18 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-inner overflow-hidden">
+                            <div className="w-18 h-18 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm border border-white/30 shadow-inner overflow-hidden relative">
                               {buy.image ? (
-                                <OptimizedImage src={getImageUrl(buy.image)} alt={buy.name} type="product" className="w-full h-full" />
+                                <>
+                                  <OptimizedImage src={getImageUrl(buy.image)} alt={buy.name} type="product" className="w-full h-full" />
+                                  {buy.stock === 0 && (
+                                    <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[0.5px] flex items-center justify-center z-20">
+                                      <span className="bg-red-650 text-white text-[7.5px] font-black uppercase tracking-tight px-1.5 py-0.5 rounded-full border border-red-500">
+                                        Sold Out
+                                      </span>
+                                    </div>
+                                  )}
+                                </>
                               ) : (
                                 <Sparkles className="w-7 h-7 text-white/80" />
                               )}
@@ -847,7 +881,7 @@ export default function Home() {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {trendingBrandsList.map(brand => (
-                    <div key={`home-brand-${brand.id}`} className="flex flex-col cursor-pointer group" onClick={() => navigate('/categories')}>
+                    <div key={`home-brand-${brand.id}`} className="flex flex-col cursor-pointer group" onClick={() => navigate(`/brand/${brand.id}`)}>
                       <div className="w-full aspect-[4/3] rounded-2xl bg-slate-100 relative shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center overflow-hidden border border-slate-100">
                         {/* Brand Badge */}
                         <div className="absolute top-0 left-2.5 bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-b-lg shadow-sm z-10">
@@ -1011,7 +1045,7 @@ export default function Home() {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {trendingBrandsList.map(brand => (
-                    <div key={`cat-brand-${brand.id}`} className="flex flex-col cursor-pointer group" onClick={() => navigate('/categories')}>
+                    <div key={`cat-brand-${brand.id}`} className="flex flex-col cursor-pointer group" onClick={() => navigate('/brand/' + brand.id)}>
                       <div className="w-full aspect-[4/3] rounded-2xl bg-slate-100 relative overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-slate-100">
                         <div className="absolute top-0 left-2.5 bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-b-lg shadow-sm z-10">
                           <span className={`text-[9px] md:text-[10px] font-black ${brand.badgeColor}`}>{brand.brand.toUpperCase()}</span>

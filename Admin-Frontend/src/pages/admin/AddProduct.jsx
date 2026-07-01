@@ -116,6 +116,9 @@ const AddProduct = () => {
 
   // Organization state
   const [brandName, setBrandName] = useState('');
+  const [brandId, setBrandId] = useState('');
+  const [isTrending, setIsTrending] = useState(false);
+  const [brands, setBrands] = useState([]);
   const [tags, setTags] = useState('');
   const [manufacturerInfo, setManufacturerInfo] = useState('');
 
@@ -141,6 +144,8 @@ const AddProduct = () => {
           setDiscountLabel(p.discountLabel || '');
           setSku(p.sku || '');
           setBrandName(p.brandName || '');
+          setBrandId(p.brandId || '');
+          setIsTrending(p.isTrending || false);
           setTags(Array.isArray(p.tags) ? p.tags.join(', ') : '');
           setManufacturerInfo(p.manufacturerInfo || '');
           setHsnCode(p.hsnCode || '');
@@ -204,7 +209,11 @@ const AddProduct = () => {
         // Fetch Subcategories
         const subRes = await fetch(`${apiBase}/admin/catalog/subchips`);
         const subData = await subRes.json();
-        
+
+        // Fetch Brands
+        const brandRes = await fetch(`${apiBase}/catalog/brands`);
+        const brandData = await brandRes.json();
+
         if (catRes.ok && catData.success && subRes.ok && subData.success) {
           const catsList = (catData.chips || []).filter(c => c.active !== false).map(c => ({
             id: c._id,
@@ -222,8 +231,12 @@ const AddProduct = () => {
           });
           setSubCategoriesMap(map);
         }
+
+        if (brandRes.ok && brandData.success) {
+          setBrands(brandData.brands || []);
+        }
       } catch (err) {
-        console.error('Failed to fetch categories/subcategories:', err);
+        console.error('Failed to fetch categories/subcategories/brands:', err);
       }
     };
     fetchCategoriesAndSubcategories();
@@ -378,6 +391,8 @@ const AddProduct = () => {
       bodyFormData.append('sku', sku);
       bodyFormData.append('hsnCode', hsnCode);
       bodyFormData.append('brandName', brandName || 'Generic');
+      bodyFormData.append('brandId', brandId || '');
+      bodyFormData.append('isTrending', isTrending);
       bodyFormData.append('manufacturerInfo', manufacturerInfo);
 
       bodyFormData.append('highlights', JSON.stringify(highlights));
@@ -868,6 +883,19 @@ const AddProduct = () => {
                 </button>
               </div>
             ))}
+
+            <div className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200">
+              <div>
+                <p className="text-sm font-semibold text-slate-800">Is Trending Product</p>
+                <p className="text-xs text-slate-500 mt-0.5">Feature as a Popular Product in its Brand page</p>
+              </div>
+              <button onClick={() => setIsTrending(!isTrending)}>
+                {isTrending
+                  ? <ToggleRight size={28} className="text-blue-500" />
+                  : <ToggleLeft size={28} className="text-slate-300" />
+                }
+              </button>
+            </div>
           </section>
 
           {/* Tax & Compliance */}
@@ -943,13 +971,34 @@ const AddProduct = () => {
 
             <div>
               <Label>Brand Name</Label>
+              <select 
+                value={brandId}
+                onChange={e => {
+                  const selectedId = e.target.value;
+                  setBrandId(selectedId);
+                  const selectedBrand = brands.find(b => b._id === selectedId);
+                  setBrandName(selectedBrand ? selectedBrand.name : 'Generic');
+                }}
+                className={inputCls}
+              >
+                <option value="">Generic / None</option>
+                {brands.map(b => (
+                  <option key={b._id} value={b._id}>{b.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex items-center gap-2 py-1 select-none">
               <input 
-                type="text" 
-                value={brandName}
-                onChange={e => setBrandName(e.target.value)}
-                placeholder="Generic" 
-                className={inputCls} 
+                type="checkbox"
+                id="isTrending"
+                checked={isTrending}
+                onChange={e => setIsTrending(e.target.checked)}
+                className="w-4 h-4 accent-orange-500 rounded border-slate-300 cursor-pointer"
               />
+              <label htmlFor="isTrending" className="text-xs font-bold text-slate-600 cursor-pointer">
+                Is Trending / Popular Product
+              </label>
             </div>
             <div>
               <Label>Tags (Comma Separated)</Label>
