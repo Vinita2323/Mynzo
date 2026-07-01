@@ -177,3 +177,37 @@ exports.bulkDeleteNotifications = async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
+
+// @desc    Mark a single notification as read for current user
+// @route   POST /api/notifications/:id/read
+// @access  Private (User)
+exports.markSingleRead = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const notificationId = req.params.id;
+    
+    // Make sure notification exists and target matches
+    const notification = await Notification.findOne({
+      _id: notificationId,
+      $or: [
+        { target: 'All Users' },
+        { targetUserIds: userId }
+      ]
+    });
+    
+    if (!notification) {
+      return res.status(404).json({ success: false, message: 'Notification not found' });
+    }
+    
+    // Add userId to readBy array if not already present
+    await Notification.updateOne(
+      { _id: notificationId },
+      { $addToSet: { readBy: userId } }
+    );
+    
+    res.status(200).json({ success: true, message: 'Notification marked as read' });
+  } catch (error) {
+    console.error('Mark single read error:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

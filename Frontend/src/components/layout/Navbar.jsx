@@ -218,6 +218,21 @@ export default function Navbar() {
     }
   };
 
+  const markSingleNotificationAsRead = async (id) => {
+    if (!user) return;
+    try {
+      const token = localStorage.getItem('userToken');
+      await fetch(`${API_BASE}/notifications/${id}/read`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      // Update local read status for this notification only
+      setNotifications(prev => prev.map(notif => notif._id === id ? { ...notif, read: true } : notif));
+    } catch (err) {
+      console.error('Error marking single notification as read:', err);
+    }
+  };
+
   useEffect(() => {
     if (user) {
       fetchNotifications();
@@ -229,10 +244,6 @@ export default function Navbar() {
   useEffect(() => {
     if (isNotificationModalOpen) {
       fetchNotifications();
-      const timer = setTimeout(() => {
-        markNotificationsAsRead();
-      }, 1500);
-      return () => clearTimeout(timer);
     }
   }, [isNotificationModalOpen]);
 
@@ -907,7 +918,17 @@ export default function Navbar() {
         <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/60 backdrop-blur-xs transition-opacity duration-300 p-0 md:p-4">
           <div className="w-full max-w-md md:rounded-2xl bg-white rounded-t-3xl p-6 shadow-2xl animate-slide-up max-h-[85vh] flex flex-col animate-scale-in">
             <div className="flex items-center justify-between mb-4 border-b border-slate-100 pb-3 flex-shrink-0">
-              <h3 className="text-base font-bold text-[#02006c] nunito-heading">Notifications</h3>
+              <div className="flex items-baseline gap-3">
+                <h3 className="text-base font-bold text-[#02006c] nunito-heading">Notifications</h3>
+                {notifications.some(n => !n.read) && (
+                  <button 
+                    onClick={markNotificationsAsRead}
+                    className="text-[10px] font-black text-[#ee4923] uppercase tracking-wider hover:underline cursor-pointer"
+                  >
+                    Mark all as read
+                  </button>
+                )}
+              </div>
               <button
                 onClick={() => setIsNotificationModalOpen(false)}
                 className="p-1 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
@@ -923,7 +944,11 @@ export default function Navbar() {
                 </div>
               ) : notifications.length > 0 ? (
                 notifications.map((notif) => (
-                  <div key={notif._id} className={`p-3 rounded-xl border ${notif.read ? 'bg-white border-slate-100' : 'bg-orange-50/50 border-orange-200'}`}>
+                  <div 
+                    key={notif._id} 
+                    onClick={() => !notif.read && markSingleNotificationAsRead(notif._id)}
+                    className={`p-3 rounded-xl border transition-all cursor-pointer ${notif.read ? 'bg-white border-slate-100 hover:bg-slate-50/50' : 'bg-orange-50/50 border-orange-200 hover:bg-orange-50'}`}
+                  >
                     <div className="flex items-start justify-between">
                       <h4 className={`text-sm font-bold nunito-heading ${notif.read ? 'text-slate-700' : 'text-[#02006c]'}`}>{notif.title}</h4>
                       {!notif.read && <span className="w-2 h-2 rounded-full bg-[#ee4923] flex-shrink-0 mt-1.5"></span>}

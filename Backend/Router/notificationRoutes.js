@@ -12,5 +12,6 @@ router.post('/bulk-delete', protectAdmin, notificationController.bulkDeleteNotif
 // User-facing routes
 router.get('/my', protectUser, notificationController.getMyNotifications);
 router.post('/read-all', protectUser, notificationController.markAllRead);
+router.post('/:id/read', protectUser, notificationController.markSingleRead);
 
 module.exports = router;
