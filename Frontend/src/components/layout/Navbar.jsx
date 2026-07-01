@@ -365,7 +365,7 @@ export default function Navbar() {
       </header>
 
       {/* DESKTOP HEADER: Visible on screen sizes >= md */}
-      <header className="hidden md:block sticky top-0 z-50 bg-[#EE4923] text-white shadow-md select-none">
+      <header className="hidden md:block sticky top-0 z-[60] bg-[#EE4923] text-white shadow-md select-none">
         {/* Main top header bar */}
         <div className="max-w-7xl mx-auto px-4 lg:px-8 py-3 flex items-center justify-between gap-4">
           
@@ -505,35 +505,55 @@ export default function Navbar() {
                       </div>
                       
                       <button 
-                        onClick={() => navigate('/profile')} 
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          navigate('/profile');
+                          setProfileDropdownOpen(false);
+                        }} 
                         className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                       >
                         <User className="w-3.5 h-3.5 text-slate-500" />
                         My Profile
                       </button>
                       <button 
-                        onClick={() => navigate('/orders')} 
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          navigate('/orders');
+                          setProfileDropdownOpen(false);
+                        }} 
                         className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                       >
                         <Plus className="w-3.5 h-3.5 text-slate-500" />
                         My Orders
                       </button>
                       <button 
-                        onClick={() => navigate('/saved-addresses')} 
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          navigate('/saved-addresses');
+                          setProfileDropdownOpen(false);
+                        }} 
                         className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                       >
                         <MapPin className="w-3.5 h-3.5 text-slate-500" />
                         Addresses
                       </button>
                       <button 
-                        onClick={() => navigate('/wallet')} 
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          navigate('/wallet');
+                          setProfileDropdownOpen(false);
+                        }} 
                         className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                       >
                         <Wallet className="w-3.5 h-3.5 text-slate-500" />
                         Wallet & Coins
                       </button>
                       <button 
-                        onClick={() => navigate('/coupons')} 
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          navigate('/coupons');
+                          setProfileDropdownOpen(false);
+                        }} 
                         className="w-full text-left px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2"
                       >
                         <Percent className="w-3.5 h-3.5 text-slate-500" />
@@ -542,7 +562,11 @@ export default function Navbar() {
                       
                       <div className="border-t border-slate-100 my-1"></div>
                       <button 
-                        onClick={logout} 
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          logout();
+                          setProfileDropdownOpen(false);
+                        }} 
                         className="w-full text-left px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 flex items-center gap-2"
                       >
                         <LogOut className="w-3.5 h-3.5" />

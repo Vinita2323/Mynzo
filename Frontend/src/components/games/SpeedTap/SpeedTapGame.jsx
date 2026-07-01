@@ -46,6 +46,7 @@ export default function SpeedTapGame({ onClose, addCoins }) {
 
   return (
     <div className="fixed inset-0 z-[100] bg-[#071226] text-white flex flex-col overflow-hidden">
+      <div className="w-full h-full flex flex-col md:max-w-md md:mx-auto relative">
       <AnimatePresence mode="wait">
         {gameState === 'intro' && (
           <IntroScreen 
@@ -100,6 +101,7 @@ export default function SpeedTapGame({ onClose, addCoins }) {
           />
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }

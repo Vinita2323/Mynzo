@@ -155,30 +155,32 @@ export default function WalletPage() {
     <div className="min-h-[100dvh] bg-slate-50 flex flex-col font-sans pb-20">
       {/* Header */}
       <div className="bg-[#fff4f2] px-4 py-3 sticky top-0 z-50 shadow-sm flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button 
-            onClick={() => navigate(-1)}
-            className="p-2 -ml-2 hover:bg-slate-100 rounded-full transition-colors active:scale-95"
-          >
-            <ChevronLeft className="w-5 h-5 text-[#02006c]" />
-          </button>
-          <h1 className="text-[17px] font-bold text-[#02006c]">My Wallet</h1>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleAddTestCoins}
-            className="bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-1.5 rounded-lg active:scale-95 transition-transform"
-          >
-            + 1000 Coins (Test)
-          </button>
-          <button 
-            onClick={handleRefresh}
-            className="p-2 rounded-full hover:bg-slate-100 transition-colors"
-            title="Refresh Balance"
-            disabled={refreshing}
-          >
-            <RefreshCw className={`w-4 h-4 text-slate-500 ${refreshing ? 'animate-spin' : ''}`} />
-          </button>
+        <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-0 md:px-8">
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => navigate(-1)}
+              className="p-2 -ml-2 hover:bg-slate-100 rounded-full transition-colors active:scale-95 cursor-pointer"
+            >
+              <ChevronLeft className="w-5 h-5 text-[#02006c]" />
+            </button>
+            <h1 className="text-[17px] font-bold text-[#02006c]">My Wallet</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleAddTestCoins}
+              className="bg-amber-100 text-amber-800 text-[10px] font-black px-2.5 py-1.5 rounded-lg active:scale-95 transition-transform cursor-pointer"
+            >
+              + 1000 Coins (Test)
+            </button>
+            <button 
+              onClick={handleRefresh}
+              className="p-2 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+              title="Refresh Balance"
+              disabled={refreshing}
+            >
+              <RefreshCw className={`w-4 h-4 text-slate-500 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+          </div>
         </div>
       </div>
       
@@ -188,7 +190,9 @@ export default function WalletPage() {
           <span className="text-xs font-bold text-slate-400">Loading wallet details...</span>
         </div>
       ) : (
-        <div className="p-4 space-y-5">
+        <div className="max-w-7xl mx-auto px-4 md:px-12 py-4 w-full flex-grow">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div className="md:col-span-7 space-y-5 flex flex-col">
           
           {/* Dual Balance Card */}
           <div className="bg-gradient-to-br from-[#02006c] to-indigo-900 rounded-[24px] p-5 text-white shadow-lg relative overflow-hidden">
@@ -287,9 +291,11 @@ export default function WalletPage() {
             </form>
           </div>
 
-          {/* History Section */}
-          <div className="space-y-3">
-            <div className="flex border-b border-slate-100">
+            </div>
+
+            {/* Right Column (History Section) */}
+            <div className="md:col-span-5 space-y-3">
+              <div className="flex border-b border-slate-100">
               <button
                 onClick={() => setHistoryTab('coins')}
                 className={`flex-1 pb-3 text-xs font-black uppercase tracking-wider text-center border-b-2 transition-all ${historyTab === 'coins' ? 'border-[#02006c] text-[#02006c]' : 'border-transparent text-slate-400'}`}
@@ -377,6 +383,7 @@ export default function WalletPage() {
           </div>
 
         </div>
+      </div>
       )}
     </div>
   );

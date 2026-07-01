@@ -233,6 +233,7 @@ export default function SnakeGame({ onClose, addCoins }) {
       onTouchMove={onTouchMoveEvent}
       onTouchEnd={onTouchEndEvent}
     >
+      <div className="w-full flex-grow flex flex-col md:max-w-md md:mx-auto relative">
       
       {/* Top Bar */}
       <div className="flex items-center justify-between p-5 pt-8">
@@ -430,6 +431,7 @@ export default function SnakeGame({ onClose, addCoins }) {
           </div>
         </div>
 
+      </div>
       </div>
     </div>
   );

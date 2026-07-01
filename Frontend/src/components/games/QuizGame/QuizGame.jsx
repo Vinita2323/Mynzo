@@ -84,6 +84,7 @@ export default function QuizGame({ onClose, addCoins }) {
 
   return (
     <div className="fixed inset-0 z-[100] bg-[#071226] text-slate-900 flex flex-col overflow-hidden font-sans">
+      <div className="w-full h-full flex flex-col md:max-w-md md:mx-auto relative">
       <AnimatePresence mode="wait">
         {gameState === 'playing' && (
           <QuizQuestionCard 
@@ -108,6 +109,7 @@ export default function QuizGame({ onClose, addCoins }) {
           />
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }

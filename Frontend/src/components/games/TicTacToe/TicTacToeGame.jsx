@@ -32,6 +32,7 @@ export default function TicTacToeGame({ onClose, addCoins }) {
 
   return (
     <div className="fixed inset-0 z-[100] bg-slate-50 text-slate-900 flex flex-col overflow-hidden">
+      <div className="w-full h-full flex flex-col md:max-w-md md:mx-auto relative">
       <AnimatePresence mode="wait">
         {gameState === 'home' && (
           <TicTacHome 
@@ -69,6 +70,7 @@ export default function TicTacToeGame({ onClose, addCoins }) {
           />
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }

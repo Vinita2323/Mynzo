@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, Eye, EyeOff, ShieldCheck, Loader2 } from 'lucide-react';
 
-const API_URL = `${import.meta.env.VITE_API_URL || 'https://mynzoworld.com'}/admin/auth`;
+const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/admin/auth`;
 
 const Auth = () => {
   const [email, setEmail] = useState('admin@gmail.com');
@@ -69,7 +69,7 @@ const Auth = () => {
             </div>
           </div>
           <h1 className="text-2xl font-semibold text-slate-900 tracking-tight font-montserrat uppercase">
-            Cocio<span className="text-blue-600">.</span> Admin
+            Mynzo<span className="text-[#ee4923]">.</span> Admin
           </h1>
           <p className="text-slate-400 font-bold uppercase tracking-[2px] text-[9px] mt-1">Verified Management Session</p>
         </div>

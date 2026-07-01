@@ -134,18 +134,20 @@ export default function GamesPage() {
       
       <div className="flex-grow overflow-y-auto pb-24 bg-[#FFF6F2]">
         {/* Playground Header */}
-        <div className="flex items-center justify-between px-5 py-2.5 sticky top-0 bg-orange-100 border-b-2 border-[#EE4923]/20 backdrop-blur-md z-20 shadow-sm">
-          <button onClick={() => navigate('/')} className="p-2 -ml-2 rounded-full hover:bg-black/5 transition-colors">
-            <ChevronLeft className="w-6 h-6 text-[#071226]" />
-          </button>
-          <div className="flex flex-col items-center">
-            <h1 className="text-xl font-black text-[#071226] uppercase tracking-tighter leading-none">PLAYGROUND <span className="text-amber-400">✦</span></h1>
-            <p className="text-[10px] font-medium text-slate-600 mt-0.5">Play Games, Win Rewards!</p>
+        <div className="sticky top-0 bg-orange-100 border-b-2 border-[#EE4923]/20 backdrop-blur-md z-20 shadow-sm">
+          <div className="flex items-center justify-between px-5 py-2.5 md:max-w-3xl md:mx-auto">
+            <button onClick={() => navigate('/')} className="p-2 -ml-2 rounded-full hover:bg-black/5 transition-colors">
+              <ChevronLeft className="w-6 h-6 text-[#071226]" />
+            </button>
+            <div className="flex flex-col items-center">
+              <h1 className="text-xl font-black text-[#071226] uppercase tracking-tighter leading-none">PLAYGROUND <span className="text-amber-400">✦</span></h1>
+              <p className="text-[10px] font-medium text-slate-600 mt-0.5">Play Games, Win Rewards!</p>
+            </div>
+            <div className="w-6 h-6"></div>
           </div>
-          <div className="w-6 h-6"></div>
         </div>
 
-        <div className="px-5 mt-2 space-y-6">
+        <div className="px-5 mt-2 space-y-6 md:max-w-3xl md:mx-auto">
 
           {/* Wallet Card */}
           <div className="relative w-full h-44 rounded-2xl p-5 text-white overflow-hidden shadow-lg"

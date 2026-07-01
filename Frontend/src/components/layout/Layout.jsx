@@ -11,11 +11,12 @@ export default function Layout({ children }) {
   const { isMobile } = useDeviceType();
 
   React.useEffect(() => {
+    window.scrollTo(0, 0);
     const scrollContainer = document.getElementById('main-scroll-container');
     if (scrollContainer) {
       scrollContainer.scrollTop = 0;
     }
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   const isLoginPage = location.pathname.toLowerCase().startsWith('/login');
   

@@ -829,12 +829,92 @@ export default function ProfilePage() {
                 </button>
               </div>
             </div>
-
           </div>
-
         </div>
-
       </div>
+
+      {/* Info Modals */}
+      <AnimatePresence>
+        {infoModalType === 'terms' && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-[#0a0927]/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4"
+          >
+            <motion.div 
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="bg-white rounded-t-[32px] sm:rounded-[32px] w-full max-w-md overflow-hidden flex flex-col h-[85vh] shadow-2xl border-t border-slate-100"
+            >
+              <div className="w-full flex justify-center pt-4 pb-2 bg-white relative z-20">
+                <div className="w-12 h-1.5 bg-slate-200 rounded-full"></div>
+              </div>
+              <div className="px-6 pb-4 pt-1 flex items-center justify-between border-b border-slate-100">
+                <h3 className="text-lg font-black text-[#02006c]">Terms & Policies</h3>
+                <button onClick={() => setInfoModalType(null)} className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"><X className="w-4.5 h-4.5 text-slate-500" /></button>
+              </div>
+              <div className="p-6 overflow-y-auto space-y-4 text-sm text-slate-600 text-left">
+                <h4 className="font-bold text-slate-800">1. Acceptance of Terms</h4>
+                <p>By using Mynzo, you agree to these conditions. Please read them carefully.</p>
+                <h4 className="font-bold text-slate-800">2. Privacy Policy</h4>
+                <p>Your privacy is important to us. We only collect information necessary to provide you with our services.</p>
+                <h4 className="font-bold text-slate-800">3. Return & Refund</h4>
+                <p>Items can be returned within 14 days of delivery. Custom avatars and digital goods are non-refundable.</p>
+                <h4 className="font-bold text-slate-800">4. Intellectual Property</h4>
+                <p>All content included in or made available through Mynzo, such as text, graphics, logos, and avatars is the property of Mynzo.</p>
+                <h4 className="font-bold text-slate-800">5. User Conduct</h4>
+                <p>Users must not engage in any activity that disrupts or interferes with Mynzo services.</p>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+
+        {infoModalType === 'faq' && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-[#0a0927]/60 backdrop-blur-sm flex items-end sm:items-center justify-center sm:p-4"
+          >
+            <motion.div 
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="bg-white rounded-t-[32px] sm:rounded-[32px] w-full max-w-md overflow-hidden flex flex-col h-[85vh] shadow-2xl border-t border-slate-100"
+            >
+              <div className="w-full flex justify-center pt-4 pb-2 bg-white relative z-20">
+                <div className="w-12 h-1.5 bg-slate-200 rounded-full"></div>
+              </div>
+              <div className="px-6 pb-4 pt-1 flex items-center justify-between border-b border-slate-100">
+                <h3 className="text-lg font-black text-[#02006c]">Frequently Asked Questions</h3>
+                <button onClick={() => setInfoModalType(null)} className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"><X className="w-4.5 h-4.5 text-slate-500" /></button>
+              </div>
+              <div className="p-6 overflow-y-auto space-y-6 text-left">
+                <div>
+                  <h4 className="font-bold text-slate-800 mb-1">How do I track my order?</h4>
+                  <p className="text-sm text-slate-600">You can track your order status in the "My Orders" section if you are logged in, or using the tracking link in your email.</p>
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 mb-1">What are Mynzo Coins?</h4>
+                  <p className="text-sm text-slate-600">Mynzo Coins are our loyalty currency. You earn them on every purchase and can use them for discounts on future orders.</p>
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 mb-1">Can I change my avatar later?</h4>
+                  <p className="text-sm text-slate-600">Yes! You can edit your avatar at any time by clicking on it in your profile page.</p>
+                </div>
+                <div>
+                  <h4 className="font-bold text-slate-800 mb-1">Do you ship internationally?</h4>
+                  <p className="text-sm text-slate-600">Currently, we only ship within select regions. Please check our delivery coverage during checkout.</p>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Delete Account Confirmation Modal */}
       <AnimatePresence>

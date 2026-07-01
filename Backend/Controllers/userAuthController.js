@@ -143,6 +143,10 @@ const verifyOtp = async (req, res) => {
     const crypto = require('crypto');
     const inputHash = crypto.createHash('sha256').update(otp).digest('hex');
     if (!user.otp || user.otp !== inputHash) {
+      console.log(`❌ OTP Verification failed for ${phone}:`);
+      console.log(`   - Input OTP: "${otp}"`);
+      console.log(`   - Input Hash: "${inputHash}"`);
+      console.log(`   - Stored Hash in DB: "${user.otp}"`);
       return res.status(401).json({ success: false, message: 'Invalid OTP' });
     }
 

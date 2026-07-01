@@ -127,19 +127,22 @@ export default function SavedAddressesPage() {
   };
 
   return (
-    <div className="bg-white min-h-[100dvh] font-sans pb-20 animate-fade-in relative">
+    <div className="bg-slate-50/30 min-h-[100dvh] font-sans pb-20 animate-fade-in relative">
       {/* Header */}
       <div className="bg-[#fff4f2] px-4 py-3 sticky top-0 z-50 shadow-sm flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-white/50 rounded-full transition-colors cursor-pointer">
-            <ArrowLeft className="w-5 h-5 text-[#02006c]" />
-          </button>
-          <h1 className="text-[17px] font-bold text-[#02006c]">Saved Addresses</h1>
+        <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-0 md:px-8">
+          <div className="flex items-center gap-3">
+            <button onClick={() => navigate(-1)} className="p-2 -ml-2 hover:bg-white/50 rounded-full transition-colors cursor-pointer">
+              <ArrowLeft className="w-5 h-5 text-[#02006c]" />
+            </button>
+            <h1 className="text-[17px] font-bold text-[#02006c]">Saved Addresses</h1>
+          </div>
         </div>
       </div>
 
-      {/* Add New button */}
-      {user && user.id && (
+      <div className="max-w-7xl mx-auto px-4 md:px-12 py-4">
+        {/* Add New button */}
+        {user && user.id && (
         <div className="px-4 py-3 flex justify-end">
           <button
             onClick={openAddModal}
@@ -188,9 +191,9 @@ export default function SavedAddressesPage() {
         </div>
       ) : (
         /* Address list */
-        <div className="px-4 space-y-6 mt-2">
+        <div className="px-4 mt-2 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 space-y-6 md:space-y-0">
           {addresses.map((addr) => (
-            <div key={addr._id} className="border-b border-slate-100 pb-5 last:border-0 relative">
+            <div key={addr._id} className="border-b border-slate-100 pb-5 last:border-0 relative md:border md:border-slate-100 md:rounded-2xl md:p-5 md:bg-white md:shadow-3xs md:hover:border-[#ee4923] md:hover:shadow-sm transition-all duration-300">
               <div className="flex items-start gap-3">
                 <div className="pt-0.5 text-slate-600">
                   {addr.type === 'Home' ? (
@@ -267,6 +270,7 @@ export default function SavedAddressesPage() {
           ))}
         </div>
       )}
+      </div>
 
       {/* Click outside overlay to close menu */}
       {activeMenuId && (

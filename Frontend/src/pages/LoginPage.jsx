@@ -38,6 +38,7 @@ export default function LoginPage() {
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
+    if (loading) return;
     if (!phoneNumber.trim() || phoneNumber.length < 10) {
       setSignInError('Please enter a valid 10-digit phone number');
       toast.info('Please enter a valid 10-digit phone number');
@@ -102,6 +103,7 @@ export default function LoginPage() {
 
   const handleVerifyOtpAndLogin = async (e) => {
     e.preventDefault();
+    if (loading) return;
     const fullOtp = otp.join('');
 
     if (fullOtp.length < 6) {

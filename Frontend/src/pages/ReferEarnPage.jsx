@@ -127,14 +127,18 @@ export default function ReferEarnPage() {
   return (
     <div className="min-h-[100dvh] bg-slate-50 flex flex-col font-sans pb-20">
       {/* Header */}
-      <div className="bg-[#fff4f2] px-4 py-3 sticky top-0 z-50 shadow-sm flex items-center gap-3">
-        <button
-          onClick={() => navigate(-1)}
-          className="p-2 -ml-2 hover:bg-slate-100 rounded-full transition-colors active:scale-95"
-        >
-          <ChevronLeft className="w-5 h-5 text-[#02006c]" />
-        </button>
-        <h1 className="text-[17px] font-bold text-[#02006c]">Refer &amp; Earn</h1>
+      <div className="bg-[#fff4f2] px-4 py-3 sticky top-0 z-50 shadow-sm flex items-center justify-between">
+        <div className="flex items-center justify-between w-full max-w-7xl mx-auto px-0 md:px-8">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 -ml-2 hover:bg-slate-100 rounded-full transition-colors active:scale-95 cursor-pointer"
+            >
+              <ChevronLeft className="w-5 h-5 text-[#02006c]" />
+            </button>
+            <h1 className="text-[17px] font-bold text-[#02006c]">Refer &amp; Earn</h1>
+          </div>
+        </div>
       </div>
 
       {/* Not logged in */}
@@ -156,7 +160,9 @@ export default function ReferEarnPage() {
           <p className="text-[13px] text-slate-400 font-medium">Loading your referral info...</p>
         </div>
       ) : (
-        <div className="p-4 flex-1 flex flex-col gap-4">
+        <div className="max-w-7xl mx-auto px-4 md:px-12 py-4 w-full flex-grow">
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+            <div className="md:col-span-7 space-y-4 flex flex-col gap-4">
 
           {/* Hero Banner */}
           <div className="bg-gradient-to-br from-[#02006c] to-indigo-900 rounded-2xl p-6 text-white text-center shadow-lg relative overflow-hidden mt-2">
@@ -263,6 +269,10 @@ export default function ReferEarnPage() {
               </div>
             )}
           </div>
+        </div>
+
+        {/* Right Column (History & Guide) */}
+        <div className="md:col-span-5 space-y-4 flex flex-col gap-4">
 
           {/* Referral History */}
           <div className="bg-white rounded-xl shadow-sm border border-slate-100">
@@ -334,6 +344,8 @@ export default function ReferEarnPage() {
           </div>
 
         </div>
+      </div>
+      </div>
       )}
     </div>
   );
