@@ -19,7 +19,7 @@ const SearchBar = ({ selectedAddress }) => {
 
   const shortAddress = selectedAddress?.address
     ? selectedAddress.address.slice(0, 40) + '...'
-    : '83 kishan pura mataji mandir, sector no...';
+    : 'Select delivery address...';
 
   return (
     <div className="px-3 pb-2 flex flex-col gap-1.5">

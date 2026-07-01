@@ -21,6 +21,78 @@ export default function OrderDetailsPage() {
   const [submittedReview, setSubmittedReview] = useState(initialDraft.submittedReview || null);
   const [selectedMedia, setSelectedMedia] = useState(null);
 
+  const [localOrder, setLocalOrder] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  // Pull to refresh states
+  const [startY, setStartY] = useState(0);
+  const [pullOffset, setPullOffset] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const fetchOrderDetails = async (showLoader = true) => {
+    const token = localStorage.getItem('userToken');
+    if (!token) return;
+
+    try {
+      if (showLoader) setLoading(true);
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/orders/${id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success && data.order) {
+        setLocalOrder(data.order);
+      }
+    } catch (err) {
+      console.error('Error fetching order details:', err);
+    } finally {
+      if (showLoader) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchOrderDetails();
+  }, [id]);
+
+  const handleTouchStart = (e) => {
+    if (window.scrollY === 0 && !isRefreshing) {
+      setStartY(e.touches[0].clientY);
+      setIsPulling(true);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isPulling) return;
+    const currentY = e.touches[0].clientY;
+    const diff = currentY - startY;
+
+    if (diff > 0) {
+      // Add friction resistance
+      const resistance = Math.min(diff * 0.4, 80);
+      setPullOffset(resistance);
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (!isPulling) return;
+    setIsPulling(false);
+
+    if (pullOffset > 50) {
+      setIsRefreshing(true);
+      setPullOffset(50);
+
+      await fetchOrderDetails(false);
+
+      setTimeout(() => {
+        setIsRefreshing(false);
+        setPullOffset(0);
+      }, 500);
+    } else {
+      setPullOffset(0);
+    }
+  };
+
   useEffect(() => {
     addOrderReview(id, {
       isEditingReview,
@@ -59,7 +131,32 @@ export default function OrderDetailsPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isAddressExpanded, setIsAddressExpanded] = useState(false);
 
-  const globalOrder = orders?.find(o => o.id === id);
+  const globalOrderFromContext = orders?.find(o => o.id === id);
+  const orderData = localOrder || globalOrderFromContext;
+
+  const globalOrder = orderData ? {
+    id: orderData._id || orderData.id,
+    date: orderData.createdAt ? new Date(orderData.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : orderData.date,
+    items: orderData.items ? orderData.items.map(item => ({
+      id: item.productId || item.id,
+      name: item.name,
+      price: item.price,
+      quantity: item.quantity,
+      image: item.image
+    })) : [],
+    total: orderData.total,
+    status: orderData.status,
+    paymentMethod: orderData.paymentMethod,
+    paymentStatus: orderData.paymentStatus,
+    deliveryAddress: orderData.deliveryAddress,
+    deliveryCharge: orderData.deliveryCharge,
+    etd: orderData.etd,
+    walletUsed: orderData.walletUsed,
+    coinsRedeemed: orderData.coinsRedeemed,
+    couponCode: orderData.couponCode,
+    createdAt: orderData.createdAt
+  } : null;
+
   const isDelivered = globalOrder ? globalOrder.status === 'Delivered' : id !== 'ORD-8X92-K1';
 
   // Return request state
@@ -191,13 +288,38 @@ export default function OrderDetailsPage() {
   };
 
   const deliveryAddress = globalOrder?.deliveryAddress || {
-    name: user?.name || "Mukesh Jinodiya",
+    name: user?.name || "",
     type: "Home",
-    address: "83 kishan pura mataji mandir, sector no. 5 new harsook, Jaipur, Rajasthan 302033",
-    pincode: "302033"
+    address: "",
+    pincode: "",
+    phone: user?.phone || ""
   };
 
   const orderTotal = globalOrder ? globalOrder.total : (product.selling + 7 - 150);
+
+  const subtotal = orderItems.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
+  const gstAmount = Math.round(subtotal * 0.18);
+  const platformCommission = 15;
+  const deliveryCharge = globalOrder?.deliveryCharge || 0;
+  const coinsRedeemed = globalOrder?.coinsRedeemed || 0;
+  const walletUsed = globalOrder?.walletUsed || 0;
+
+  // Deduce coupon discount from order total
+  const deducedDiscount = Math.max(
+    0,
+    Math.round(subtotal + gstAmount + platformCommission + deliveryCharge - coinsRedeemed - walletUsed - orderTotal)
+  );
+
+  const returnWindowExpiry = globalOrder?.createdAt ? (() => {
+    const expiry = new Date(globalOrder.createdAt);
+    expiry.setDate(expiry.getDate() + 7);
+    const now = new Date();
+    const formattedDate = expiry.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
+    return {
+      expired: now > expiry,
+      dateText: formattedDate
+    };
+  })() : { expired: true, dateText: 'Apr 23' };
 
   const handleDownload = () => {
     setIsDownloading(true);
@@ -240,7 +362,28 @@ Thank you for shopping with Mynzo!
   };
 
   return (
-    <div className="bg-slate-50 min-h-screen font-sans pb-24 select-none">
+    <div 
+      className="bg-slate-50 min-h-screen font-sans pb-24 select-none relative"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Pull to Refresh Indicator */}
+      {(pullOffset > 0 || isRefreshing) && (
+        <div 
+          className="fixed left-1/2 -translate-x-1/2 z-[100] bg-white rounded-full p-2.5 shadow-md flex items-center justify-center transition-all duration-100 ease-out"
+          style={{ 
+            top: '55px', 
+            transform: `translate(-50%, ${pullOffset}px)`,
+            opacity: Math.min(pullOffset / 50, 1)
+          }}
+        >
+          <Loader2 
+            className={`w-5 h-5 text-[#ee4923] ${isRefreshing ? 'animate-spin' : ''}`}
+            style={!isRefreshing ? { transform: `rotate(${pullOffset * 4}deg)` } : undefined}
+          />
+        </div>
+      )}
       {/* Header (Mobile Only) */}
       <div className="bg-[#FFE4D6] px-4 py-3 sticky top-0 z-50 flex items-center justify-between shadow-sm md:hidden">
         <div className="flex items-center gap-3">
@@ -330,16 +473,26 @@ Thank you for shopping with Mynzo!
                      {isDelivered ? `Delivered, ${globalOrder?.date || 'Apr 13'}` : (globalOrder?.etd ? `Estimated Delivery: ${globalOrder.etd}` : 'Processing Order')}
                    </h2>
                    {isDelivered ? (
-                     <div className="flex items-center gap-1.5 text-xs text-slate-455">
-                       <div className="w-3.5 h-3.5 border border-slate-400 rounded-full flex items-center justify-center text-[9px] font-bold">i</div>
-                       Return window expired on Apr 23
-                     </div>
-                   ) : (
-                     <div className="flex items-center gap-1.5 text-xs text-slate-455">
-                       <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
-                       Item is out for delivery
-                     </div>
-                   )}
+                      <div className="flex items-center gap-1.5 text-xs text-slate-455">
+                        <div className="w-3.5 h-3.5 border border-slate-400 rounded-full flex items-center justify-center text-[9px] font-bold">i</div>
+                        {returnWindowExpiry.expired 
+                          ? `Return window expired on ${returnWindowExpiry.dateText}` 
+                          : `Return window active until ${returnWindowExpiry.dateText}`}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-xs text-slate-455">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></div>
+                        {globalOrder?.status === 'Pending' ? 'Order is pending verification' :
+                         globalOrder?.status === 'Processing' ? 'Item is being processed' :
+                         globalOrder?.status === 'Shipped' ? 'Item has been shipped' :
+                         globalOrder?.status === 'Out for Delivery' ? 'Item is out for delivery' :
+                         globalOrder?.status === 'Cancelled' ? 'Order is cancelled' :
+                         globalOrder?.status === 'Return Requested' ? 'Return requested' :
+                         globalOrder?.status === 'Refunded' ? 'Refunded' :
+                         globalOrder?.status === 'Partially Refunded' ? 'Partially refunded' :
+                         'Processing Order'}
+                      </div>
+                    )}
                  </div>
                  <div className={`${isDelivered ? 'bg-green-600' : 'bg-[#ee4923]'} rounded-full w-8 h-8 flex items-center justify-center shadow-sm`}>
                    {isDelivered ? (
@@ -562,7 +715,7 @@ Thank you for shopping with Mynzo!
                       <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
                     </div>
                     <p className="font-bold text-slate-800">
-                      {deliveryAddress.name} <span className="font-semibold text-slate-450 ml-1">{user?.phone || '9302841832'}</span>
+                      {deliveryAddress.name} <span className="font-semibold text-slate-450 ml-1">{deliveryAddress.phone || user?.phone || '9302841832'}</span>
                     </p>
                  </div>
               </div>
@@ -581,31 +734,56 @@ Thank you for shopping with Mynzo!
                  </div>
                  <div className="flex justify-between items-center text-slate-600 font-semibold">
                    <span className="flex items-center gap-1">Selling price <div className="w-3.5 h-3.5 border border-slate-350 rounded-full flex items-center justify-center text-[8px] font-bold">i</div></span>
-                   <span>₹{orderItems.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0)}</span>
+                   <span>₹{subtotal}</span>
+                 </div>
+                 <div className="flex justify-between items-center text-slate-600 font-semibold">
+                   <span>GST (18%)</span>
+                   <span>₹{gstAmount}</span>
                  </div>
                  <div className="flex justify-between items-center text-slate-600 font-semibold">
                    <span className="flex items-center gap-1">Total fees <ChevronDown className="w-3.5 h-3.5 text-slate-400" /></span>
-                   <span>₹15</span>
+                   <span>₹{platformCommission}</span>
                  </div>
                  <div className="flex justify-between items-center text-slate-600 font-semibold">
                    <span>Delivery Charges</span>
-                   <span className={globalOrder?.deliveryCharge ? "font-bold text-slate-800" : "text-green-600 font-black"}>
-                     {globalOrder?.deliveryCharge ? `₹${globalOrder.deliveryCharge}` : 'FREE'}
+                   <span className={deliveryCharge ? "font-bold text-slate-800" : "text-green-600 font-black"}>
+                     {deliveryCharge ? `₹${deliveryCharge}` : 'FREE'}
                    </span>
                  </div>
                  
                  <div className="border-t border-dashed border-slate-200 pt-3 flex justify-between items-center text-xs font-semibold text-slate-600">
                    <span>Items Total</span>
-                   <span>₹{orderItems.reduce((acc, curr) => acc + curr.price * curr.quantity, 0)}</span>
+                   <span>₹{subtotal}</span>
                  </div>
                  <div className="flex justify-between items-center text-xs font-semibold text-slate-600">
                    <span>Delivery Charge</span>
-                   {globalOrder?.deliveryCharge > 0 ? (
-                     <span>₹{globalOrder.deliveryCharge}</span>
+                   {deliveryCharge > 0 ? (
+                     <span>₹{deliveryCharge}</span>
                    ) : (
                      <span className="font-bold text-green-600">FREE</span>
                    )}
                  </div>
+
+                 {deducedDiscount > 0 && (
+                   <div className="flex justify-between items-center text-xs font-semibold text-green-600">
+                     <span>Discount / Coupon {globalOrder?.couponCode ? `(${globalOrder.couponCode})` : ''}</span>
+                     <span>-₹{deducedDiscount}</span>
+                   </div>
+                 )}
+
+                 {coinsRedeemed > 0 && (
+                   <div className="flex justify-between items-center text-xs font-semibold text-green-600">
+                     <span>Coins Redeemed</span>
+                     <span>-₹{coinsRedeemed}</span>
+                   </div>
+                 )}
+
+                 {walletUsed > 0 && (
+                   <div className="flex justify-between items-center text-xs font-semibold text-green-600">
+                     <span>Wallet Used</span>
+                     <span>-₹{walletUsed}</span>
+                   </div>
+                 )}
 
                  <div className="border-t border-slate-100 my-2"></div>
                  

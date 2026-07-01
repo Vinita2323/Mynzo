@@ -49,7 +49,6 @@ export default function Navbar() {
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const [savedAddresses, setSavedAddresses] = useState([
-    { id: 1, name: 'Mukesh Jinodiya', type: 'Home', address: '83 kishan pura mataji mandir, sector no. 5 new harsud...', pincode: '450001' },
     { id: 2, name: 'Vini Jinodiya', type: 'Home', address: '36, narmada kirana store abhinandan nagar mr10 ind...', pincode: '452010' }
   ]);
 
@@ -62,7 +61,6 @@ export default function Navbar() {
     const fetchAddresses = async () => {
       if (!user) {
         setSavedAddresses([
-          { id: 1, name: 'Mukesh Jinodiya', type: 'Home', address: '83 kishan pura mataji mandir, sector no. 5 new harsud...', pincode: '450001' },
           { id: 2, name: 'Vini Jinodiya', type: 'Home', address: '36, narmada kirana store abhinandan nagar mr10 ind...', pincode: '452010' }
         ]);
         return;

@@ -378,7 +378,8 @@ export default function ReviewOrderPage() {
             name: selectedAddress.name,
             type: selectedAddress.type,
             address: selectedAddress.address,
-            pincode: selectedAddress.pincode
+            pincode: selectedAddress.pincode,
+            phone: selectedAddress.phone
           },
           paymentMethod: method === 'Online' ? 'Online' : 'COD',
           paymentStatus: method === 'Online' ? 'Paid' : 'Pending',

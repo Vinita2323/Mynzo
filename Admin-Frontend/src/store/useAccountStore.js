@@ -9,15 +9,7 @@ const useAccountStore = create((set) => ({
     dob: '1995-05-15',
     avatar: null
   },
-  savedAddresses: [
-    {
-      id: 1,
-      type: 'HOME',
-      name: 'Harsh Pandey',
-      address: '83 Kishan Pura Mataji Mandir, Sector No. 5 New Harsud Chh...',
-      phone: '+91 98765 43210'
-    }
-  ],
+  savedAddresses: [],
   savedCards: [
     {
       id: 1,

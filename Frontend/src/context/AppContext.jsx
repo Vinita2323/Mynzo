@@ -15,7 +15,7 @@ export const AppProvider = ({ children }) => {
   const [addresses, setAddresses] = useState([]);
   const [addressesLoading, setAddressesLoading] = useState(false);
   const [coins, setCoins] = useState(0);
-  const [location, setLocation] = useState("83 Kishan Pura Mataji Mandir, Sector 3, Mathura");
+  const [location, setLocation] = useState("Select Location");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("home");
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
@@ -386,6 +386,9 @@ export const AppProvider = ({ children }) => {
             deliveryAddress: o.deliveryAddress,
             deliveryCharge: o.deliveryCharge,
             etd: o.etd,
+            walletUsed: o.walletUsed,
+            coinsRedeemed: o.coinsRedeemed,
+            couponCode: o.couponCode,
             createdAt: o.createdAt
           }));
           setOrders(mappedOrders);
