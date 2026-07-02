@@ -189,6 +189,10 @@ export default function ReviewOrderPage() {
       alert("Please fill all required fields");
       return;
     }
+    if (/\d/.test(newAddrName)) {
+      alert("Receiver name cannot contain numerical digits");
+      return;
+    }
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(newAddrPhone)) {
       alert("Phone number must be exactly 10 digits");
@@ -731,31 +735,31 @@ export default function ReviewOrderPage() {
           <div className="space-y-3.5 text-xs text-slate-600 font-semibold">
             <div className="flex justify-between items-center">
               <span>Total MRP</span>
-              <span className="text-slate-800">₹{originalTotal}</span>
+              <span className="text-slate-800">₹{Number(originalTotal).toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span>Product Discount</span>
-              <span className="text-emerald-600 font-medium">- ₹{productDiscount}</span>
+              <span className="text-emerald-600 font-medium">- ₹{Number(productDiscount).toFixed(2)}</span>
             </div>
             {appliedCoupon && (
               <div className="flex justify-between items-center">
                 <span>Coupon Discount ({appliedCoupon.code})</span>
-                <span className="text-emerald-600 font-medium">- ₹{discountAmount}</span>
+                <span className="text-emerald-600 font-medium">- ₹{Number(discountAmount).toFixed(2)}</span>
               </div>
             )}
             {redeemWallet && walletUsedAmount > 0 && (
               <div className="flex justify-between items-center">
                 <span>Wallet Balance Used</span>
-                <span className="text-emerald-600 font-medium">- ₹{walletUsedAmount.toFixed(2)}</span>
+                <span className="text-emerald-600 font-medium">- ₹{Number(walletUsedAmount).toFixed(2)}</span>
               </div>
             )}
             <div className="flex justify-between items-center">
               <span>Product GST (18%)</span>
-              <span className="text-slate-800">₹{gstAmount}</span>
+              <span className="text-slate-800">₹{Number(gstAmount).toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
               <span>Platform Fee</span>
-              <span className="text-slate-800">₹{platformCommission}</span>
+              <span className="text-slate-800">₹{Number(platformCommission).toFixed(2)}</span>
             </div>
             
             <div className="flex justify-between items-center">
@@ -767,14 +771,14 @@ export default function ReviewOrderPage() {
                 <span className="text-slate-400 font-medium">Calculating...</span>
               ) : (
                 <span className={deliveryCharge > 0 ? "text-slate-800" : "text-emerald-600 font-bold"}>
-                  {deliveryCharge > 0 ? `₹${deliveryCharge}` : 'FREE'}
+                  {deliveryCharge > 0 ? `₹${Number(deliveryCharge).toFixed(2)}` : 'FREE'}
                 </span>
               )}
             </div>
             
             <div className="border-t border-slate-200 pt-3.5 flex justify-between items-center text-base font-black text-[#02006c]">
               <span>Total Amount</span>
-              <span>₹{grandTotal}</span>
+              <span>₹{Number(grandTotal).toFixed(2)}</span>
             </div>
           </div>
 
@@ -809,7 +813,7 @@ export default function ReviewOrderPage() {
             onClick={handlePlaceOrder}
             className="w-full bg-[#ee4923] active:bg-[#e05b43] text-white py-3.5 rounded-lg font-bold text-sm shadow-md transition-all active:scale-95"
           >
-            Confirm & Place order ₹{grandTotal}
+            Confirm & Place order ₹{Number(grandTotal).toFixed(2)}
           </button>
         </div>
       </div>
@@ -892,7 +896,7 @@ export default function ReviewOrderPage() {
                       type="text" 
                       placeholder="e.g. Vini Sharma" 
                       value={newAddrName} 
-                      onChange={(e) => setNewAddrName(e.target.value)}
+                      onChange={(e) => setNewAddrName(e.target.value.replace(/\d/g, ''))}
                       className="mt-1 w-full border border-slate-200 rounded-lg p-2.5 text-xs font-semibold focus:outline-none focus:border-[#ee4923]"
                       required 
                     />
@@ -903,7 +907,7 @@ export default function ReviewOrderPage() {
                       type="tel" 
                       placeholder="e.g. 9876543210" 
                       value={newAddrPhone} 
-                      onChange={(e) => setNewAddrPhone(e.target.value)}
+                      onChange={(e) => setNewAddrPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                       className="mt-1 w-full border border-slate-200 rounded-lg p-2.5 text-xs font-semibold focus:outline-none focus:border-[#ee4923]"
                       required 
                       maxLength={10}

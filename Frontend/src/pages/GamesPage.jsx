@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Gift, Coins } from 'lucide-react';
+import { ChevronLeft, Gift, Coins, X, Copy, Check } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import toast from '../utils/toast';
@@ -35,6 +35,8 @@ export default function GamesPage() {
   const [loading, setLoading] = useState(true);
   const [activeGame, setActiveGame] = useState(null); // 'quiz' | 'speedTap' | 'ticTacToe' | 'snake' | null
   const [selectedGameKey, setSelectedGameKey] = useState('speedTap');
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   const fetchGames = async () => {
     const token = localStorage.getItem('userToken');
@@ -70,6 +72,42 @@ export default function GamesPage() {
     analytics.trackGamePlay(gameKey, 'start');
     setActiveGame(gameKey);
   };
+
+  // Ref to distinguish: was the game closed via the in-app button (true)
+  // or via the hardware back button (false/undefined)?
+  const closingFromButtonRef = React.useRef(false);
+
+  // Shared close handler — called by onClose (the in-app arrow button)
+  const handleCloseGame = React.useCallback(() => {
+    closingFromButtonRef.current = true;   // mark: this is a button-close
+    window.history.back();                 // pop the dummy entry we pushed
+    // popstate will fire; listener below reads the flag and just cleans up
+  }, []);
+
+  // Intercept the mobile hardware back button while a game overlay is open.
+  // Push a dummy history entry when the game opens so pressing back
+  // fires popstate instead of leaving /games entirely.
+  useEffect(() => {
+    if (!activeGame) return;
+
+    // Push a dummy state so the back button has somewhere to "go back to"
+    window.history.pushState({ gameOverlay: true }, '');
+    closingFromButtonRef.current = false;
+
+    const handlePopState = () => {
+      if (closingFromButtonRef.current) {
+        // Closed via in-app button — history.back() already consumed the dummy
+        // entry; just close the overlay state.
+        closingFromButtonRef.current = false;
+      }
+      // Either way (button or hardware back), close the overlay
+      setActiveGame(null);
+      fetchGames();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [activeGame]);
 
   const handleRecordPlay = async (gameKey, scoreAmount) => {
     analytics.trackGamePlay(gameKey, 'complete', scoreAmount);
@@ -114,36 +152,44 @@ export default function GamesPage() {
     }
   };
 
-  const handleInvite = async () => {
+  const shareUrl = window.location.origin;
+  const shareText = encodeURIComponent('Come play games & win real rewards on Mynzo! 🎮🎁');
+
+  const openShareModal = () => setShowShareModal(true);
+
+  const handleCopyLink = async () => {
     try {
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Join Mynzo',
-          text: 'Come play games and win rewards on Mynzo!',
-          url: window.location.origin
-        });
-      } else {
-        await navigator.clipboard.writeText(window.location.origin);
-        toast.success('Link copied to clipboard!', {
-          position: 'top-center',
-          style: {
-            padding: '8px 14px',
-            fontSize: '12.5px',
-            fontWeight: '600',
-            borderRadius: '50px',
-            background: '#ffffff',
-            color: '#1e293b',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
-          }
-        });
-      }
-    } catch (err) {
-      console.log('Error sharing:', err);
-      if (err.name !== 'AbortError') {
-        toast.error('Sharing failed');
-      }
+      await navigator.clipboard.writeText(shareUrl);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      toast.error('Could not copy link');
     }
   };
+
+  const shareOptions = [
+    {
+      label: 'WhatsApp',
+      color: '#25D366',
+      bg: '#f0fdf4',
+      icon: '💬',
+      action: () => window.open(`https://wa.me/?text=${shareText}%20${encodeURIComponent(shareUrl)}`, '_blank'),
+    },
+    {
+      label: 'Telegram',
+      color: '#229ED9',
+      bg: '#eff8ff',
+      icon: '✈️',
+      action: () => window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${shareText}`, '_blank'),
+    },
+    {
+      label: 'Twitter',
+      color: '#1DA1F2',
+      bg: '#eff8ff',
+      icon: '🐦',
+      action: () => window.open(`https://twitter.com/intent/tweet?text=${shareText}&url=${encodeURIComponent(shareUrl)}`, '_blank'),
+    },
+  ];
 
   // Find currently selected game data
   const selectedGameData = games.find(g => g.key === selectedGameKey) || games[0];
@@ -315,7 +361,7 @@ export default function GamesPage() {
                 <p className="text-xs text-[#EE4923] font-bold mt-0.5">&amp; Earn 100 Coins</p>
               </div>
             </div>
-            <button onClick={handleInvite} className="bg-[#EE4923] text-white text-xs font-black px-5 py-2.5 rounded-full shadow-md active:scale-95 transition-transform z-10 relative">
+            <button onClick={openShareModal} className="bg-[#EE4923] text-white text-xs font-black px-5 py-2.5 rounded-full shadow-md active:scale-95 transition-transform z-10 relative">
               Invite Now
             </button>
           </div>
@@ -326,29 +372,108 @@ export default function GamesPage() {
       {/* Dedicated Full Screen Game Overlays */}
       {activeGame === 'snake' && (
         <SnakeGame 
-          onClose={() => { setActiveGame(null); fetchGames(); }} 
+          onClose={handleCloseGame} 
           addCoins={(amount) => handleRecordPlay('snake', amount)} 
         />
       )}
       {activeGame === 'speedTap' && (
         <SpeedTapGame 
-          onClose={() => { setActiveGame(null); fetchGames(); }} 
+          onClose={handleCloseGame} 
           addCoins={(amount) => handleRecordPlay('speedTap', amount)} 
         />
       )}
       {activeGame === 'ticTacToe' && (
         <TicTacToeGame 
-          onClose={() => { setActiveGame(null); fetchGames(); }} 
+          onClose={handleCloseGame} 
           addCoins={(amount) => handleRecordPlay('ticTacToe', amount)} 
         />
       )}
       {activeGame === 'quiz' && (
         <QuizGame 
-          onClose={() => { setActiveGame(null); fetchGames(); }} 
+          onClose={handleCloseGame} 
           addCoins={(amount) => handleRecordPlay('quiz', amount)} 
         />
       )}
 
+      {/* Custom Share Modal */}
+      {showShareModal && (
+        <div
+          className="fixed inset-0 z-[200] flex items-end justify-center"
+          onClick={() => setShowShareModal(false)}
+        >
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+
+          {/* Bottom Sheet */}
+          <div
+            className="relative w-full max-w-md bg-white rounded-t-3xl shadow-2xl p-6 pb-10 animate-slide-up"
+            onClick={e => e.stopPropagation()}
+            style={{ animation: 'slideUp 0.3s ease-out' }}
+          >
+            {/* Handle */}
+            <div className="w-10 h-1.5 bg-slate-200 rounded-full mx-auto mb-5" />
+
+            {/* Header */}
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h3 className="text-lg font-black text-[#071226]">Invite Friends</h3>
+                <p className="text-xs text-slate-500 font-medium mt-0.5">Share & earn 100 coins per invite</p>
+              </div>
+              <button
+                onClick={() => setShowShareModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Share Options */}
+            <div className="flex justify-around mb-6">
+              {shareOptions.map(opt => (
+                <button
+                  key={opt.label}
+                  onClick={() => { opt.action(); setShowShareModal(false); }}
+                  className="flex flex-col items-center gap-2 active:scale-90 transition-transform"
+                >
+                  <div
+                    className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm"
+                    style={{ background: opt.bg, border: `1.5px solid ${opt.color}20` }}
+                  >
+                    {opt.icon}
+                  </div>
+                  <span className="text-[11px] font-bold text-slate-600">{opt.label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Divider */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="flex-1 h-px bg-slate-100" />
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">or copy link</span>
+              <div className="flex-1 h-px bg-slate-100" />
+            </div>
+
+            {/* Copy Link Row */}
+            <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3">
+              <span className="flex-1 text-xs text-slate-500 font-medium truncate">{shareUrl}</span>
+              <button
+                onClick={handleCopyLink}
+                className="flex items-center gap-1.5 bg-[#EE4923] text-white text-[11px] font-black px-3 py-1.5 rounded-xl active:scale-95 transition-all shadow-sm flex-shrink-0"
+              >
+                {linkCopied ? <Check size={12} /> : <Copy size={12} />}
+                {linkCopied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes slideUp {
+          from { transform: translateY(100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }

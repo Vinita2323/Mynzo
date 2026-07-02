@@ -676,16 +676,6 @@ export default function Navbar() {
                 />
               </div>
 
-              {/* Use Current Location */}
-              <button 
-                onClick={() => handleSaveLocation("Current Location")}
-                className="flex items-center gap-3 w-full py-1 text-[#ee4923] hover:opacity-80 transition-opacity cursor-pointer"
-              >
-                <Crosshair className="w-5 h-5" />
-                <span className="text-sm font-bold">Use my current location</span>
-              </button>
-
-              <div className="border-t border-dashed border-slate-200 my-2" />
 
               {/* Saved Addresses Header */}
               <div className="flex items-center justify-between mt-2 mb-3">

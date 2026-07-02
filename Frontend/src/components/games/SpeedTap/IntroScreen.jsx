@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Trophy, Gift, ShoppingBag, Percent, Zap } from 'lucide-react';
 
-export default function IntroScreen({ bestScore, onStart, onClose, onViewRewards, onViewLeaderboard }) {
+export default function IntroScreen({ bestScore, onStart, onClose, onViewRewards }) {
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { 
@@ -94,8 +94,7 @@ export default function IntroScreen({ bestScore, onStart, onClose, onViewRewards
         {/* Info Cards */}
         <motion.div variants={itemVariants} className="flex gap-4 w-full px-4">
           <div 
-            onClick={onViewLeaderboard}
-            className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center gap-1 cursor-pointer hover:bg-white/10 transition-colors backdrop-blur-sm"
+            className="flex-1 bg-white/5 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center gap-1 backdrop-blur-sm"
           >
             <Trophy className="w-6 h-6 text-amber-400 mb-1" />
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Best Score</span>

@@ -5,10 +5,9 @@ import CountdownScreen from './CountdownScreen';
 import GameplayScreen from './GameplayScreen';
 import ResultScreen from './ResultScreen';
 import RewardsScreen from './RewardsScreen';
-import LeaderboardScreen from './LeaderboardScreen';
 
 export default function SpeedTapGame({ onClose, addCoins }) {
-  const [gameState, setGameState] = useState('intro'); // intro, countdown, playing, result, rewards, leaderboard
+  const [gameState, setGameState] = useState('intro'); // intro, countdown, playing, result, rewards
   const [score, setScore] = useState(0);
   const [bestScore, setBestScore] = useState(parseInt(localStorage.getItem('speedTapBest')) || 0);
   
@@ -55,7 +54,6 @@ export default function SpeedTapGame({ onClose, addCoins }) {
             onStart={startGame} 
             onClose={onClose}
             onViewRewards={() => setGameState('rewards')}
-            onViewLeaderboard={() => setGameState('leaderboard')}
           />
         )}
         
@@ -93,13 +91,6 @@ export default function SpeedTapGame({ onClose, addCoins }) {
           />
         )}
         
-        {gameState === 'leaderboard' && (
-          <LeaderboardScreen 
-            key="leaderboard" 
-            bestScore={bestScore}
-            onBack={() => setGameState('intro')}
-          />
-        )}
       </AnimatePresence>
       </div>
     </div>

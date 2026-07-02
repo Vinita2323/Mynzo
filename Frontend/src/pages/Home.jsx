@@ -82,6 +82,26 @@ export default function Home() {
     return () => controller.abort(); // cleanup on unmount
   }, []);
 
+  // When returning from a brand page, scroll to Trending Brands section
+  useEffect(() => {
+    if (sessionStorage.getItem('scrollToBrands') === '1') {
+      sessionStorage.removeItem('scrollToBrands');
+      // Wait for content to render before scrolling
+      const tryScroll = (attempts = 0) => {
+        const el = document.getElementById('trending-brands-section');
+        const container = document.getElementById('main-scroll-container');
+        if (el && container) {
+          const containerTop = container.getBoundingClientRect().top;
+          const elTop = el.getBoundingClientRect().top;
+          container.scrollTo({ top: container.scrollTop + (elTop - containerTop) - 12, behavior: 'smooth' });
+        } else if (attempts < 10) {
+          setTimeout(() => tryScroll(attempts + 1), 150);
+        }
+      };
+      setTimeout(() => tryScroll(), 200);
+    }
+  }, []);
+
 
 
 
@@ -931,7 +951,7 @@ export default function Home() {
 
             {/* 6.7 Trending Brands Section (Responsive grids) */}
             <LazySection placeholderHeight="200px">
-              <div className="space-y-4">
+              <div id="trending-brands-section" className="space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="text-xl md:text-2xl font-bold text-[#02006c] font-sans">
                     TRENDING BRANDS
@@ -943,7 +963,7 @@ export default function Home() {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {trendingBrandsList.map(brand => (
-                    <div key={`home-brand-${brand.id}`} className="flex flex-col cursor-pointer group" onClick={() => navigate(`/brand/${brand.id}`)}>
+                    <div key={`home-brand-${brand.id}`} className="flex flex-col cursor-pointer group" onClick={() => { sessionStorage.setItem('scrollToBrands', '1'); navigate(`/brand/${brand.id}`); }}>
                       <div className="w-full aspect-[4/3] rounded-2xl bg-slate-100 relative shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center overflow-hidden border border-slate-100">
                         {/* Brand Badge */}
                         <div className="absolute top-0 left-2.5 bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-b-lg shadow-sm z-10">
@@ -1012,7 +1032,7 @@ export default function Home() {
                 {(() => {
                   const selectedCatObj = categories.find(c => c._id === selectedCategory || c.id === selectedCategory);
                   const displayCatName = selectedCatObj ? (selectedCatObj.categoryName || selectedCatObj.name) : selectedCategory;
-                  const selectedSubObj = subCategoryChips.find(sc => sc.id === selectedSubCategory);
+                  const selectedSubObj = subCategoryChips.find(sc => sc._id === selectedSubCategory || sc.id === selectedSubCategory);
                   const displaySubName = selectedSubObj ? selectedSubObj.subCategoryName : selectedSubCategory;
                   return (
                     <h3 className="text-xl md:text-2xl font-bold text-[#02006c] capitalize">

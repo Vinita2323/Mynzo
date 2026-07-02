@@ -7,6 +7,8 @@ export default function QuizResult({ score, total, onPlayAgain, onClose, addCoin
   const coinsEarned = score * 10;
   const isPerfect = score === total;
 
+  const coinsAddedRef = React.useRef(false);
+
   useEffect(() => {
     // Confetti explosion
     const duration = 2500;
@@ -34,8 +36,9 @@ export default function QuizResult({ score, total, onPlayAgain, onClose, addCoin
     };
     frame();
     
-    // Automatically add coins for playing
-    if (addCoins) {
+    // Automatically add coins for playing - ensuring it only happens once
+    if (addCoins && !coinsAddedRef.current) {
+      coinsAddedRef.current = true;
       addCoins(coinsEarned);
     }
   }, [coinsEarned, addCoins]);

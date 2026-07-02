@@ -124,6 +124,10 @@ export default function CartPage() {
       alert("Please fill all required fields");
       return;
     }
+    if (/\d/.test(newAddrName)) {
+      alert("Receiver name cannot contain numerical digits");
+      return;
+    }
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(newAddrPhone)) {
       alert("Phone number must be exactly 10 digits");
@@ -380,21 +384,21 @@ export default function CartPage() {
               <div className="space-y-3.5 text-xs text-slate-600 font-semibold">
                 <div className="flex justify-between">
                   <span>Price ({totalCartItems} Items)</span>
-                  <span className="text-slate-900">₹{totalCartPrice}</span>
+                  <span className="text-slate-900">₹{Number(totalCartPrice).toFixed(2)}</span>
                 </div>
                 {discountAmount > 0 && (
                   <div className="flex justify-between text-green-600">
                     <span>Coupon Discount</span>
-                    <span>- ₹{discountAmount}</span>
+                    <span>- ₹{Number(discountAmount).toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between">
                   <span>GST (18% inclusive)</span>
-                  <span className="text-slate-900">₹{gstAmount}</span>
+                  <span className="text-slate-900">₹{Number(gstAmount).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Platform Fee</span>
-                  <span className="text-slate-900">₹{platformCommission}</span>
+                  <span className="text-slate-900">₹{Number(platformCommission).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span>Shipping Fee</span>
@@ -403,7 +407,7 @@ export default function CartPage() {
 
                 <div className="border-t border-slate-100 pt-3 flex justify-between text-base font-black text-[#02006c]">
                   <span>Total Amount</span>
-                  <span>₹{finalTotal}</span>
+                  <span>₹{Number(finalTotal).toFixed(2)}</span>
                 </div>
               </div>
 
@@ -424,7 +428,7 @@ export default function CartPage() {
             <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-3 z-50 flex items-center justify-between max-w-md mx-auto shadow-[0_-4px_10px_rgba(0,0,0,0.05)] md:hidden">
               <div className="flex flex-col justify-center">
                 <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Subtotal</span>
-                <span className="text-xl font-black text-slate-800 tracking-tight leading-none">₹{totalCartPrice}</span>
+                <span className="text-xl font-black text-slate-800 tracking-tight leading-none">₹{Number(totalCartPrice).toFixed(2)}</span>
               </div>
               <button 
                 onClick={handleCheckout} 
@@ -566,7 +570,7 @@ export default function CartPage() {
                       type="text" 
                       placeholder="e.g. Vini Sharma" 
                       value={newAddrName} 
-                      onChange={(e) => setNewAddrName(e.target.value)}
+                      onChange={(e) => setNewAddrName(e.target.value.replace(/\d/g, ''))}
                       className="mt-1 w-full border border-slate-200 rounded-lg p-2.5 text-xs font-semibold focus:outline-none focus:border-[#ee4923]"
                       required 
                     />
@@ -577,7 +581,7 @@ export default function CartPage() {
                       type="tel" 
                       placeholder="e.g. 9876543210" 
                       value={newAddrPhone} 
-                      onChange={(e) => setNewAddrPhone(e.target.value)}
+                      onChange={(e) => setNewAddrPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
                       className="mt-1 w-full border border-slate-200 rounded-lg p-2.5 text-xs font-semibold focus:outline-none focus:border-[#ee4923]"
                       required 
                       maxLength={10}

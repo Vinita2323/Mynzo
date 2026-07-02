@@ -46,6 +46,10 @@ export default function SavedAddressesPage() {
       toast.info('Name, Phone, Address, and Pincode are required!');
       return;
     }
+    if (/\d/.test(formData.name)) {
+      toast.info('Receiver name cannot contain numerical digits!');
+      return;
+    }
     if (formData.pincode.trim().length !== 6) {
       toast.info('Pincode must be exactly 6 digits!');
       return;
@@ -305,7 +309,7 @@ export default function SavedAddressesPage() {
                 <input
                   type="text"
                   value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value })}
+                  onChange={e => setFormData({ ...formData, name: e.target.value.replace(/\d/g, '') })}
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-lg text-[13px] focus:outline-none focus:border-[#ee4923] focus:ring-1 focus:ring-[#ee4923]/20 transition-all"
                   placeholder="Enter full name"
                 />
