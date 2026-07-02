@@ -16,6 +16,7 @@ const Settings = () => {
   const [adminPhone, setAdminPhone] = useState('');
   const [avatar, setAvatar] = useState('');
   const [imageFile, setImageFile] = useState(null);
+  const [hasRemovedAvatar, setHasRemovedAvatar] = useState(false);
   const fileInputRef = useRef(null);
 
   // System Config States (from Settings DB)
@@ -104,6 +105,7 @@ const Settings = () => {
         return;
       }
       setImageFile(file);
+      setHasRemovedAvatar(false);
       const reader = new FileReader();
       reader.onloadend = () => {
         setAvatar(reader.result);
@@ -131,6 +133,8 @@ const Settings = () => {
         formData.append('phone', adminPhone);
         if (imageFile) {
           formData.append('image', imageFile);
+        } else if (hasRemovedAvatar) {
+          formData.append('avatar', '');
         }
 
         // Save Admin Info
@@ -343,9 +347,22 @@ const Settings = () => {
                       <div>
                         <h3 className="text-xl font-semibold text-slate-900 font-montserrat uppercase tracking-tight">{adminName || 'Administrator'}</h3>
                         <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Super Admin • Full Access</p>
-                        <div className="flex gap-2 mt-4">
+                        <div className="flex flex-wrap gap-2 mt-4">
                           <span className="px-3 py-1 bg-green-50 text-green-600 text-[9px] font-semibold uppercase tracking-widest rounded-lg border border-green-100">Verified</span>
                           <span className="px-3 py-1 bg-blue-50 text-blue-600 text-[9px] font-semibold uppercase tracking-widest rounded-lg border border-blue-100">Primary Account</span>
+                          {avatar && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAvatar('');
+                                setImageFile(null);
+                                setHasRemovedAvatar(true);
+                              }}
+                              className="px-3 py-1 bg-rose-50 text-rose-600 text-[9px] font-black uppercase tracking-widest rounded-lg border border-rose-100 hover:bg-rose-100 transition-colors cursor-pointer"
+                            >
+                              Remove Photo
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

@@ -384,12 +384,20 @@ export default function ProductDetailsPage() {
   }
 
   const handleAddToCart = () => {
+    if (!product || !product.stock || product.stock <= 0) {
+      toast.error('Item is out of stock!');
+      return;
+    }
     addToCart(product);
     setToastMessage('Item added to cart!');
     setTimeout(() => setToastMessage(''), 3000);
   };
 
   const handleBuyNow = () => {
+    if (!product || !product.stock || product.stock <= 0) {
+      toast.error('Item is out of stock!');
+      return;
+    }
     const itemInCart = cart.find(item => item.id === product.id);
     if (!itemInCart) {
       addToCart(product);
@@ -454,7 +462,7 @@ export default function ProductDetailsPage() {
       </header>
 
       {/* Main Content wrapper */}
-      <div className={`max-w-7xl mx-auto w-full px-0 md:px-6 lg:px-8 md:py-8 grid grid-cols-1 md:grid-cols-12 gap-8 items-start ${product.stock === 0 ? 'grayscale opacity-90' : ''}`}>
+      <div className={`max-w-7xl mx-auto w-full px-0 md:px-6 lg:px-8 md:py-8 grid grid-cols-1 md:grid-cols-12 gap-8 items-start ${(!product.stock || product.stock <= 0) ? 'grayscale opacity-90' : ''}`}>
         
         {/* Left Column: Image Gallery on desktop */}
         <div className="md:col-span-7 bg-white p-0 md:p-6 md:rounded-2xl md:border md:border-slate-100 md:shadow-xs space-y-6">
@@ -568,7 +576,7 @@ export default function ProductDetailsPage() {
 
             {/* Image Thumbnails Row */}
             {product.images && product.images.length > 1 && (
-              <div className={`flex justify-center gap-2 mt-4 px-4 overflow-x-auto scrollbar-none ${product.stock === 0 ? 'grayscale opacity-70' : ''}`}>
+              <div className={`flex justify-center gap-2 mt-4 px-4 overflow-x-auto scrollbar-none ${(!product.stock || product.stock <= 0) ? 'grayscale opacity-70' : ''}`}>
                 {product.images.map((img, idx) => (
                   <button
                     key={idx}
@@ -639,7 +647,7 @@ export default function ProductDetailsPage() {
                 <button 
                   onClick={() => setIsSizeChartOpen(true)}
                   className="text-[#ee4923] font-bold text-[11px] cursor-pointer hover:underline"
-                  disabled={product.stock === 0}
+                  disabled={!product.stock || product.stock <= 0}
                 >
                   Size Chart
                 </button>
@@ -648,7 +656,7 @@ export default function ProductDetailsPage() {
               <div className="flex gap-2.5">
                 {['XS', 'S', 'M', 'L', 'XL'].map((size) => {
                   const isSelected = selectedSize === size;
-                  const isOutOfStock = size === 'S' || product.stock === 0;
+                  const isOutOfStock = size === 'S' || !product.stock || product.stock <= 0;
                   
                   return (
                     <button
@@ -719,9 +727,9 @@ export default function ProductDetailsPage() {
           <div className="hidden md:flex gap-3 pt-2">
             <button 
               onClick={handleAddToCart}
-              disabled={product.stock === 0}
+              disabled={!product.stock || product.stock <= 0}
               className={`flex-1 rounded-xl font-black text-xs uppercase tracking-wider py-3.5 transition-colors flex items-center justify-center gap-1.5
-                ${product.stock === 0 
+                ${(!product.stock || product.stock <= 0) 
                   ? 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed opacity-60' 
                   : 'bg-white hover:bg-slate-50 border border-[#02006c] text-[#02006c] cursor-pointer'
                 }`}
@@ -730,14 +738,14 @@ export default function ProductDetailsPage() {
             </button>
             <button 
               onClick={handleBuyNow}
-              disabled={product.stock === 0}
+              disabled={!product.stock || product.stock <= 0}
               className={`flex-1 rounded-xl font-black text-xs uppercase tracking-wider py-3.5 shadow-md transition-colors flex items-center justify-center gap-1.5
-                ${product.stock === 0 
+                ${(!product.stock || product.stock <= 0) 
                   ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60 shadow-none' 
                   : 'bg-[#ee4923] hover:bg-orange-600 text-white shadow-orange-500/20 cursor-pointer'
                 }`}
             >
-              {product.stock === 0 ? 'Out of Stock' : `Buy at ₹${product.price}`}
+              {(!product.stock || product.stock <= 0) ? 'Out of Stock' : `Buy at ₹${product.price}`}
             </button>
           </div>
         </div>
@@ -1048,9 +1056,9 @@ export default function ProductDetailsPage() {
         <div className="flex gap-2 h-12">
           <button 
             onClick={handleAddToCart}
-            disabled={product.stock === 0}
+            disabled={!product.stock || product.stock <= 0}
             className={`flex-1 rounded font-bold text-[13px] flex items-center justify-center transition-colors
-              ${product.stock === 0 
+              ${(!product.stock || product.stock <= 0) 
                 ? 'bg-slate-100 border border-slate-200 text-slate-400 cursor-not-allowed opacity-60' 
                 : 'bg-white border border-[#02006c] text-[#02006c] active:bg-slate-50'
               }`}
@@ -1059,14 +1067,14 @@ export default function ProductDetailsPage() {
           </button>
           <button 
             onClick={handleBuyNow}
-            disabled={product.stock === 0}
+            disabled={!product.stock || product.stock <= 0}
             className={`flex-1 rounded font-bold text-[13px] flex items-center justify-center transition-colors
-              ${product.stock === 0 
+              ${(!product.stock || product.stock <= 0) 
                 ? 'bg-slate-200 text-slate-400 cursor-not-allowed opacity-60' 
                 : 'bg-[#ee4923] text-white active:bg-orange-600 shadow-sm'
               }`}
           >
-            {product.stock === 0 ? 'Out of Stock' : `Buy at ₹${product.price}`}
+            {(!product.stock || product.stock <= 0) ? 'Out of Stock' : `Buy at ₹${product.price}`}
           </button>
         </div>
       </div>

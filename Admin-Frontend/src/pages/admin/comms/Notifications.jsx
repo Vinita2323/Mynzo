@@ -12,6 +12,8 @@ const Notifications = () => {
   const [history, setHistory] = useState([]);
   const [isComposeOpen, setIsComposeOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState('All');
   
   const [allUsers, setAllUsers] = useState([]);
   const [userSearchQuery, setUserSearchQuery] = useState('');
@@ -201,6 +203,17 @@ const Notifications = () => {
   const totalSent = history.length;
   const delivered = history.filter(n => n.status === 'Delivered').length;
 
+  const filteredHistory = history.filter(item => {
+    const matchesSearch = 
+      (item.title || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.body || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (item.target || '').toLowerCase().includes(searchQuery.toLowerCase());
+      
+    const matchesStatus = statusFilter === 'All' || item.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
+
   const filteredUsers = allUsers.filter(user => 
     (user.name || '').toLowerCase().includes(userSearchQuery.toLowerCase()) || 
     (user.phone || '').includes(userSearchQuery)
@@ -244,9 +257,26 @@ const Notifications = () => {
 
       {/* History Table */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-50 flex justify-between items-center">
+        <div className="p-6 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
             <h3 className="text-sm font-black text-slate-900 font-montserrat uppercase tracking-widest">Broadcast History</h3>
-            <div className="flex gap-3 items-center">
+            <div className="flex flex-wrap gap-3 items-center">
+               <input 
+                 type="text" 
+                 placeholder="Search broadcasts..."
+                 value={searchQuery}
+                 onChange={e => setSearchQuery(e.target.value)}
+                 className="border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold bg-slate-50 outline-none"
+               />
+               <select
+                 value={statusFilter}
+                 onChange={e => setStatusFilter(e.target.value)}
+                 className="border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold bg-white outline-none cursor-pointer"
+               >
+                 <option value="All">All Statuses</option>
+                 <option value="Delivered">Delivered</option>
+                 <option value="Pending">Pending</option>
+                 <option value="Failed">Failed</option>
+               </select>
                {selectedIds.length > 0 && (
                   <button 
                      onClick={handleDeleteSelected}
@@ -256,9 +286,6 @@ const Notifications = () => {
                      Delete Selected ({selectedIds.length})
                   </button>
                )}
-               <button className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:text-slate-900 transition-all border border-slate-100">
-                  <Filter size={18} />
-               </button>
             </div>
         </div>
 
@@ -269,8 +296,14 @@ const Notifications = () => {
                 <th className="px-6 py-4 w-12">
                   <input
                     type="checkbox"
-                    checked={history.length > 0 && selectedIds.length === history.length}
-                    onChange={handleSelectAll}
+                    checked={filteredHistory.length > 0 && selectedIds.length === filteredHistory.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setSelectedIds(filteredHistory.map(n => n._id));
+                      } else {
+                        setSelectedIds([]);
+                      }
+                    }}
                     className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 cursor-pointer"
                   />
                 </th>
@@ -282,7 +315,7 @@ const Notifications = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50 text-sm">
-              {history.length > 0 ? history.map((item, i) => (
+              {filteredHistory.length > 0 ? filteredHistory.map((item, i) => (
                 <tr key={item._id} className="group hover:bg-slate-50/50 transition-colors">
                   <td className="px-6 py-5">
                     <input

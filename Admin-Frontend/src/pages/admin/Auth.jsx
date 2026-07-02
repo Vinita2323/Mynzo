@@ -10,12 +10,41 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [modalType, setModalType] = useState(null); // 'privacy' | 'terms' | null
+  const [modalContent, setModalContent] = useState('');
+  const [modalLoading, setModalLoading] = useState(false);
   const navigate = useNavigate();
+
+  const openModal = async (type) => {
+    setModalType(type);
+    setModalLoading(true);
+    setModalContent('');
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/admin/content/legal`);
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setModalContent(type === 'privacy' ? (data.privacy || 'Privacy Policy has not been published yet.') : (data.terms || 'Terms & Conditions have not been published yet.'));
+      } else {
+        setModalContent('Failed to load policy content from the server.');
+      }
+    } catch (err) {
+      console.error(err);
+      setModalContent('Failed to connect to server to fetch policy.');
+    } finally {
+      setModalLoading(false);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
     if (!email || !password) {
       setError('Please fill in all fields');
+      return;
+    }
+    if (!agreed) {
+      setError('You must agree to the Terms & Conditions and Privacy Policy');
       return;
     }
     setError('');
@@ -50,7 +79,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] px-4 font-nunito">
+    <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] px-4 font-nunito relative">
       <div className="w-full max-w-md">
         {/* Admin Branding */}
         <div className="text-center mb-8">
@@ -71,51 +100,80 @@ const Auth = () => {
           <h1 className="text-2xl font-semibold text-slate-900 tracking-tight font-montserrat uppercase">
             Mynzo<span className="text-[#ee4923]">.</span> Admin
           </h1>
-          <p className="text-slate-400 font-bold uppercase tracking-[2px] text-[9px] mt-1">Verified Management Session</p>
+          <p className="text-slate-600 font-black uppercase tracking-[2px] text-[9px] mt-1">Verified Management Session</p>
         </div>
 
         {/* Login Card */}
         <div className="bg-white border border-slate-100 p-8 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.04)]">
           <form onSubmit={handleLogin} className="space-y-5">
             {error && (
-              <div className="bg-red-50 border border-red-100 text-red-500 text-[10px] font-bold p-3 rounded-xl text-center uppercase tracking-widest">
+              <div className="bg-red-50 border border-red-100 text-red-500 text-[10px] font-bold p-3 rounded-xl text-center uppercase tracking-widest animate-pulse">
                 {error}
               </div>
             )}
 
             <div className="space-y-1.5">
-              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Admin Email</label>
+              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Admin Email</label>
               <div className="relative group">
-                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={16} />
+                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
                 <input 
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@gmail.com"
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3.5 pl-14 pr-6 text-slate-900 font-bold placeholder:text-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all text-sm"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3.5 pl-14 pr-6 text-slate-900 font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all text-sm"
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-[9px] font-bold text-slate-400 uppercase tracking-widest ml-1">Secure Password</label>
+              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Secure Password</label>
               <div className="relative group">
-                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-blue-500 transition-colors" size={16} />
+                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
                 <input 
                   type={showPassword ? "text" : "password"} 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3.5 pl-14 pr-14 text-slate-900 font-bold placeholder:text-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all text-sm"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3.5 pl-14 pr-14 text-slate-900 font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all text-sm"
                 />
                 <button 
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-300 hover:text-blue-500 transition-colors"
+                  className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors"
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
+            </div>
+
+            {/* Terms and Privacy Checkbox */}
+            <div className="flex items-start gap-2.5 mt-2 px-1">
+              <input 
+                type="checkbox" 
+                id="agree-checkbox" 
+                checked={agreed}
+                onChange={(e) => setAgreed(e.target.checked)}
+                className="w-4 h-4 text-blue-600 border-slate-200 rounded focus:ring-blue-500 mt-0.5 cursor-pointer"
+              />
+              <label htmlFor="agree-checkbox" className="text-[11px] font-bold text-slate-700 select-none leading-normal cursor-pointer">
+                I agree to the{' '}
+                <button 
+                  type="button" 
+                  onClick={() => openModal('privacy')} 
+                  className="text-blue-600 hover:underline font-extrabold focus:outline-none bg-transparent border-0 p-0 cursor-pointer inline"
+                >
+                  Privacy Policy
+                </button>
+                {' '}and{' '}
+                <button 
+                  type="button" 
+                  onClick={() => openModal('terms')} 
+                  className="text-blue-600 hover:underline font-extrabold focus:outline-none bg-transparent border-0 p-0 cursor-pointer inline"
+                >
+                  Terms & Conditions
+                </button>
+              </label>
             </div>
 
             <button 
@@ -134,16 +192,63 @@ const Auth = () => {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-slate-50 flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-slate-300">
+          <div className="mt-8 pt-6 border-t border-slate-50 flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-slate-500">
             <button className="hover:text-blue-500 transition-colors">Recover Access</button>
             <span>v2.4.0-Stable</span>
           </div>
         </div>
 
-        <p className="text-center text-slate-400 text-[10px] font-bold mt-8 uppercase tracking-widest">
+        <p className="text-center text-slate-600 text-[10px] font-bold mt-8 uppercase tracking-widest">
           Not an admin? <button onClick={() => navigate('/')} className="text-blue-600 hover:underline">Back to Storefront</button>
         </p>
       </div>
+
+      {/* Policy Modal Overlay */}
+      {modalType && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white rounded-[24px] max-w-2xl w-full max-h-[80vh] flex flex-col border border-slate-100 shadow-2xl animate-in zoom-in-95 duration-200">
+            {/* Modal Header */}
+            <div className="p-6 border-b border-slate-50 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-900 font-montserrat uppercase tracking-tight">
+                {modalType === 'privacy' ? 'Privacy Policy' : 'Terms & Conditions'}
+              </h3>
+              <button 
+                type="button"
+                onClick={() => setModalType(null)} 
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-950 transition-all font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto flex-1 text-slate-600 text-sm leading-relaxed whitespace-pre-wrap font-sans">
+              {modalLoading ? (
+                <div className="flex flex-col items-center justify-center py-12 gap-3">
+                  <Loader2 className="animate-spin text-blue-600" size={24} />
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Loading Policy Content...</span>
+                </div>
+              ) : (
+                modalContent
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-5 border-t border-slate-50 flex justify-end">
+              <button 
+                type="button"
+                onClick={() => {
+                  setAgreed(true);
+                  setModalType(null);
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[10px] uppercase tracking-[1.5px] px-6 py-3 rounded-xl shadow-md transition-all active:scale-[0.98]"
+              >
+                Accept and Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

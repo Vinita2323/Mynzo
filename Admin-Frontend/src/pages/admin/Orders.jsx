@@ -300,7 +300,7 @@ const Orders = () => {
 
   const handleDeleteOrder = async (orderId) => {
     if (!orderId) return;
-    if (!window.confirm('Are you sure you want to delete this order? It will be cancelled in Shiprocket and completely removed from the database.')) return;
+    if (!window.confirm('Are you sure you want to delete this order? This action cannot be undone.')) return;
     const token = localStorage.getItem('adminToken');
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';

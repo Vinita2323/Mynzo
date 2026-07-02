@@ -47,8 +47,13 @@ export default function GamesPage() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
-      if (data.success) {
+      if (data.success && data.data) {
         setGames(data.data);
+        // Find if the currently selected game is active, else default to the first active game
+        const activeKeys = data.data.map(g => g.key);
+        if (data.data.length > 0 && !activeKeys.includes(selectedGameKey)) {
+          setSelectedGameKey(data.data[0].key);
+        }
       }
     } catch (err) {
       console.error('Failed to load games list', err);
@@ -186,8 +191,14 @@ export default function GamesPage() {
                 { id: 'snake', key: 'snake' },
                 { id: 'ticTacToe', key: 'ticTacToe' },
                 { id: 'quiz', key: 'quiz' }
-              ].map(gRef => {
-                const details = GAME_ASSETS[gRef.id];
+              ]
+              .filter(gRef => games.some(g => g.key === gRef.key))
+              .map(gRef => {
+                const dbGame = games.find(g => g.key === gRef.key);
+                const details = {
+                  title: dbGame?.name || GAME_ASSETS[gRef.id].title,
+                  icon: GAME_ASSETS[gRef.id].icon
+                };
                 const isSelected = selectedGameKey === gRef.key;
                 return (
                   <div 

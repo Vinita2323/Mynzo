@@ -80,7 +80,7 @@ const AddProduct = () => {
       if (!isNaN(discount) && discount >= 0 && discount <= 100) {
         const calculatedPrice = Math.round(Number(mrp) * (1 - discount / 100));
         setSellingPrice(calculatedPrice);
-        setDiscountLabel(`-${discount}% OFF`);
+        setDiscountLabel(String(discount));
       }
     }
   }, [mrp, discountPercent]);
@@ -141,8 +141,13 @@ const AddProduct = () => {
           setSellingPrice(p.sellingPrice || '');
           setMrp(p.mrp || '');
           setStock(p.stock || 1);
-          setDiscountLabel(p.discountLabel || '');
-          setSku(p.sku || '');
+          if (p.discountLabel) {
+             const match = String(p.discountLabel).match(/\d+/);
+             setDiscountLabel(match ? match[0] : '');
+           } else {
+             setDiscountLabel('');
+           }
+           setSku(p.sku || '');
           setBrandName(p.brandName || '');
           setBrandId(p.brandId || '');
           setIsTrending(p.isTrending || false);
@@ -217,17 +222,32 @@ const AddProduct = () => {
         if (catRes.ok && catData.success && subRes.ok && subData.success) {
           const catsList = (catData.chips || []).filter(c => c.active !== false).map(c => ({
             id: c._id,
+            slug: c.id,
             name: c.categoryName
           }));
           setCategories(catsList);
           
           const map = {};
           (subData.subchips || []).filter(s => s.active !== false).forEach(s => {
-            if (!map[s.categoryId]) map[s.categoryId] = [];
-            map[s.categoryId].push({
+            // Find parent category to map by both slug and _id keys
+            const parentCat = (catData.chips || []).find(c => c._id === s.categoryId || c.id === s.categoryId);
+            const parentId = parentCat ? parentCat._id : s.categoryId;
+            const parentSlug = parentCat ? parentCat.id : s.categoryId;
+
+            const subItem = {
               id: s._id,
+              slug: s.id,
               name: s.subCategoryName
-            });
+            };
+
+            if (parentId) {
+              if (!map[parentId]) map[parentId] = [];
+              map[parentId].push(subItem);
+            }
+            if (parentSlug && parentSlug !== parentId) {
+              if (!map[parentSlug]) map[parentSlug] = [];
+              map[parentSlug].push(subItem);
+            }
           });
           setSubCategoriesMap(map);
         }
@@ -241,6 +261,27 @@ const AddProduct = () => {
     };
     fetchCategoriesAndSubcategories();
   }, []);
+
+  // Resolve category slug to _id if needed once categories list is loaded
+  useEffect(() => {
+    if (category && categories.length > 0) {
+      const found = categories.find(c => c.id === category || c.slug === category);
+      if (found && found.id !== category) {
+        setCategory(found.id);
+      }
+    }
+  }, [categories, category]);
+
+  // Resolve subcategory slug to _id if needed
+  useEffect(() => {
+    if (subCategory && category && subCategoriesMap[category]) {
+      const subCats = subCategoriesMap[category] || [];
+      const found = subCats.find(sc => sc.id === subCategory || sc.slug === subCategory);
+      if (found && found.id !== subCategory) {
+        setSubCategory(found.id);
+      }
+    }
+  }, [subCategoriesMap, subCategory, category]);
 
   // Variations state
   const [attributes, setAttributes] = useState([]);
@@ -364,6 +405,11 @@ const AddProduct = () => {
       toast.info('Actual Price (MRP) cannot be less than Selling Price!');
       return;
     }
+
+    if (stock !== undefined && Number(stock) < 0) {
+      toast.info('Stock cannot be negative!');
+      return;
+    }
     
     if (!shippingSpecs.weight) {
       toast.info('Product Weight is mandatory for shipping calculation!');
@@ -387,7 +433,7 @@ const AddProduct = () => {
       bodyFormData.append('sellingPrice', sellingPrice);
       if (mrp) bodyFormData.append('mrp', mrp);
       bodyFormData.append('stock', stock);
-      bodyFormData.append('discountLabel', discountLabel);
+      bodyFormData.append('discountLabel', discountLabel ? `-${discountLabel}% OFF` : '');
       bodyFormData.append('sku', sku);
       bodyFormData.append('hsnCode', hsnCode);
       bodyFormData.append('brandName', brandName || 'Generic');
@@ -581,12 +627,19 @@ const AddProduct = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Discount Label</Label>
+                <Label>Discount Label (Percentage)</Label>
                 <input 
-                  type="text" 
+                  type="number" 
                   value={discountLabel}
-                  onChange={e => setDiscountLabel(e.target.value)}
-                  placeholder="e.g. -40% OFF" 
+                  onChange={e => {
+                    const val = Number(e.target.value);
+                    if (val >= 0 && val <= 100) {
+                      setDiscountLabel(e.target.value);
+                    }
+                  }}
+                  placeholder="e.g. 40" 
+                  min="0"
+                  max="100"
                   className={inputCls} 
                 />
               </div>

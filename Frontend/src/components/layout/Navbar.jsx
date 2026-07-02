@@ -36,13 +36,15 @@ export default function Navbar() {
     setSearchQuery,
     isLocationModalOpen,
     setIsLocationModalOpen,
-    logout
+    logout,
+    notifications,
+    loadingNotifications,
+    fetchNotifications,
+    setNotifications
   } = useApp();
 
   const [tempLocation, setTempLocation] = useState(location);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-  const [loadingNotifications, setLoadingNotifications] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const fileInputRef = useRef(null);
 
@@ -184,25 +186,6 @@ export default function Navbar() {
     setIsLocationModalOpen(false);
   };
 
-  const fetchNotifications = async () => {
-    if (!user) return;
-    setLoadingNotifications(true);
-    try {
-      const token = localStorage.getItem('userToken');
-      const res = await fetch(`${API_BASE}/notifications/my`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data.success) {
-        setNotifications(data.notifications || []);
-      }
-    } catch (err) {
-      console.error('Error fetching notifications:', err);
-    } finally {
-      setLoadingNotifications(false);
-    }
-  };
-
   const markNotificationsAsRead = async () => {
     if (!user) return;
     try {
@@ -232,14 +215,6 @@ export default function Navbar() {
       console.error('Error marking single notification as read:', err);
     }
   };
-
-  useEffect(() => {
-    if (user) {
-      fetchNotifications();
-    } else {
-      setNotifications([]);
-    }
-  }, [user]);
 
   useEffect(() => {
     if (isNotificationModalOpen) {

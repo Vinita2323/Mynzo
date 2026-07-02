@@ -122,10 +122,31 @@ const Users = () => {
       return;
     }
 
+    const trimmedName = formData.name.trim().replace(/\s+/g, ' ');
+    const nameRegex = /^[a-zA-Z]+(?:\s+[a-zA-Z]+)+$/;
+    if (!nameRegex.test(trimmedName)) {
+      toast.info('Please enter a valid full name (e.g., John Doe) containing only letters');
+      return;
+    }
+
+    const formattedName = trimmedName
+      .toLowerCase()
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+
     const phoneRegex = /^[0-9]{10}$/;
     if (!phoneRegex.test(formData.phone)) {
       toast.info('Phone number must be exactly 10 digits');
       return;
+    }
+
+    if (formData.email) {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+      if (!emailRegex.test(formData.email)) {
+        toast.info('Please enter a valid email address (e.g., user@example.com)');
+        return;
+      }
     }
 
     const token = localStorage.getItem('adminToken');
@@ -146,7 +167,7 @@ const Users = () => {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          name: formData.name,
+          name: formattedName,
           email: formData.email || '',
           phone: formData.phone
         })
@@ -292,15 +313,15 @@ const Users = () => {
       });
       const data = await res.json();
       if (res.ok && data.success) {
-        const headers = ['ID', 'Name', 'Email', 'Phone', 'Joined', 'Spent', 'Orders', 'Status'];
+        const headers = ['ID', 'Name', 'Email', 'Phone', 'Joined', 'Spent Amount', 'Orders', 'Status'];
         const csvContent = [
           headers.join(','),
           ...data.users.map(u => {
             const joined = new Date(u.createdAt).toISOString().split('T')[0];
-            const spent = `₹${(u.totalSpent || 0).toLocaleString('en-IN')}`;
+            const spent = u.totalSpent || 0;
             const orders = u.ordersCount || 0;
             const status = u.derivedStatus || 'Active';
-            return `${u._id},"${u.name || 'Anonymous'}",${u.email || 'N/A'},${u.phone || 'N/A'},${joined},"${spent}",${orders},${status}`;
+            return `${u._id},"${u.name || 'Anonymous'}",${u.email || 'N/A'},${u.phone || 'N/A'},${joined},${spent},${orders},${status}`;
           })
         ].join('\n');
 

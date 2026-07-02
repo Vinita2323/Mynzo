@@ -71,6 +71,16 @@ const Coupons = () => {
       return;
     }
 
+    if (Number(value) < 0) {
+      toast.info('Discount value cannot be negative!');
+      return;
+    }
+
+    if (type === 'Percentage' && Number(value) > 100) {
+      toast.info('Percentage discount cannot exceed 100%!');
+      return;
+    }
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const selectedExpiry = new Date(expiry);
@@ -208,7 +218,7 @@ const Coupons = () => {
       c.status,
       c.usage || 0
     ]);
-    const csvContent = [
+    const csvContent = "\uFEFF" + [
       headers.join(','),
       ...rows.map(row => row.join(','))
     ].join('\n');

@@ -8,7 +8,7 @@ import analytics from '../utils/analytics';
 
 export default function ReviewOrderPage() {
   const navigate = useNavigate();
-  const { cart, totalCartPrice, user, clearCart, addOrder } = useApp();
+  const { cart, totalCartPrice, user, clearCart, addOrder, systemSettings } = useApp();
 
   useEffect(() => {
     if (!user) {
@@ -36,6 +36,7 @@ export default function ReviewOrderPage() {
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [discountAmount, setDiscountAmount] = useState(0);
   const [promoError, setPromoError] = useState('');
+  const [availableCoupons, setAvailableCoupons] = useState([]);
   const [feeInfoModal, setFeeInfoModal] = useState(null);
   
   // Coins states
@@ -233,8 +234,31 @@ export default function ReviewOrderPage() {
     }
   };
 
-  const handleApplyPromo = async () => {
-    if (!promoInput.trim()) {
+  useEffect(() => {
+    const fetchAvailableCoupons = async () => {
+      try {
+        const token = localStorage.getItem('userToken');
+        const res = await fetch(`${API_BASE}/admin/promotions/coupons`, {
+          headers: {
+            ...(token && { 'Authorization': `Bearer ${token}` })
+          }
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          // Filter active coupons that expire in the future
+          const active = (data.coupons || []).filter(c => c.status === 'Active' && new Date(c.expiry) > new Date());
+          setAvailableCoupons(active);
+        }
+      } catch (err) {
+        console.error('Failed to load eligible coupons:', err);
+      }
+    };
+    fetchAvailableCoupons();
+  }, [API_BASE]);
+
+  const handleApplyPromo = async (codeOverride = null) => {
+    const code = (typeof codeOverride === 'string' ? codeOverride : promoInput).trim();
+    if (!code) {
       setPromoError('Please enter a coupon code.');
       return;
     }
@@ -247,7 +271,7 @@ export default function ReviewOrderPage() {
           ...(token && { 'Authorization': `Bearer ${token}` })
         },
         body: JSON.stringify({
-          code: promoInput.trim(),
+          code: code,
           orderAmount: totalCartPrice
         })
       });
@@ -256,6 +280,7 @@ export default function ReviewOrderPage() {
         const found = data.coupon;
         setAppliedCoupon(found);
         setPromoError('');
+        setPromoInput(found.code);
         let discount = 0;
         if (found.type === 'Percentage') {
           discount = Math.round((totalCartPrice * found.value) / 100);
@@ -268,7 +293,7 @@ export default function ReviewOrderPage() {
         setPromoError(data.message || 'Failed to validate coupon.');
         setAppliedCoupon(null);
         setDiscountAmount(0);
-        analytics.trackCouponApplied(promoInput.trim(), false, 0);
+        analytics.trackCouponApplied(code, false, 0);
       }
     } catch (err) {
       console.error("Error applying promo:", err);
@@ -439,9 +464,10 @@ export default function ReviewOrderPage() {
 
   const originalTotal = cart.reduce((sum, item) => sum + (item.originalPrice || item.price) * item.quantity, 0);
   const productDiscount = Math.max(0, originalTotal - totalCartPrice);
-  const platformCommission = 15;
+  const platformCommission = systemSettings?.commission ?? 15;
+  const gstPercentage = systemSettings?.gstPercentage ?? 18;
   
-  const gstAmount = Math.round(Math.max(0, totalCartPrice - discountAmount) * 0.18);
+  const gstAmount = Math.round(Math.max(0, totalCartPrice - discountAmount) * (gstPercentage / 100));
   const grandTotalBeforeCoins = Math.max(0, totalCartPrice - discountAmount + gstAmount + platformCommission + deliveryCharge);
   
   const walletUsedAmount = redeemWallet ? Math.min(walletBalance, grandTotalBeforeCoins) : 0;
@@ -594,6 +620,35 @@ export default function ReviewOrderPage() {
                 <p className="text-[10px] text-green-600 font-bold">
                   ✓ Coupon '{appliedCoupon.code}' applied successfully!
                 </p>
+              )}
+              
+              {/* Available Coupons List */}
+              {availableCoupons.length > 0 && !appliedCoupon && (
+                <div className="mt-3 pt-3 border-t border-slate-50">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Available Coupons</p>
+                  <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto pr-1">
+                    {availableCoupons.map((coupon) => (
+                      <div 
+                        key={coupon._id} 
+                        onClick={() => handleApplyPromo(coupon.code)}
+                        className="flex justify-between items-center p-2 rounded-xl bg-slate-50 border border-slate-100 hover:border-orange-200 hover:bg-orange-50/20 cursor-pointer transition-all active:scale-[0.98]"
+                      >
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-black text-[#ee4923] bg-orange-50 border border-orange-100 px-2 py-0.5 rounded-lg w-max mb-1">
+                            {coupon.code}
+                          </span>
+                          <span className="text-[10px] text-slate-500 font-medium">
+                            {coupon.type === 'Percentage' ? `${coupon.value}% Off` : `₹${coupon.value} Off`}
+                            {coupon.minOrder > 0 && ` on orders above ₹${coupon.minOrder}`}
+                          </span>
+                        </div>
+                        <button className="text-[10px] font-black text-blue-600 hover:text-blue-700 pointer-events-none">
+                          APPLY
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           </div>

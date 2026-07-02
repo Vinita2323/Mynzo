@@ -72,6 +72,13 @@ exports.createCoupon = async (req, res) => {
       });
     }
 
+    if (Number(value) < 0) {
+      return res.status(400).json({ success: false, message: 'Discount value cannot be negative.' });
+    }
+    if (type === 'Percentage' && Number(value) > 100) {
+      return res.status(400).json({ success: false, message: 'Percentage discount cannot exceed 100%.' });
+    }
+
     const uppercaseCode = code.toUpperCase().trim();
 
     // Check if code already exists
@@ -180,6 +187,14 @@ exports.deleteCoupon = async (req, res) => {
 exports.updateCoupon = async (req, res) => {
   try {
     const { code, type, value, minOrder, usageLimit, perUserLimit, expiry } = req.body;
+
+    if (value !== undefined && Number(value) < 0) {
+      return res.status(400).json({ success: false, message: 'Discount value cannot be negative.' });
+    }
+    const finalType = type || (await Coupon.findById(req.params.id))?.type;
+    if (finalType === 'Percentage' && value !== undefined && Number(value) > 100) {
+      return res.status(400).json({ success: false, message: 'Percentage discount cannot exceed 100%.' });
+    }
 
     const uppercaseCode = code ? code.toUpperCase().trim() : undefined;
 

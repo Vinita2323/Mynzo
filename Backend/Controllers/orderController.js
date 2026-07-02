@@ -577,6 +577,16 @@ exports.updateOrderStatus = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
+    const targetStatus = status || order.status;
+    const targetPaymentStatus = paymentStatus || order.paymentStatus;
+
+    if (targetStatus === 'Delivered' && targetPaymentStatus === 'Failed') {
+      return res.status(400).json({
+        success: false,
+        message: 'Cannot have order status as Delivered when payment status is Failed.'
+      });
+    }
+
     if (status && status !== order.status) {
       const validTransitions = {
         'Pending': ['Processing', 'Cancelled'],
@@ -629,8 +639,15 @@ exports.updateOrderStatus = async (req, res) => {
       }
     }
 
-    if (status) order.status = status;
-    if (paymentStatus) order.paymentStatus = paymentStatus;
+    if (status) {
+      order.status = status;
+      if (status === 'Delivered') {
+        order.paymentStatus = 'Paid';
+      }
+    }
+    if (paymentStatus && status !== 'Delivered') {
+      order.paymentStatus = paymentStatus;
+    }
 
     await order.save();
     await checkAndTriggerReferral(order);

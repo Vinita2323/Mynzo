@@ -21,6 +21,15 @@ export const getImageUrl = (imagePath) => {
     }
   }
 
+  // If it's a full URL without http/https (e.g. starting with www.)
+  if (path.startsWith('www.')) {
+    return `https://${path}`;
+  }
+  // If it doesn't look like a local uploads path (doesn't start with /uploads or uploads), it's likely a full external URL
+  if (!path.startsWith('/uploads') && !path.startsWith('uploads')) {
+    return path; // Return as is
+  }
+
   if (
     path.startsWith('http://') ||
     path.startsWith('https://') ||

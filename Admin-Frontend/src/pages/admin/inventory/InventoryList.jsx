@@ -144,27 +144,46 @@ export default function InventoryList() {
       'Fit', 'Fabric Care', 'Suitable For', 'Hem',
       'Weight (kg)', 'Length (cm)', 'Width (cm)', 'Height (cm)',
       'Top Section', 'Crazy Deals', 'Flash Sale',
-      'Brand Name', 'Tags', 'Manufacturer Info', 'HSN Code', 'Image URLs'
+      'Brand Name', 'Tags', 'Manufacturer Info', 'HSN Code', 'GST Category', 'Is Trending', 'Image URLs'
     ];
     const sampleRow = [
-      '"Premium Leather Satchel"', 'Fashion', 'Accessories', '"A high-quality leather satchel for everyday use."', 2999, 4999, 100, '"-40% OFF"', 'FSH-SAT-001',
+      'Premium Leather Satchel', 'Fashion', 'Accessories', 'A high-quality leather satchel for everyday use.', 2999, 4999, 100, '-40% OFF', 'FSH-SAT-001',
       '1', 'Leather', '', 'Solid', '', 'Brown',
       'Regular', 'Wipe with damp cloth', 'Casual', '',
       0.8, 30, 20, 10,
       'false', 'true', 'false',
-      'LeatherCraft', '"bags, leather, premium"', '"LeatherCraft Mfg."', '4202', '"https://example.com/img1.jpg, https://example.com/img2.jpg"'
+      'LeatherCraft', 'bags, leather, premium', 'LeatherCraft Mfg.', '4202', 'Standard GST', 'true', 'https://example.com/img1.jpg, https://example.com/img2.jpg'
     ];
-    const csvContent = [headers.join(','), sampleRow.join(',')].join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+
+    const xmlContent = `<?xml version="1.0"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Worksheet ss:Name="Sheet1">
+  <Table>
+   <Row>
+    ${headers.map(h => `<Cell><Data ss:Type="String">${h}</Data></Cell>`).join('\n    ')}
+   </Row>
+   <Row>
+    ${sampleRow.map(v => `<Cell><Data ss:Type="${typeof v === 'number' ? 'Number' : 'String'}">${v}</Data></Cell>`).join('\n    ')}
+   </Row>
+  </Table>
+ </Worksheet>
+</Workbook>`;
+
+    const blob = new Blob([xmlContent], { type: 'application/vnd.ms-excel' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', 'product_upload_sample.csv');
+    link.setAttribute('download', 'product_upload_template.xls');
     link.style.visibility = 'hidden';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success('Sample format downloaded!');
+    toast.success('Excel sample template downloaded!');
   };
 
   const handleFileUpload = async (e) => {
@@ -298,7 +317,7 @@ export default function InventoryList() {
         if (res.ok && data.success && data.chips) {
           const fetchedCats = data.chips
             .filter(c => c.active !== false)
-            .map(c => ({ id: c._id, name: c.categoryName }));
+            .map(c => ({ id: c._id, slug: c.id, name: c.categoryName }));
           setCategories([{ id: 'All', name: 'All' }, ...fetchedCats]);
         }
       } catch (err) {
@@ -319,7 +338,7 @@ export default function InventoryList() {
 
   const getCategoryName = (catId) => {
     if (!catId) return 'N/A';
-    const found = categories.find(c => c.id === catId);
+    const found = categories.find(c => c.id === catId || c.slug === catId);
     return found ? found.name : catId;
   };
 

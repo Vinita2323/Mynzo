@@ -159,6 +159,48 @@ const completeReferral = async (userId, referrerCoins = 100, refereeCoins = 100)
       title: `Referral Reward (Signed up with code ${referral.referralCode})`,
       amount: finalRefereeCoins
     });
+
+    // Create notification and send push for Referrer
+    try {
+      const Notification = require('../Models/Notification');
+      const { sendNotificationToUser } = require('../Router/firebaseAdmin');
+
+      const referrerNotif = new Notification({
+        title: 'Referral Reward Credited! 🎉',
+        body: `Your friend ${user.name || user.phone} placed their first order. You earned ${finalReferrerCoins} coins!`,
+        target: 'Selected Users',
+        targetUserIds: [referral.referrer],
+        status: 'Delivered'
+      });
+      await referrerNotif.save();
+      await sendNotificationToUser(referral.referrer, {
+        title: referrerNotif.title,
+        body: referrerNotif.body
+      });
+    } catch (notifErr) {
+      console.error('Error sending referral referrer notification:', notifErr.message);
+    }
+
+    // Create notification and send push for Referee
+    try {
+      const Notification = require('../Models/Notification');
+      const { sendNotificationToUser } = require('../Router/firebaseAdmin');
+
+      const refereeNotif = new Notification({
+        title: 'Welcome Reward Credited! 🎁',
+        body: `You joined using code ${referral.referralCode}. You earned ${finalRefereeCoins} welcome coins!`,
+        target: 'Selected Users',
+        targetUserIds: [userId],
+        status: 'Delivered'
+      });
+      await refereeNotif.save();
+      await sendNotificationToUser(userId, {
+        title: refereeNotif.title,
+        body: refereeNotif.body
+      });
+    } catch (notifErr) {
+      console.error('Error sending referral referee notification:', notifErr.message);
+    }
   } catch (err) {
     console.error('Complete Referral Error:', err);
   }

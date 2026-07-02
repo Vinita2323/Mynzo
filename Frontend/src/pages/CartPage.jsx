@@ -8,9 +8,14 @@ import OptimizedImage from '../components/ui/OptimizedImage';
 
 export default function CartPage() {
   const navigate = useNavigate();
-  const { cart, updateQuantity, removeFromCart, totalCartPrice, totalCartItems, setActiveTab, user } = useApp();
+  const { cart, updateQuantity, removeFromCart, totalCartPrice, totalCartItems, setActiveTab, user, systemSettings } = useApp();
 
   const handleCheckout = () => {
+    const outOfStockItem = cart.find(item => !item.stock || item.stock <= 0);
+    if (outOfStockItem) {
+      alert(`"${outOfStockItem.name}" is currently out of stock. Please remove it from your cart to proceed.`);
+      return;
+    }
     if (!user) {
       navigate('/login');
     } else {
@@ -218,8 +223,9 @@ export default function CartPage() {
   };
 
   const mockSavings = 2458;
-  const gstAmount = Math.round(Math.max(0, totalCartPrice - discountAmount) * 0.18);
-  const platformCommission = 15;
+  const platformCommission = systemSettings?.commission ?? 15;
+  const gstPercentage = systemSettings?.gstPercentage ?? 18;
+  const gstAmount = Math.round(Math.max(0, totalCartPrice - discountAmount) * (gstPercentage / 100));
   const finalTotal = Math.max(0, totalCartPrice - discountAmount + gstAmount + platformCommission);
   const mockOriginalTotal = totalCartPrice + mockSavings;
 

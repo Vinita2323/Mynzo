@@ -178,6 +178,62 @@ export const AppProvider = ({ children }) => {
     registerFcm();
   }, [user]);
 
+  const [systemSettings, setSystemSettings] = useState({
+    commission: 15,
+    gstPercentage: 18,
+    coinsPerRupee: 100,
+    minimumRedeemCoins: 500,
+    maximumRedeemPerOrder: 10000
+  });
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch(`${API_BASE}/admin/settings`);
+        const data = await res.json();
+        if (res.ok && data.success && data.settings) {
+          setSystemSettings(data.settings);
+        }
+      } catch (err) {
+        console.error("Error fetching system settings:", err);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifications, setLoadingNotifications] = useState(false);
+
+  const fetchNotifications = async () => {
+    setLoadingNotifications(true);
+    try {
+      const token = localStorage.getItem('userToken');
+      if (!token) {
+        setNotifications([
+          { _id: '1', title: 'Welcome to Mynzo!', body: 'Thank you for choosing Mynzo. Start shopping now!', createdAt: new Date(), read: false },
+          { _id: '2', title: 'Referral Discount Available', body: 'Refer a friend and get 10% off their first order.', createdAt: new Date(), read: true }
+        ]);
+        setLoadingNotifications(false);
+        return;
+      }
+      const res = await fetch(`${API_BASE}/notifications/my`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setNotifications(data.notifications || []);
+      }
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    } finally {
+      setLoadingNotifications(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [user]);
+
   useEffect(() => {
     if (user && user.id && messaging) {
       const unsubscribe = onMessage(messaging, (payload) => {
@@ -190,6 +246,16 @@ export const AppProvider = ({ children }) => {
 
         const title = payload.notification?.title || 'Notification';
         const body = payload.notification?.body || '';
+
+        const newNotif = {
+          _id: payload.messageId || String(Date.now()),
+          title,
+          body,
+          read: false,
+          createdAt: new Date()
+        };
+        setNotifications(prev => [newNotif, ...prev]);
+
         toast((t) => (
           <div className="flex flex-col gap-1">
             <span className="font-bold text-[#02006c]">{title}</span>
@@ -714,8 +780,12 @@ export const AppProvider = ({ children }) => {
         fetchAddresses,
         addAddress,
         updateAddress,
-        deleteAddress,
-        socketRef
+        socketRef,
+        systemSettings,
+        notifications,
+        loadingNotifications,
+        fetchNotifications,
+        setNotifications
       }}
     >
       {children}

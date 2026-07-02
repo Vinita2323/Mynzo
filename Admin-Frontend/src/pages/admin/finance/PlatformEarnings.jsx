@@ -40,7 +40,7 @@ const PlatformEarnings = () => {
 
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/admin/analytics/earnings`, {
+      const res = await fetch(`${apiBase}/admin/analytics/earnings?t=${Date.now()}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

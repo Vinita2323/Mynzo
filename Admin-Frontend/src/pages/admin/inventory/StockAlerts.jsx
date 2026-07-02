@@ -19,7 +19,7 @@ const StockAlerts = () => {
   const fetchProducts = async () => {
     try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/admin/catalog/products`);
+      const res = await fetch(`${apiBase}/admin/catalog/products?t=${Date.now()}`);
       const data = await res.json();
       if (res.ok && data.success) {
         setProducts(data.products || []);
@@ -50,6 +50,11 @@ const StockAlerts = () => {
   }, []);
 
   const handleSaveStock = async (id, newStock) => {
+    if (newStock < 0) {
+      toast.error('Stock cannot be negative!');
+      return;
+    }
+
     const token = localStorage.getItem('adminToken');
     if (!token) {
       toast.error('Not authenticated');

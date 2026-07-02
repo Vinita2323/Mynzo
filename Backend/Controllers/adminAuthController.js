@@ -291,7 +291,25 @@ const createUser = async (req, res) => {
       return res.status(400).json({ success: false, message: 'User with this phone number already exists' });
     }
 
+    let formattedName = null;
+    if (name) {
+      const trimmedName = name.trim().replace(/\s+/g, ' ');
+      const nameRegex = /^[a-zA-Z]+(?:\s+[a-zA-Z]+)+$/;
+      if (!nameRegex.test(trimmedName)) {
+        return res.status(400).json({ success: false, message: 'Please enter a valid full name (e.g., John Doe) containing only letters.' });
+      }
+      formattedName = trimmedName
+        .toLowerCase()
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    }
+
     if (email) {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+      }
       const existingEmail = await User.findOne({ email: email.toLowerCase() });
       if (existingEmail) {
         return res.status(400).json({ success: false, message: 'User with this email already exists' });
@@ -299,7 +317,7 @@ const createUser = async (req, res) => {
     }
 
     const newUser = new User({
-      name: name || null,
+      name: formattedName,
       email: email ? email.toLowerCase() : null,
       phone,
       gender: gender || null,
@@ -348,6 +366,10 @@ const updateUser = async (req, res) => {
     }
 
     if (email) {
+      const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/;
+      if (!emailRegex.test(email)) {
+        return res.status(400).json({ success: false, message: 'Please enter a valid email address.' });
+      }
       const existingEmail = await User.findOne({ email: email.toLowerCase(), _id: { $ne: userId } });
       if (existingEmail) {
         return res.status(400).json({ success: false, message: 'User with this email already exists' });
@@ -358,7 +380,20 @@ const updateUser = async (req, res) => {
     }
 
     if (name !== undefined) {
-      user.name = name || null;
+      let formattedName = null;
+      if (name) {
+        const trimmedName = name.trim().replace(/\s+/g, ' ');
+        const nameRegex = /^[a-zA-Z]+(?:\s+[a-zA-Z]+)+$/;
+        if (!nameRegex.test(trimmedName)) {
+          return res.status(400).json({ success: false, message: 'Please enter a valid full name (e.g., John Doe) containing only letters.' });
+        }
+        formattedName = trimmedName
+          .toLowerCase()
+          .split(' ')
+          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(' ');
+      }
+      user.name = formattedName;
     }
 
     if (status !== undefined) {

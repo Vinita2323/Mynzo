@@ -71,14 +71,21 @@ const getOverview = async (req, res) => {
     ]);
     const totalRevenue = revenueStats.length > 0 ? revenueStats[0].total : 0;
 
-    // Calculate today's stats
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    // Calculate today's stats (timezone-agnostic IST start of day)
+    const getISTTodayStart = () => {
+      const now = new Date();
+      // IST is UTC +5:30. Offset in milliseconds: 5.5 * 60 * 60 * 1000 = 19800000
+      const istTime = new Date(now.getTime() + 19800000);
+      const istTodayStart = new Date(Date.UTC(istTime.getUTCFullYear(), istTime.getUTCMonth(), istTime.getUTCDate()));
+      return new Date(istTodayStart.getTime() - 19800000);
+    };
+    const todayStart = getISTTodayStart();
 
     const revenueTodayStats = await Order.aggregate([
       {
         $match: {
           paymentStatus: 'Paid',
+          status: { $nin: ['Cancelled', 'Refunded'] },
           createdAt: { $gte: todayStart }
         }
       },
@@ -87,6 +94,7 @@ const getOverview = async (req, res) => {
     const revenueToday = revenueTodayStats.length > 0 ? revenueTodayStats[0].total : 0;
 
     const ordersToday = await Order.countDocuments({
+      status: { $nin: ['Cancelled', 'Refunded'] },
       createdAt: { $gte: todayStart }
     });
 
@@ -864,9 +872,9 @@ const getGameAnalytics = async (req, res) => {
 // @access  Private (Admin)
 const getEarnings = async (req, res) => {
   try {
-    // 1. Net Revenue: Sum of total of paid orders
+    // 1. Net Revenue: Sum of total of paid orders (excluding Cancelled/Refunded)
     const netRevenueStats = await Order.aggregate([
-      { $match: { paymentStatus: 'Paid' } },
+      { $match: { paymentStatus: 'Paid', status: { $nin: ['Cancelled', 'Refunded', 'Returned'] } } },
       { $group: { _id: null, total: { $sum: '$total' } } }
     ]);
     const netRevenue = netRevenueStats.length > 0 ? netRevenueStats[0].total : 0;
@@ -895,7 +903,8 @@ const getEarnings = async (req, res) => {
       { 
         $match: { 
           createdAt: { $gte: startOfSevenDaysAgo },
-          paymentStatus: 'Paid'
+          paymentStatus: 'Paid',
+          status: { $nin: ['Cancelled', 'Refunded', 'Returned'] }
         } 
       },
       {
@@ -926,12 +935,23 @@ const getEarnings = async (req, res) => {
 
     // 5. Category Revenue Breakdown
     const categoryRevenueStats = await Order.aggregate([
-      { $match: { paymentStatus: 'Paid' } },
+      { $match: { paymentStatus: 'Paid', status: { $nin: ['Cancelled', 'Refunded', 'Returned'] } } },
       { $unwind: '$items' },
+      {
+        $addFields: {
+          "items.productObjectId": {
+            $cond: {
+              if: { $regexMatch: { input: { $toString: "$items.productId" }, regex: /^[0-9a-fA-F]{24}$/ } },
+              then: { $toObjectId: "$items.productId" },
+              else: null
+            }
+          }
+        }
+      },
       {
         $lookup: {
           from: 'products',
-          localField: 'items.productId',
+          localField: 'items.productObjectId',
           foreignField: '_id',
           as: 'productInfo'
         }

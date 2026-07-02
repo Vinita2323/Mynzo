@@ -31,6 +31,14 @@ const getImageUrl = (imagePath) => {
   ) {
     return imagePath;
   }
+  // If it's a full URL without http/https (e.g. starting with www.)
+  if (imagePath.startsWith('www.')) {
+    return `https://${imagePath}`;
+  }
+  // If it doesn't look like a local uploads path (doesn't start with /uploads or uploads), it's likely a full external URL
+  if (!imagePath.startsWith('/uploads') && !imagePath.startsWith('uploads')) {
+    return imagePath; // Return as is
+  }
   const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   return `${apiBase}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
 };

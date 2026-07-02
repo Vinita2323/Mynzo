@@ -146,6 +146,10 @@ const createProduct = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Actual Price (MRP) cannot be less than Selling Price' });
     }
 
+    if (stock !== undefined && Number(stock) < 0) {
+      return res.status(400).json({ success: false, message: 'Stock cannot be negative' });
+    }
+
     // Process Images
     let imageUrls = [];
     if (req.processedFiles && req.processedFiles.length > 0) {
@@ -220,6 +224,10 @@ const updateProduct = async (req, res) => {
     const finalMrp = req.body.mrp !== undefined ? (req.body.mrp ? Number(req.body.mrp) : undefined) : product.mrp;
     if (finalMrp !== undefined && finalMrp < finalSellingPrice) {
       return res.status(400).json({ success: false, message: 'Actual Price (MRP) cannot be less than Selling Price' });
+    }
+
+    if (req.body.stock !== undefined && Number(req.body.stock) < 0) {
+      return res.status(400).json({ success: false, message: 'Stock cannot be negative' });
     }
 
     if (req.body.category !== undefined || req.body.subCategory !== undefined) {
@@ -708,6 +716,8 @@ const bulkUploadProducts = async (req, res) => {
         tags: getValue('Tags') ? getValue('Tags').split(',').map(t => t.trim()) : [],
         manufacturerInfo: getValue('Manufacturer Info'),
         hsnCode: getValue('HSN Code'),
+        gstCategory: getValue('GST Category'),
+        isTrending: getValue('Is Trending') === 'true',
         status: 'Approved'
       };
 

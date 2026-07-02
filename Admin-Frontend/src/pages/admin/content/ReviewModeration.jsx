@@ -13,6 +13,7 @@ const ReviewModeration = () => {
   const [reviews, setReviews] = useState(MOCK_REVIEWS);
   const [reviewType, setReviewType] = useState('reels'); // 'text' or 'reels'
   const [activeTab, setActiveTab] = useState('All'); // 'All', 'Pending', 'Approved', 'Flagged'/'Rejected'
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Video Reels States
   const [reels, setReels] = useState([]);
@@ -93,6 +94,17 @@ const ReviewModeration = () => {
       fetchProducts();
     }
   }, [reviewType]);
+
+  useEffect(() => {
+    if (isUploadOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isUploadOpen]);
 
   // Update reel status (Approve/Reject)
   const handleUpdateReelStatus = async (reelId, newStatus) => {
@@ -215,9 +227,12 @@ const ReviewModeration = () => {
 
   const filteredReels = reels.filter(r => {
     const mappedTab = activeTab.toLowerCase();
-    if (mappedTab === 'all') return true;
-    if (mappedTab === 'flagged') return r.status === 'rejected';
-    return r.status === mappedTab;
+    const matchesTab = mappedTab === 'all' || (mappedTab === 'flagged' ? r.status === 'rejected' : r.status === mappedTab);
+    const matchesSearch = searchQuery === '' ||
+      (r.username || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.caption || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (r.productId?.name || '').toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesTab && matchesSearch;
   });
 
   return (
@@ -244,7 +259,7 @@ const ReviewModeration = () => {
 
       {/* Tabs & Search */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-50 space-y-4">
+        <div className="p-6 border-b border-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
            <div className="flex flex-wrap gap-2">
             {tabs.map(tab => (
               <button
@@ -260,11 +275,26 @@ const ReviewModeration = () => {
               </button>
             ))}
           </div>
+          <div className="relative max-w-xs w-full">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+            <input 
+              type="text" 
+              placeholder="Search user, product, or comment..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full bg-slate-50 border border-slate-100 rounded-xl py-2.5 pl-11 pr-4 text-xs font-bold outline-none focus:border-blue-500 transition-colors"
+            />
+          </div>
         </div>
 
         {reviewType === 'text' ? (
           <div className="divide-y divide-slate-50">
-            {reviews.filter(r => activeTab === 'All' || r.status === activeTab).map((review) => (
+            {reviews.filter(r => (activeTab === 'All' || r.status === activeTab) && (
+              searchQuery === '' ||
+              (r.user || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+              (r.product || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+              (r.comment || '').toLowerCase().includes(searchQuery.toLowerCase())
+            )).map((review) => (
               <motion.div 
                 key={review.id}
                 initial={{ opacity: 0 }}
@@ -461,7 +491,7 @@ const ReviewModeration = () => {
                 </button>
               </div>
 
-              <form onSubmit={handleAdminUpload} className="flex-1 space-y-6 overflow-y-auto pr-1">
+              <form onSubmit={handleAdminUpload} className="flex-1 space-y-6 overflow-y-auto overscroll-contain pr-1">
                 <div className="space-y-2 relative">
                   <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Select Associated Product</label>
                   
@@ -491,7 +521,7 @@ const ReviewModeration = () => {
                         />
                       </div>
                       {/* Scrollable list */}
-                      <div className="overflow-y-auto max-h-44 divide-y divide-slate-50">
+                      <div className="overflow-y-auto max-h-44 divide-y divide-slate-50 overscroll-contain">
                         {products.filter(p => p.name.toLowerCase().includes(productSearchQuery.toLowerCase())).length > 0 ? (
                           products.filter(p => p.name.toLowerCase().includes(productSearchQuery.toLowerCase())).map(p => (
                             <div 

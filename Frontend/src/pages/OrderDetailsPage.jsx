@@ -8,7 +8,7 @@ import OptimizedImage from '../components/ui/OptimizedImage';
 export default function OrderDetailsPage() {
   const navigate = useNavigate();
   const { orderId } = useParams();
-  const { addStudioPost, user, getOrderReview, addOrderReview, orders } = useApp();
+  const { addStudioPost, user, getOrderReview, addOrderReview, orders, systemSettings } = useApp();
 
   const id = orderId || 'OD337252952617879100';
   const initialDraft = getOrderReview(id) || {};
@@ -328,27 +328,30 @@ export default function OrderDetailsPage() {
   const orderTotal = globalOrder ? globalOrder.total : (product.selling + 7 - 150);
 
   const subtotal = orderItems.reduce((acc, curr) => acc + (curr.price * curr.quantity), 0);
-  const platformCommission = 15;
+  const platformCommission = systemSettings?.commission ?? 15;
+  const gstPercentage = systemSettings?.gstPercentage ?? 18;
   const deliveryCharge = globalOrder?.deliveryCharge || 0;
   const coinsRedeemed = globalOrder?.coinsRedeemed || 0;
   const walletUsed = globalOrder?.walletUsed || 0;
 
   // Mathematically solve for coupon discount:
-  // (subtotal - discountAmount) * 1.18 + platformCommission + deliveryCharge - coinsRedeemed - walletUsed = orderTotal
-  // (subtotal - discountAmount) * 1.18 = orderTotal - platformCommission - deliveryCharge + coinsRedeemed + walletUsed
-  // subtotal - discountAmount = (orderTotal - platformCommission - deliveryCharge + coinsRedeemed + walletUsed) / 1.18
-  // discountAmount = subtotal - (orderTotal - platformCommission - deliveryCharge + coinsRedeemed + walletUsed) / 1.18
+  // (subtotal - discountAmount) * (1 + gstPercentage/100) + platformCommission + deliveryCharge - coinsRedeemed - walletUsed = orderTotal
+  // (subtotal - discountAmount) * (1 + gstPercentage/100) = orderTotal - platformCommission - deliveryCharge + coinsRedeemed + walletUsed
+  // subtotal - discountAmount = (orderTotal - platformCommission - deliveryCharge + coinsRedeemed + walletUsed) / (1 + gstPercentage/100)
+  // discountAmount = subtotal - (orderTotal - platformCommission - deliveryCharge + coinsRedeemed + walletUsed) / (1 + gstPercentage/100)
   let deducedDiscount = 0;
   let gstAmount = 0;
 
+  const gstFactor = 1 + (gstPercentage / 100);
+
   if (globalOrder?.couponCode) {
     const targetValue = orderTotal - platformCommission - deliveryCharge + coinsRedeemed + walletUsed;
-    const discountedSubtotal = targetValue / 1.18;
+    const discountedSubtotal = targetValue / gstFactor;
     deducedDiscount = Math.max(0, Math.round(subtotal - discountedSubtotal));
-    gstAmount = Math.round((subtotal - deducedDiscount) * 0.18);
+    gstAmount = Math.round((subtotal - deducedDiscount) * (gstPercentage / 100));
   } else {
     deducedDiscount = 0;
-    gstAmount = Math.round(subtotal * 0.18);
+    gstAmount = Math.round(subtotal * (gstPercentage / 100));
   }
 
   const returnWindowExpiry = globalOrder?.createdAt ? (() => {
