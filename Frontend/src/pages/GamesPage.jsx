@@ -122,9 +122,26 @@ export default function GamesPage() {
           text: 'Come play games and win rewards on Mynzo!',
           url: window.location.origin
         });
+      } else {
+        await navigator.clipboard.writeText(window.location.origin);
+        toast.success('Link copied to clipboard!', {
+          position: 'top-center',
+          style: {
+            padding: '8px 14px',
+            fontSize: '12.5px',
+            fontWeight: '600',
+            borderRadius: '50px',
+            background: '#ffffff',
+            color: '#1e293b',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
+          }
+        });
       }
     } catch (err) {
       console.log('Error sharing:', err);
+      if (err.name !== 'AbortError') {
+        toast.error('Sharing failed');
+      }
     }
   };
 

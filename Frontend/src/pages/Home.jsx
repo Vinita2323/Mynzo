@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { Sparkles, Gift, Gamepad2, Gem, Heart, LayoutGrid, Compass, HelpCircle, Layers, MapPin, Trophy, ShieldAlert, Truck, RotateCcw, ShieldCheck, Tag, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { CATEGORIES, BANNERS, VALUE_PROPS } from '../data/mockData';
@@ -124,15 +124,81 @@ export default function Home() {
     setIsTransitioning(true);
   }, [activeBannersList.length]);
 
-  // Auto-slide Banners with infinite loop logic
-  useEffect(() => {
+  const slideInterval = useRef(null);
+
+  const startAutoPlay = useCallback(() => {
     if (activeBannersList.length === 0) return;
-    const timer = setInterval(() => {
+    if (slideInterval.current) clearInterval(slideInterval.current);
+    slideInterval.current = setInterval(() => {
       setIsTransitioning(true);
       setActiveBanner((prev) => prev + 1);
     }, 4500);
-    return () => clearInterval(timer);
   }, [activeBannersList.length]);
+
+  const stopAutoPlay = useCallback(() => {
+    if (slideInterval.current) {
+      clearInterval(slideInterval.current);
+      slideInterval.current = null;
+    }
+  }, []);
+
+  const resetAutoPlay = () => {
+    stopAutoPlay();
+    startAutoPlay();
+  };
+
+  const handleNextBanner = () => {
+    setIsTransitioning(true);
+    setActiveBanner((prev) => prev + 1);
+    resetAutoPlay();
+  };
+
+  const handlePrevBanner = () => {
+    setIsTransitioning(true);
+    setActiveBanner(prev => prev === 0 ? activeBannersList.length - 1 : prev - 1);
+    resetAutoPlay();
+  };
+
+  const handleDotClick = (idx) => {
+    setIsTransitioning(true);
+    setActiveBanner(idx);
+    resetAutoPlay();
+  };
+
+  // Touch Swipe Handlers for Manual Carousel Control
+  const [touchStart, setTouchStart] = useState(0);
+  const [touchEnd, setTouchEnd] = useState(0);
+
+  const handleTouchStart = (e) => {
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) {
+      handleNextBanner();
+    } else if (isRightSwipe) {
+      handlePrevBanner();
+    }
+    
+    // Reset touch coordinates
+    setTouchStart(0);
+    setTouchEnd(0);
+  };
+
+  // Auto-slide Banners with infinite loop logic
+  useEffect(() => {
+    startAutoPlay();
+    return () => stopAutoPlay();
+  }, [startAutoPlay, stopAutoPlay]);
 
   // Handle seamless loop rewind without animation
   useEffect(() => {
@@ -479,7 +545,12 @@ export default function Home() {
         
         {/* 2. Banner Slider (Hero Banner Section) */}
         <div className="relative group">
-          <div className="overflow-hidden rounded-2xl shadow-sm relative aspect-[21/9] md:aspect-[3/1] md:max-h-[350px] w-full">
+          <div 
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            className="overflow-hidden rounded-2xl shadow-sm relative aspect-[21/9] md:aspect-[3/1] md:max-h-[350px] w-full select-none"
+          >
             <div 
               className={`flex w-full h-full ${isTransitioning ? 'transition-transform duration-700 ease-in-out' : ''}`}
               style={{ transform: `translateX(-${activeBanner * 100}%)` }}
@@ -495,26 +566,20 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Desktop Navigation Arrows */}
+            {/* Navigation Arrows */}
             {activeBannersList.length > 1 && (
               <>
                 <button 
-                  onClick={() => {
-                    setIsTransitioning(true);
-                    setActiveBanner(prev => prev === 0 ? activeBannersList.length - 1 : prev - 1);
-                  }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/80 hover:bg-white text-slate-800 rounded-full flex items-center justify-center shadow-md cursor-pointer transition-opacity opacity-0 group-hover:opacity-100 hidden md:flex"
+                  onClick={handlePrevBanner}
+                  className="absolute left-1 top-1/2 -translate-y-1/2 text-white hover:text-[#ee4923] transition-all duration-200 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 flex cursor-pointer select-none active:scale-95 drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.5)]"
                 >
-                  <ChevronRight className="w-5 h-5 rotate-180 stroke-[2.5]" />
+                  <ChevronRight className="w-8 h-8 rotate-180 stroke-[3]" />
                 </button>
                 <button 
-                  onClick={() => {
-                    setIsTransitioning(true);
-                    setActiveBanner(prev => (prev + 1) % activeBannersList.length);
-                  }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/80 hover:bg-white text-slate-800 rounded-full flex items-center justify-center shadow-md cursor-pointer transition-opacity opacity-0 group-hover:opacity-100 hidden md:flex"
+                  onClick={handleNextBanner}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-white hover:text-[#ee4923] transition-all duration-200 z-10 opacity-100 md:opacity-0 md:group-hover:opacity-100 flex cursor-pointer select-none active:scale-95 drop-shadow-[0_1.5px_3px_rgba(0,0,0,0.5)]"
                 >
-                  <ChevronRight className="w-5 h-5 stroke-[2.5]" />
+                  <ChevronRight className="w-8 h-8 stroke-[3]" />
                 </button>
               </>
             )}
@@ -526,10 +591,7 @@ export default function Home() {
               {activeBannersList.map((_, idx) => (
                 <button
                   key={idx}
-                  onClick={() => {
-                    setIsTransitioning(true);
-                    setActiveBanner(idx);
-                  }}
+                  onClick={() => handleDotClick(idx)}
                   className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
                     idx === (activeBanner % activeBannersList.length) ? 'w-5 bg-[#ee4923]' : 'w-1.5 bg-slate-200 hover:bg-slate-350'
                   }`}

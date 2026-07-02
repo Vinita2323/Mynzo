@@ -704,6 +704,34 @@ export const AppProvider = ({ children }) => {
     if (socketRef.current) {
       console.log('🔌 [toggleWishlist] Emitting toggle_like with:', { userId: user.id, productId: product.id });
       socketRef.current.emit('toggle_like', { userId: user.id, productId: product.id });
+      
+      if (isAdding) {
+        toast.success('Added to Wishlist', {
+          position: 'top-center',
+          style: {
+            padding: '8px 14px',
+            fontSize: '12.5px',
+            fontWeight: '600',
+            borderRadius: '50px',
+            background: '#ffffff',
+            color: '#1e293b',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
+          }
+        });
+      } else {
+        toast.success('Removed from Wishlist', {
+          position: 'top-center',
+          style: {
+            padding: '8px 14px',
+            fontSize: '12.5px',
+            fontWeight: '600',
+            borderRadius: '50px',
+            background: '#ffffff',
+            color: '#1e293b',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
+          }
+        });
+      }
     } else {
       console.error('🔌 [toggleWishlist] Failed: socketRef.current is null/undefined!');
       toast.error('Real-time connection is offline. Please retry.');

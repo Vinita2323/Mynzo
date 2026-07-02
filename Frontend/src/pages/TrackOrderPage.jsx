@@ -136,7 +136,7 @@ export default function TrackOrderPage() {
         </button>
         <div className="flex flex-col">
           <h1 className="text-[17px] font-bold text-[#02006c] leading-tight">Track Order</h1>
-          <span className="text-[11px] font-bold text-slate-500 tracking-wider">#{orderId || '123456789'}</span>
+          <span className="text-[11px] font-bold text-slate-500 tracking-wider">#{orderId ? orderId.slice(0, 5) : '12345'}</span>
         </div>
       </div>
       
@@ -148,7 +148,7 @@ export default function TrackOrderPage() {
             <h2 className="text-lg font-black text-[#02006c] uppercase tracking-wide">
               Live Order Tracker
             </h2>
-            <span className="text-xs text-slate-400 font-bold mt-1">Order ID: #{orderId}</span>
+            <span className="text-xs text-slate-400 font-bold mt-1">Order ID: #{orderId?.slice(0, 5)}</span>
           </div>
           <button 
             onClick={() => navigate(-1)}

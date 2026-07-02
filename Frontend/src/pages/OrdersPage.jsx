@@ -214,7 +214,7 @@ export default function OrdersPage() {
                   <div className="flex-1 flex flex-col justify-center min-w-0">
                     <h3 className="font-extrabold text-slate-800 text-xs md:text-sm group-hover:text-[#ee4923] transition-colors">{order.date}</h3>
                     <p className="text-slate-500 text-[11px] md:text-xs mt-1 truncate">{order.name}</p>
-                    <p className="text-[10px] text-slate-400 mt-0.5 font-semibold">ID: {order.id}</p>
+                    <p className="text-[10px] text-slate-400 mt-0.5 font-semibold">ID: {order.id?.slice(0, 5)}</p>
                   </div>
                   <ChevronRight className="w-5 h-5 text-slate-400 flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
                 </div>

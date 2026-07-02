@@ -22,6 +22,7 @@ export default function ProductDetailsPage() {
   const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [fullscreenImage, setFullscreenImage] = useState(null);
   const [similarProducts, setSimilarProducts] = useState([]);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   
   // Video Reels States
   const [productReels, setProductReels] = useState([]);
@@ -405,23 +406,8 @@ export default function ProductDetailsPage() {
     navigate('/review-order');
   };
 
-  const handleShare = async () => {
-    const shareData = {
-      title: product?.name || 'Check out this product',
-      text: product?.desc || 'Great product on Mynzo',
-      url: window.location.href,
-    };
-
-    try {
-      if (navigator.share) {
-        await navigator.share(shareData);
-      } else {
-        await navigator.clipboard.writeText(window.location.href);
-        alert('Link copied to clipboard!');
-      }
-    } catch (error) {
-      console.error('Error sharing:', error);
-    }
+  const handleShare = () => {
+    setIsShareModalOpen(true);
   };
 
 
@@ -1328,6 +1314,156 @@ export default function ProductDetailsPage() {
             </TransformWrapper>
           </div>
         </div>
+      )}
+
+      {/* Custom Share Modal */}
+      {isShareModalOpen && (
+        <>
+          <style>{`
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            @keyframes slideUp {
+              from { transform: translateY(100%); }
+              to { transform: translateY(0); }
+            }
+            @keyframes scaleIn {
+              from { transform: scale(0.95); opacity: 0; }
+              to { transform: scale(1); opacity: 1; }
+            }
+            .animate-modal-fade {
+              animation: fadeIn 0.2s ease-out forwards;
+            }
+            .animate-modal-slide {
+              animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+            .animate-modal-scale {
+              animation: scaleIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+          `}</style>
+          <div 
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-end md:items-center justify-center z-[250] animate-modal-fade"
+            onClick={() => setIsShareModalOpen(false)}
+          >
+            <div 
+              className="w-full md:max-w-md bg-white rounded-t-3xl md:rounded-2xl p-6 md:p-7 shadow-2xl flex flex-col gap-5 animate-modal-slide md:animate-modal-scale"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex justify-between items-center pb-2 border-b border-slate-100">
+                <div>
+                  <h3 className="text-lg font-black text-[#02006c]">Share Product</h3>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">Spread the word about this product</p>
+                </div>
+                <button 
+                  onClick={() => setIsShareModalOpen(false)}
+                  className="w-8 h-8 rounded-full bg-slate-50 hover:bg-slate-100 flex items-center justify-center text-slate-500 hover:text-slate-700 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Social Grid */}
+              <div className="grid grid-cols-4 gap-4 py-2">
+                {/* WhatsApp */}
+                <button 
+                  onClick={() => {
+                    const text = `Check out this amazing product on Mynzo: ${product?.name || ''}`;
+                    const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(text + ' ' + window.location.href)}`;
+                    window.open(url, '_blank');
+                    setIsShareModalOpen(false);
+                  }}
+                  className="flex flex-col items-center gap-2 group cursor-pointer"
+                >
+                  <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-sm">
+                    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.42 9.864-9.864.002-2.637-1.03-5.114-2.905-6.99C16.557 1.875 14.07 1.84 11.472 1.84c-5.437 0-9.862 4.42-9.866 9.863-.001 1.762.461 3.483 1.337 5.019L1.87 22.13l5.59-1.466.162-.093zM18.23 15.65c-.3-.15-1.782-.88-2.062-.98-.28-.1-.48-.15-.68.15-.2.3-.77.98-.94 1.18-.17.2-.34.22-.64.07-1.125-.565-2.063-1.166-2.855-1.848-.77-.665-1.3-1.468-1.45-1.72-.15-.27-.02-.415.115-.55.12-.12.27-.3.4-.45.13-.15.17-.25.26-.43.09-.17.04-.32-.02-.47-.06-.15-.48-1.15-.66-1.58-.17-.43-.35-.37-.48-.37h-.41c-.14 0-.36.05-.55.25-.19.2-.72.7-0.72 1.7 0 1 .73 1.97.83 2.1.1.13 1.44 2.2 3.49 3.08.49.21.87.34 1.17.44.5.16.95.14 1.31.08.4-.06 1.782-.73 2.03-1.43.25-.7.25-1.3.17-1.43-.08-.13-.28-.21-.58-.36z"/></svg>
+                  </div>
+                  <span className="text-[11px] font-semibold text-slate-600">WhatsApp</span>
+                </button>
+
+                {/* Facebook */}
+                <button 
+                  onClick={() => {
+                    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`;
+                    window.open(url, '_blank');
+                    setIsShareModalOpen(false);
+                  }}
+                  className="flex flex-col items-center gap-2 group cursor-pointer"
+                >
+                  <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+                    <svg viewBox="0 0 24 24" className="w-6 h-6 fill-current"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+                  </div>
+                  <span className="text-[11px] font-semibold text-slate-600">Facebook</span>
+                </button>
+
+                {/* Twitter / X */}
+                <button 
+                  onClick={() => {
+                    const text = `Check out this amazing product on Mynzo: ${product?.name || ''}`;
+                    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(window.location.href)}`;
+                    window.open(url, '_blank');
+                    setIsShareModalOpen(false);
+                  }}
+                  className="flex flex-col items-center gap-2 group cursor-pointer"
+                >
+                  <div className="w-12 h-12 rounded-full bg-slate-50 text-slate-800 flex items-center justify-center group-hover:bg-slate-900 group-hover:text-white transition-all shadow-sm">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  </div>
+                  <span className="text-[11px] font-semibold text-slate-600">Twitter / X</span>
+                </button>
+
+                {/* Email */}
+                <button 
+                  onClick={() => {
+                    const subject = `Check out this product on Mynzo`;
+                    const body = `Hey, check out this amazing product on Mynzo: ${product?.name || ''}\n\n${window.location.href}`;
+                    const url = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    window.open(url, '_self');
+                    setIsShareModalOpen(false);
+                  }}
+                  className="flex flex-col items-center gap-2 group cursor-pointer"
+                >
+                  <div className="w-12 h-12 rounded-full bg-slate-50 text-slate-600 flex items-center justify-center group-hover:bg-slate-600 group-hover:text-white transition-all shadow-sm">
+                    <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+                  </div>
+                  <span className="text-[11px] font-semibold text-slate-600">Email</span>
+                </button>
+              </div>
+
+              {/* Copy Link Input Bar */}
+              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl p-2 mt-2">
+                <input 
+                  type="text" 
+                  readOnly 
+                  value={window.location.href} 
+                  className="flex-1 bg-transparent border-none outline-none text-xs text-slate-500 px-2 select-all"
+                />
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    toast.success('Link copied to clipboard!', {
+                      position: 'top-center',
+                      style: {
+                        padding: '8px 14px',
+                        fontSize: '12.5px',
+                        fontWeight: '600',
+                        borderRadius: '50px',
+                        background: '#ffffff',
+                        color: '#1e293b',
+                        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)'
+                      }
+                    });
+                    setIsShareModalOpen(false);
+                  }}
+                  className="bg-[#02006c] hover:bg-[#02006c]/90 text-white text-xs font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-all cursor-pointer"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+          </div>
+        </>
       )}
     </div>
   );

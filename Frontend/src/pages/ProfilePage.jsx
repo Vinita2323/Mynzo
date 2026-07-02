@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import toast from '../utils/toast';
@@ -159,6 +159,46 @@ export default function ProfilePage() {
     return user?.avatar || sessionStorage.getItem('userUploadedImage') || null;
   });
   const fileInputRef = useRef(null);
+
+  const [faqs, setFaqs] = useState([]);
+
+  useEffect(() => {
+    const fallbackFaqs = [
+      {
+        question: "How do I track my order?",
+        answer: "You can track your order status in the \"My Orders\" section if you are logged in, or using the tracking link in your email."
+      },
+      {
+        question: "What are Mynzo Coins?",
+        answer: "Mynzo Coins are our loyalty currency. You earn them on every purchase and can use them for discounts on future orders."
+      },
+      {
+        question: "Can I change my avatar later?",
+        answer: "Yes! You can edit your avatar at any time by clicking on it in your profile page."
+      },
+      {
+        question: "Do you ship internationally?",
+        answer: "Currently, we only ship within select regions. Please check our delivery coverage during checkout."
+      }
+    ];
+
+    const fetchFaqs = async () => {
+      try {
+        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${apiBase}/admin/content/qna`);
+        const data = await res.json();
+        if (data.success && data.qnas && data.qnas.length > 0) {
+          setFaqs(data.qnas);
+        } else {
+          setFaqs(fallbackFaqs);
+        }
+      } catch (err) {
+        console.error("Error fetching FAQs:", err);
+        setFaqs(fallbackFaqs);
+      }
+    };
+    fetchFaqs();
+  }, []);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -381,22 +421,12 @@ export default function ProfilePage() {
                   <button onClick={() => setInfoModalType(null)} className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"><X className="w-4.5 h-4.5 text-slate-500" /></button>
                 </div>
                 <div className="p-6 overflow-y-auto space-y-6">
-                  <div>
-                    <h4 className="font-bold text-slate-800 mb-1">How do I track my order?</h4>
-                    <p className="text-sm text-slate-600">You can track your order status in the "My Orders" section if you are logged in, or using the tracking link in your email.</p>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-800 mb-1">What are Mynzo Coins?</h4>
-                    <p className="text-sm text-slate-600">Mynzo Coins are our loyalty currency. You earn them on every purchase and can use them for discounts on future orders.</p>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-800 mb-1">Can I change my avatar later?</h4>
-                    <p className="text-sm text-slate-600">Yes! You can edit your avatar at any time by clicking on it in your profile page.</p>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-slate-800 mb-1">Do you ship internationally?</h4>
-                    <p className="text-sm text-slate-600">Currently, we only ship within select regions. Please check our delivery coverage during checkout.</p>
-                  </div>
+                  {faqs.map((faq, idx) => (
+                    <div key={faq._id || idx}>
+                      <h4 className="font-bold text-slate-800 mb-1">{faq.question}</h4>
+                      <p className="text-sm text-slate-600">{faq.answer}</p>
+                    </div>
+                  ))}
                 </div>
               </motion.div>
             </motion.div>
@@ -894,22 +924,12 @@ export default function ProfilePage() {
                 <button onClick={() => setInfoModalType(null)} className="p-2 bg-slate-50 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"><X className="w-4.5 h-4.5 text-slate-500" /></button>
               </div>
               <div className="p-6 overflow-y-auto space-y-6 text-left">
-                <div>
-                  <h4 className="font-bold text-slate-800 mb-1">How do I track my order?</h4>
-                  <p className="text-sm text-slate-600">You can track your order status in the "My Orders" section if you are logged in, or using the tracking link in your email.</p>
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 mb-1">What are Mynzo Coins?</h4>
-                  <p className="text-sm text-slate-600">Mynzo Coins are our loyalty currency. You earn them on every purchase and can use them for discounts on future orders.</p>
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 mb-1">Can I change my avatar later?</h4>
-                  <p className="text-sm text-slate-600">Yes! You can edit your avatar at any time by clicking on it in your profile page.</p>
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-800 mb-1">Do you ship internationally?</h4>
-                  <p className="text-sm text-slate-600">Currently, we only ship within select regions. Please check our delivery coverage during checkout.</p>
-                </div>
+                {faqs.map((faq, idx) => (
+                  <div key={faq._id || idx}>
+                    <h4 className="font-bold text-slate-800 mb-1">{faq.question}</h4>
+                    <p className="text-sm text-slate-600">{faq.answer}</p>
+                  </div>
+                ))}
               </div>
             </motion.div>
           </motion.div>
