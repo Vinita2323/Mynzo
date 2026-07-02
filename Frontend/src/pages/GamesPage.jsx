@@ -182,98 +182,110 @@ export default function GamesPage() {
 
           {/* Fun Zone Section */}
           {/* Top Games Section */}
-          <div>
-            <h2 className="text-xl font-black text-[#071226] mb-4">Top Games</h2>
-
-            <div className="grid grid-cols-4 gap-3">
-              {[
-                { id: 'speedTap', key: 'speedTap' },
-                { id: 'snake', key: 'snake' },
-                { id: 'ticTacToe', key: 'ticTacToe' },
-                { id: 'quiz', key: 'quiz' }
-              ]
-              .filter(gRef => games.some(g => g.key === gRef.key))
-              .map(gRef => {
-                const dbGame = games.find(g => g.key === gRef.key);
-                const details = {
-                  title: dbGame?.name || GAME_ASSETS[gRef.id].title,
-                  icon: GAME_ASSETS[gRef.id].icon
-                };
-                const isSelected = selectedGameKey === gRef.key;
-                return (
-                  <div 
-                    key={gRef.id} 
-                    onClick={() => setSelectedGameKey(gRef.key)} 
-                    className="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform font-bold"
-                  >
-                    <div className={`w-16 h-16 rounded-2xl bg-white shadow-sm p-1 overflow-hidden flex items-center justify-center border-2 transition-all ${
-                      isSelected ? 'border-[#EE4923] ring-4 ring-orange-100 scale-105' : 'border-slate-100 hover:border-slate-300'
-                    }`}>
-                      <img src={details.icon} alt={details.title} className="w-full h-full object-cover rounded-xl" />
-                    </div>
-                    <span className={`text-[9px] text-center leading-tight transition-colors ${
-                      isSelected ? 'text-[#EE4923] font-black' : 'text-slate-600'
-                    }`}>{details.title}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Daily Streak */}
-          <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100 space-y-4">
-            <div className="flex justify-between items-center">
+          {games.length > 0 ? (
+            <>
               <div>
-                <h3 className="font-black text-[#071226] text-sm flex items-center gap-1">
-                  🔥 {selectedGameData?.name || 'Daily'} Streak
-                </h3>
-                {selectedGameData && (
-                  <p className="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded mt-1 w-max">
-                    Target Today: {selectedGameData?.userProgress?.todayPlayCount || 0} / {selectedGameData?.requiredPlaysPerDay} plays
-                  </p>
-                )}
-              </div>
-              <span className="text-[#EE4923] font-black text-xs bg-orange-50 px-3 py-1 rounded-full">{totalStreakDays} Days</span>
-            </div>
-            
-            <p className="text-[10px] text-slate-500 font-medium">
-              Play {selectedGameData?.requiredPlaysPerDay} games daily for {maxConfiguredDays} days to win <span className="font-bold text-[#EE4923]">{selectedGameData?.rewardPoints} Coins</span>!
-            </p>
-            
-            <div className="flex justify-between relative py-2">
-              <div className="absolute top-5 left-0 w-full h-[2px] bg-slate-100 z-0"></div>
-              <div 
-                className="absolute top-5 left-0 h-[2px] bg-[#EE4923] z-0 transition-all duration-500" 
-                style={{ width: `${Math.min((totalStreakDays / maxConfiguredDays) * 100, 100)}%` }}
-              ></div>
-              
-              {streakRange.map((day) => {
-                const isPast = day <= totalStreakDays;
-                const isGift = day === Math.floor(maxConfiguredDays / 2) || day === maxConfiguredDays;
-                return (
-                  <div key={day} className="flex flex-col items-center gap-1.5 relative z-10 bg-white px-0.5">
-                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] ${
-                      isPast 
-                        ? 'bg-[#EE4923] text-white font-bold' 
-                        : isGift 
-                          ? 'bg-amber-100 text-amber-500' 
-                          : 'bg-slate-100 text-transparent'
-                    }`}>
-                      {isPast ? '✓' : isGift ? <Gift className="w-3 h-3" /> : ''}
-                    </div>
-                    <span className="text-[8px] font-medium text-slate-500">Day {day}</span>
-                  </div>
-                );
-              })}
-            </div>
+                <h2 className="text-xl font-black text-[#071226] mb-4">Top Games</h2>
 
-            <button 
-              onClick={() => handleOpenGame(selectedGameKey)}
-              className="w-full bg-[#071226] text-white text-xs font-black py-3 rounded-xl shadow-md active:scale-95 transition-all uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-slate-800"
-            >
-              Play {selectedGameData?.name || 'Game'} Now
-            </button>
-          </div>
+                <div className="grid grid-cols-4 gap-3">
+                  {[
+                    { id: 'speedTap', key: 'speedTap' },
+                    { id: 'snake', key: 'snake' },
+                    { id: 'ticTacToe', key: 'ticTacToe' },
+                    { id: 'quiz', key: 'quiz' }
+                  ]
+                  .filter(gRef => games.some(g => g.key === gRef.key))
+                  .map(gRef => {
+                    const dbGame = games.find(g => g.key === gRef.key);
+                    const details = {
+                      title: dbGame?.name || GAME_ASSETS[gRef.id].title,
+                      icon: GAME_ASSETS[gRef.id].icon
+                    };
+                    const isSelected = selectedGameKey === gRef.key;
+                    return (
+                      <div 
+                        key={gRef.id} 
+                        onClick={() => setSelectedGameKey(gRef.key)} 
+                        className="flex flex-col items-center gap-2 cursor-pointer active:scale-95 transition-transform font-bold"
+                      >
+                        <div className={`w-16 h-16 rounded-2xl bg-white shadow-sm p-1 overflow-hidden flex items-center justify-center border-2 transition-all ${
+                          isSelected ? 'border-[#EE4923] ring-4 ring-orange-100 scale-105' : 'border-slate-100 hover:border-slate-300'
+                        }`}>
+                          <img src={details.icon} alt={details.title} className="w-full h-full object-cover rounded-xl" />
+                        </div>
+                        <span className={`text-[9px] text-center leading-tight transition-colors ${
+                          isSelected ? 'text-[#EE4923] font-black' : 'text-slate-600'
+                        }`}>{details.title}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Daily Streak */}
+              <div className="bg-white rounded-[2rem] p-5 shadow-sm border border-slate-100 space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h3 className="font-black text-[#071226] text-sm flex items-center gap-1">
+                      🔥 {selectedGameData?.name || 'Daily'} Streak
+                    </h3>
+                    {selectedGameData && (
+                      <p className="text-[9px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded mt-1 w-max">
+                        Target Today: {selectedGameData?.userProgress?.todayPlayCount || 0} / {selectedGameData?.requiredPlaysPerDay} plays
+                      </p>
+                    )}
+                  </div>
+                  <span className="text-[#EE4923] font-black text-xs bg-orange-50 px-3 py-1 rounded-full">{totalStreakDays} Days</span>
+                </div>
+                
+                <p className="text-[10px] text-slate-500 font-medium">
+                  Play {selectedGameData?.requiredPlaysPerDay} games daily for {maxConfiguredDays} days to win <span className="font-bold text-[#EE4923]">{selectedGameData?.rewardPoints} Coins</span>!
+                </p>
+                
+                <div className="flex justify-between relative py-2">
+                  <div className="absolute top-5 left-0 w-full h-[2px] bg-slate-100 z-0"></div>
+                  <div 
+                    className="absolute top-5 left-0 h-[2px] bg-[#EE4923] z-0 transition-all duration-500" 
+                    style={{ width: `${Math.min((totalStreakDays / maxConfiguredDays) * 100, 100)}%` }}
+                  ></div>
+                  
+                  {streakRange.map((day) => {
+                    const isPast = day <= totalStreakDays;
+                    const isGift = day === Math.floor(maxConfiguredDays / 2) || day === maxConfiguredDays;
+                    return (
+                      <div key={day} className="flex flex-col items-center gap-1.5 relative z-10 bg-white px-0.5">
+                        <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] ${
+                          isPast 
+                            ? 'bg-[#EE4923] text-white font-bold' 
+                            : isGift 
+                              ? 'bg-amber-100 text-amber-500' 
+                              : 'bg-slate-100 text-transparent'
+                        }`}>
+                          {isPast ? '✓' : isGift ? <Gift className="w-3 h-3" /> : ''}
+                        </div>
+                        <span className="text-[8px] font-medium text-slate-500">Day {day}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <button 
+                  onClick={() => handleOpenGame(selectedGameKey)}
+                  className="w-full bg-[#071226] text-white text-xs font-black py-3 rounded-xl shadow-md active:scale-95 transition-all uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-slate-800"
+                >
+                  Play {selectedGameData?.name || 'Game'} Now
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="bg-white rounded-3xl p-8 text-center border border-slate-100 shadow-sm flex flex-col items-center justify-center gap-3">
+              <span className="text-4xl">🎮</span>
+              <div>
+                <h3 className="font-black text-[#071226] text-sm">Playground Closed</h3>
+                <p className="text-xs text-slate-400 font-medium mt-1">No games are currently enabled by the admin. Please try again later!</p>
+              </div>
+            </div>
+          )}
 
           {/* Invite Banner */}
           <div className="bg-gradient-to-r from-orange-50 to-amber-50 rounded-xl py-6 px-4 flex items-center justify-between border border-orange-200 shadow-sm mb-6 relative overflow-hidden">
