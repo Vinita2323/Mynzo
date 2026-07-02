@@ -14,7 +14,9 @@ const {
   getSearchAnalytics,
   getTopProducts,
   getGameAnalytics,
-  getEarnings
+  getEarnings,
+  getSystemNotifications,
+  globalSearch
 } = require('../Controllers/analyticsController');
 
 // Optional user parser middleware to attach req.user if a valid token is provided
@@ -51,5 +53,7 @@ router.get('/search', protectAdmin, getSearchAnalytics);
 router.get('/products/top', protectAdmin, getTopProducts);
 router.get('/games', protectAdmin, getGameAnalytics);
 router.get('/earnings', protectAdmin, getEarnings);
+router.get('/notifications/system', protectAdmin, getSystemNotifications);
+router.get('/search/global', protectAdmin, globalSearch);
 
 module.exports = router;

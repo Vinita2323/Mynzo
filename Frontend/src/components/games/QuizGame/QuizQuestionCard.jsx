@@ -101,26 +101,7 @@ export default function QuizQuestionCard({ questionData, currentIndex, totalQues
           <p className="text-slate-500 text-sm font-medium">Choose the best option</p>
         </div>
 
-        {/* Product Image */}
-        <motion.div 
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          className="relative w-full aspect-square max-w-[280px] mx-auto mb-10"
-        >
-          {/* Soft back glow */}
-          <div className="absolute inset-4 bg-orange-200 rounded-full blur-3xl opacity-50"></div>
-          
-          <div className="relative w-full h-full bg-white rounded-[2rem] shadow-xl p-4 flex flex-col items-center justify-center border border-white">
-            <img 
-              src={questionData.image} 
-              alt={questionData.productName} 
-              className="w-3/4 h-3/4 object-cover rounded-xl shadow-sm mb-4"
-            />
-            <span className="text-[10px] font-black text-slate-400 tracking-widest uppercase">{questionData.brand}</span>
-            <h4 className="font-bold text-slate-800 text-sm text-center leading-tight">{questionData.productName}</h4>
-          </div>
-        </motion.div>
+
 
         {/* Options */}
         <div className="space-y-3">

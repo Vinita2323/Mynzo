@@ -57,7 +57,9 @@ const QUIZ_DATA = [
   }
 ];
 
-export default function QuizGame({ onClose, addCoins }) {
+export default function QuizGame({ onClose, addCoins, questions }) {
+  const activeQuestions = (questions && questions.length > 0) ? questions : QUIZ_DATA;
+
   const [currentIdx, setCurrentIdx] = useState(0);
   const [score, setScore] = useState(0);
   const [gameState, setGameState] = useState('playing'); // 'playing', 'result'
@@ -67,7 +69,7 @@ export default function QuizGame({ onClose, addCoins }) {
   };
 
   const handleNext = () => {
-    if (currentIdx < QUIZ_DATA.length - 1) {
+    if (currentIdx < activeQuestions.length - 1) {
       setCurrentIdx(c => c + 1);
     } else {
       setGameState('result');
@@ -80,7 +82,7 @@ export default function QuizGame({ onClose, addCoins }) {
     setGameState('playing');
   };
 
-  const currentQuestion = QUIZ_DATA[currentIdx];
+  const currentQuestion = activeQuestions[currentIdx];
 
   return (
     <div className="fixed inset-0 z-[100] bg-[#071226] text-slate-900 flex flex-col overflow-hidden font-sans">
@@ -91,7 +93,7 @@ export default function QuizGame({ onClose, addCoins }) {
             key={`question-${currentIdx}`}
             questionData={currentQuestion}
             currentIndex={currentIdx}
-            totalQuestions={QUIZ_DATA.length}
+            totalQuestions={activeQuestions.length}
             onAnswer={handleAnswer}
             onNext={handleNext}
             onClose={onClose}
@@ -102,7 +104,7 @@ export default function QuizGame({ onClose, addCoins }) {
           <QuizResult 
             key="result"
             score={score}
-            total={QUIZ_DATA.length}
+            total={activeQuestions.length}
             onPlayAgain={handlePlayAgain}
             onClose={onClose}
             addCoins={addCoins}

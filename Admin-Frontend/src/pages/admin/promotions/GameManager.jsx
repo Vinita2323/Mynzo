@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Gamepad2, Trophy, Coins, Users, Activity, 
+import {
+  Gamepad2, Trophy, Coins, Users, Activity,
   Settings, ToggleLeft, ToggleRight, CheckCircle2,
   Clock, Flame, Brain, Target, Info, Calendar, Edit3, Save, X, RotateCcw, AlertTriangle
 } from 'lucide-react';
@@ -31,7 +31,7 @@ export default function GameManager() {
   const [editingGame, setEditingGame] = useState(null); // copy of game currently editing
 
   const token = localStorage.getItem('adminToken');
-  const headers = { 
+  const headers = {
     'Authorization': `Bearer ${token}`,
     'Content-Type': 'application/json'
   };
@@ -112,7 +112,8 @@ export default function GameManager() {
           rewardRepeatable: editingGame.rewardRepeatable,
           repeatRewardPoints: Number(editingGame.repeatRewardPoints),
           dailyPlayLimit: Number(editingGame.dailyPlayLimit),
-          status: editingGame.status
+          status: editingGame.status,
+          questions: editingGame.questions
         })
       });
       const data = await res.json();
@@ -205,7 +206,7 @@ export default function GameManager() {
           const styles = COLOR_MAP[game.key] || { text: 'text-blue-500', bg: 'bg-blue-50', border: 'border-blue-200' };
           return (
             <div key={game.id} className={`bg-white rounded-3xl border ${game.status ? 'border-slate-200 shadow-md' : 'border-slate-100 opacity-75'} overflow-hidden flex flex-col transition-all duration-300`}>
-              
+
               {/* Card Header */}
               <div className={`p-6 ${styles.bg} border-b ${styles.border} flex items-center justify-between`}>
                 <div className="flex items-center gap-4">
@@ -220,7 +221,7 @@ export default function GameManager() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button 
+                  <button
                     onClick={() => handleToggleStatus(game)}
                     className="outline-none focus:outline-none"
                   >
@@ -229,7 +230,7 @@ export default function GameManager() {
                       : <ToggleLeft size={36} className="text-slate-300" />
                     }
                   </button>
-                  <button 
+                  <button
                     onClick={() => handleOpenEdit(game)}
                     className="p-2 bg-white rounded-lg border border-slate-200 text-slate-500 hover:text-slate-900 active:scale-95 transition-all shadow-sm"
                   >
@@ -279,7 +280,7 @@ export default function GameManager() {
           </div>
         ) : (
           <div className="space-y-8">
-            
+
             {/* Game Wise Stats */}
             <div>
               <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-1.5">📊 Game Wise Summary</h3>
@@ -398,8 +399,8 @@ export default function GameManager() {
               {/* Game name */}
               <div className="space-y-1.5">
                 <label className="text-[10px] text-slate-400 uppercase tracking-widest block">Game Name</label>
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={editingGame.name}
                   onChange={e => setEditingGame({ ...editingGame, name: e.target.value })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 font-semibold outline-none"
@@ -409,8 +410,8 @@ export default function GameManager() {
               {/* Reward Points */}
               <div className="space-y-1.5">
                 <label className="text-[10px] text-slate-400 uppercase tracking-widest block">Reward Points (First Cycle)</label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   value={editingGame.rewardPoints}
                   onChange={e => setEditingGame({ ...editingGame, rewardPoints: Number(e.target.value) })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 font-semibold outline-none"
@@ -420,8 +421,8 @@ export default function GameManager() {
               {/* Required Days */}
               <div className="space-y-1.5">
                 <label className="text-[10px] text-slate-400 uppercase tracking-widest block">Required Streak Days</label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   value={editingGame.requiredDays}
                   onChange={e => setEditingGame({ ...editingGame, requiredDays: Number(e.target.value) })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 font-semibold outline-none"
@@ -430,13 +431,116 @@ export default function GameManager() {
 
               <div className="space-y-1.5">
                 <label className="text-[10px] text-slate-400 uppercase tracking-widest block">Required Plays Per Day</label>
-                <input 
-                  type="number" 
+                <input
+                  type="number"
                   value={editingGame.requiredPlaysPerDay}
                   onChange={e => setEditingGame({ ...editingGame, requiredPlaysPerDay: Number(e.target.value) })}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 font-semibold outline-none"
                 />
               </div>
+
+              {editingGame.key === 'quiz' && (
+                <div className="space-y-4 pt-4 border-t border-slate-100">
+                  <div className="flex justify-between items-center">
+                    <label className="text-[10px] text-slate-400 uppercase tracking-widest block font-black">Manage Quiz Questions ({editingGame.questions?.length || 0})</label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const newQ = {
+                          question: "New Question Text",
+                          highlighted: "",
+                          image: "",
+                          brand: "",
+                          productName: "",
+                          options: ["Option 1", "Option 2", "Option 3", "Option 4"],
+                          correctIdx: 0
+                        };
+                        const qs = editingGame.questions ? [...editingGame.questions, newQ] : [newQ];
+                        setEditingGame({ ...editingGame, questions: qs });
+                      }}
+                      className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-[9px] font-black uppercase tracking-widest hover:bg-blue-100 transition-colors"
+                    >
+                      + Add Question
+                    </button>
+                  </div>
+
+                  <div className="space-y-4 max-h-96 overflow-y-auto pr-1">
+                    {(editingGame.questions || []).map((q, idx) => (
+                      <div key={idx} className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 relative">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const qs = editingGame.questions.filter((_, qIdx) => qIdx !== idx);
+                            setEditingGame({ ...editingGame, questions: qs });
+                          }}
+                          className="absolute top-3 right-3 text-rose-500 hover:text-rose-700 text-xs font-black"
+                        >
+                          Remove
+                        </button>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Question {idx + 1}</div>
+
+                        <div className="space-y-1">
+                          <label className="text-[9px] text-slate-500 uppercase tracking-wide block font-black">Question Prompt</label>
+                          <input
+                            type="text"
+                            value={q.question}
+                            onChange={(e) => {
+                              const qs = [...editingGame.questions];
+                              qs[idx].question = e.target.value;
+                              setEditingGame({ ...editingGame, questions: qs });
+                            }}
+                            className="w-full bg-white border border-slate-200 rounded-lg py-1.5 px-3 text-xs outline-none font-medium"
+                          />
+                        </div>
+
+
+
+                        <div className="space-y-2">
+                          <label className="text-[9px] text-slate-500 uppercase tracking-wide block font-black">Options</label>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[0, 1, 2, 3].map(optIdx => (
+                              <div key={optIdx} className="space-y-0.5">
+                                <label className="text-[8px] text-slate-400 block font-black">Option {optIdx + 1}</label>
+                                <input
+                                  type="text"
+                                  value={q.options?.[optIdx] || ''}
+                                  onChange={(e) => {
+                                    const qs = [...editingGame.questions];
+                                    const opts = [...(qs[idx].options || ["", "", "", ""])];
+                                    opts[optIdx] = e.target.value;
+                                    qs[idx].options = opts;
+                                    setEditingGame({ ...editingGame, questions: qs });
+                                  }}
+                                  className="w-full bg-white border border-slate-200 rounded-lg py-1.5 px-3 text-xs outline-none font-medium"
+                                  placeholder={`Option ${optIdx + 1}`}
+                                />
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="text-[9px] text-slate-500 uppercase tracking-wide block font-black">Correct Option Index (0-3)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            max="3"
+                            value={q.correctIdx}
+                            onChange={(e) => {
+                              const qs = [...editingGame.questions];
+                              qs[idx].correctIdx = Math.max(0, Math.min(3, Number(e.target.value)));
+                              setEditingGame({ ...editingGame, questions: qs });
+                            }}
+                            className="w-20 bg-white border border-slate-200 rounded-lg py-1.5 px-3 text-xs outline-none font-medium"
+                          />
+                        </div>
+
+                      </div>
+                    ))}
+                  </div>
+
+                </div>
+              )}
             </div>
 
             {/* Action Buttons */}

@@ -872,16 +872,57 @@ const getGameAnalytics = async (req, res) => {
 // @access  Private (Admin)
 const getEarnings = async (req, res) => {
   try {
-    // 1. Net Revenue: Sum of total of paid orders (excluding Cancelled/Refunded)
+    const { range } = req.query;
+    let matchQuery = { paymentStatus: 'Paid', status: { $nin: ['Cancelled', 'Refunded', 'Returned'] } };
+    let matchQueryGmv = { status: { $ne: 'Cancelled' } };
+    let matchQueryCoins = { type: 'spent', title: 'Redeemed to Wallet Cash' };
+
+    if (range && range !== 'all') {
+      const now = new Date();
+      let startDate = new Date();
+      if (range === 'today') {
+        startDate.setHours(0, 0, 0, 0);
+      } else if (range === 'week') {
+        startDate.setDate(now.getDate() - 7);
+        startDate.setHours(0, 0, 0, 0);
+      } else if (range === 'month') {
+        startDate.setDate(now.getDate() - 30);
+        startDate.setHours(0, 0, 0, 0);
+      }
+      matchQuery.createdAt = { $gte: startDate };
+      matchQueryGmv.createdAt = { $gte: startDate };
+      matchQueryCoins.createdAt = { $gte: startDate };
+    }
+
+    // 1. Net Revenue: Sum of total of paid orders (excluding Cancelled/Refunded and delivery charges)
     const netRevenueStats = await Order.aggregate([
-      { $match: { paymentStatus: 'Paid', status: { $nin: ['Cancelled', 'Refunded', 'Returned'] } } },
-      { $group: { _id: null, total: { $sum: '$total' } } }
+      { $match: matchQuery },
+      { $unwind: '$items' },
+      { $group: { _id: null, total: { $sum: { $multiply: ['$items.price', '$items.quantity'] } } } }
     ]);
     const netRevenue = netRevenueStats.length > 0 ? netRevenueStats[0].total : 0;
 
+    // 1b. Settled This Month: Paid orders in the current month
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
+    const settledThisMonthStats = await Order.aggregate([
+      { 
+        $match: { 
+          paymentStatus: 'Paid', 
+          status: { $nin: ['Cancelled', 'Refunded', 'Returned'] },
+          createdAt: { $gte: startOfMonth }
+        } 
+      },
+      { $unwind: '$items' },
+      { $group: { _id: null, total: { $sum: { $multiply: ['$items.price', '$items.quantity'] } } } }
+    ]);
+    const settledThisMonth = settledThisMonthStats.length > 0 ? settledThisMonthStats[0].total : 0;
+
+
     // 2. Gross Merchandise Value (GMV): Sum of all orders (excluding Cancelled)
     const gmvStats = await Order.aggregate([
-      { $match: { status: { $ne: 'Cancelled' } } },
+      { $match: matchQueryGmv },
       { $group: { _id: null, total: { $sum: '$total' } } }
     ]);
     const gmv = gmvStats.length > 0 ? gmvStats[0].total : 0;
@@ -889,7 +930,7 @@ const getEarnings = async (req, res) => {
     // 3. Coins Redeemed (spent type transactions)
     const CoinTransaction = require('../Models/CoinTransaction');
     const spentStats = await CoinTransaction.aggregate([
-      { $match: { type: 'spent' } },
+      { $match: matchQueryCoins },
       { $group: { _id: null, total: { $sum: '$amount' } } }
     ]);
     const coinsRedeemed = spentStats.length > 0 ? spentStats[0].total : 0;
@@ -935,7 +976,7 @@ const getEarnings = async (req, res) => {
 
     // 5. Category Revenue Breakdown
     const categoryRevenueStats = await Order.aggregate([
-      { $match: { paymentStatus: 'Paid', status: { $nin: ['Cancelled', 'Refunded', 'Returned'] } } },
+      { $match: matchQuery },
       { $unwind: '$items' },
       {
         $addFields: {
@@ -958,8 +999,28 @@ const getEarnings = async (req, res) => {
       },
       { $unwind: { path: '$productInfo', preserveNullAndEmptyArrays: true } },
       {
+        $addFields: {
+          "productInfo.categoryObjectId": {
+            $cond: {
+              if: { $regexMatch: { input: { $toString: "$productInfo.category" }, regex: /^[0-9a-fA-F]{24}$/ } },
+              then: { $toObjectId: "$productInfo.category" },
+              else: null
+            }
+          }
+        }
+      },
+      {
+        $lookup: {
+          from: 'categorychips',
+          localField: 'productInfo.categoryObjectId',
+          foreignField: '_id',
+          as: 'categoryInfo'
+        }
+      },
+      { $unwind: { path: '$categoryInfo', preserveNullAndEmptyArrays: true } },
+      {
         $group: {
-          _id: { $ifNull: ['$productInfo.category', 'others'] },
+          _id: { $ifNull: ['$categoryInfo.categoryName', { $ifNull: ['$productInfo.category', 'others'] }] },
           revenue: {
             $sum: {
               $multiply: [
@@ -1004,8 +1065,8 @@ const getEarnings = async (req, res) => {
       );
     }
 
-    // 6. Recent Transaction Log (10 latest orders)
-    const latestOrders = await Order.find({}).populate('userId', 'name').sort({ createdAt: -1 }).limit(10);
+    // 6. Recent Transaction Log (10 latest paid orders)
+    const latestOrders = await Order.find(matchQuery).populate('userId', 'name').sort({ createdAt: -1 }).limit(10);
     const transactions = latestOrders.map((order, i) => {
       return {
         id: order.paymentId || `TXN${order._id.toString().substring(18).toUpperCase()}`,
@@ -1021,6 +1082,7 @@ const getEarnings = async (req, res) => {
       success: true,
       data: {
         netRevenue,
+        settledThisMonth,
         gmv,
         coinsRedeemed,
         salesTrend,
@@ -1031,6 +1093,164 @@ const getEarnings = async (req, res) => {
   } catch (error) {
     console.error('Get Earnings Error:', error);
     res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+const getSystemNotifications = async (req, res) => {
+  try {
+    const Product = require('../Models/Product');
+    const Order = require('../Models/Order');
+    const ReturnRequest = require('../Models/ReturnRequest');
+
+    const notifications = [];
+
+    // 1. Low stock alerts (stock < 5)
+    const lowStockProducts = await Product.find({ stock: { $lt: 5 } }).limit(5);
+    lowStockProducts.forEach(p => {
+      notifications.push({
+        id: `stock-${p._id}`,
+        title: `Low Stock Alert: ${p.name}`,
+        desc: `Only ${p.stock} units left in inventory`,
+        time: 'Active Alert',
+        type: 'warning',
+        read: false
+      });
+    });
+
+    // 2. New orders (last 24 hours)
+    const oneDayAgo = new Date();
+    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+    const newOrders = await Order.find({ createdAt: { $gte: oneDayAgo } })
+      .populate('userId', 'name')
+      .sort({ createdAt: -1 })
+      .limit(5);
+
+    const formatTimeAgo = (date) => {
+      const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+      if (seconds < 60) return 'Just now';
+      const minutes = Math.floor(seconds / 60);
+      if (minutes < 60) return `${minutes}m ago`;
+      const hours = Math.floor(minutes / 60);
+      if (hours < 24) return `${hours}h ago`;
+      const days = Math.floor(hours / 24);
+      return `${days}d ago`;
+    };
+
+    newOrders.forEach(o => {
+      notifications.push({
+        id: `order-${o._id}`,
+        title: `New Order Placed`,
+        desc: `Order of ₹${o.total.toLocaleString()} by ${o.userId?.name || 'Customer'}`,
+        time: formatTimeAgo(o.createdAt),
+        type: 'info',
+        read: false
+      });
+    });
+
+    // 3. Pending returns
+    try {
+      const pendingReturns = await ReturnRequest.find({ status: 'Pending' }).limit(3);
+      pendingReturns.forEach(r => {
+        notifications.push({
+          id: `return-${r._id}`,
+          title: `Return Request Pending`,
+          desc: `Request for order #${r.orderId?.toString().substring(18).toUpperCase() || ''}`,
+          time: formatTimeAgo(r.createdAt),
+          type: 'warning',
+          read: false
+        });
+      });
+    } catch (e) {
+      console.error('Error fetching return requests for notifications:', e);
+    }
+
+    res.status(200).json({ success: true, notifications });
+  } catch (error) {
+    console.error('System notifications error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
+  }
+};
+
+const globalSearch = async (req, res) => {
+  try {
+    const { q } = req.query;
+    if (!q) {
+      return res.status(200).json({ success: true, results: [] });
+    }
+
+    const regex = new RegExp(q, 'i');
+    const results = [];
+
+    // 1. Search Products
+    const Product = require('../Models/Product');
+    const products = await Product.find({
+      $or: [
+        { name: regex },
+        { sku: regex },
+        { category: regex }
+      ]
+    }).limit(5);
+
+    products.forEach(p => {
+      results.push({
+        type: 'Product',
+        name: p.name,
+        extra: `SKU: ${p.sku || 'N/A'} • Price: ₹${p.sellingPrice}`,
+        path: `/admin/inventory/all`
+      });
+    });
+
+    // 2. Search Users
+    const User = require('../Models/User');
+    const users = await User.find({
+      $or: [
+        { name: regex },
+        { email: regex },
+        { phone: regex }
+      ]
+    }, 'name email').limit(5);
+
+    users.forEach(u => {
+      results.push({
+        type: 'Customer',
+        name: u.name || 'Unnamed User',
+        extra: u.email,
+        path: `/admin/users`
+      });
+    });
+
+    // 3. Search Orders
+    const Order = require('../Models/Order');
+    let orderQuery = {};
+    if (q.match(/^[0-9a-fA-F]{24}$/)) {
+      orderQuery = { _id: q };
+    }
+
+    const orders = await Order.find(orderQuery)
+      .populate('userId', 'name')
+      .sort({ createdAt: -1 })
+      .limit(20);
+
+    const filteredOrders = orders.filter(o => {
+      if (q.match(/^[0-9a-fA-F]{24}$/)) return true;
+      const customerName = o.userId?.name || '';
+      return customerName.match(regex);
+    }).slice(0, 5);
+
+    filteredOrders.forEach(o => {
+      results.push({
+        type: 'Order',
+        name: `Order #OD${o._id.toString().substring(18).toUpperCase()}`,
+        extra: `Customer: ${o.userId?.name || 'Guest'} • Total: ₹${o.total}`,
+        path: `/admin/orders`
+      });
+    });
+
+    res.status(200).json({ success: true, results });
+  } catch (error) {
+    console.error('Global search error:', error);
+    res.status(500).json({ success: false, message: 'Server error', error: error.message });
   }
 };
 
@@ -1045,5 +1265,7 @@ module.exports = {
   getSearchAnalytics,
   getTopProducts,
   getGameAnalytics,
-  getEarnings
+  getEarnings,
+  getSystemNotifications,
+  globalSearch
 };

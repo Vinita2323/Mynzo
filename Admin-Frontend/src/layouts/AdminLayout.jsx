@@ -49,11 +49,32 @@ const AdminLayout = () => {
     navigate('/admin/auth', { replace: true });
   };
 
-  const mockNotifications = [
-    { id: 1, title: 'New Vendor Request', time: '5m ago', type: 'info', read: false },
-    { id: 2, title: 'Low Stock Alert: Organic Honey', time: '12m ago', type: 'warning', read: false },
-    { id: 3, title: 'Payout Processed: #TRX9021', time: '1h ago', type: 'success', read: true },
-  ];
+  const [notifications, setNotifications] = useState([]);
+
+  const fetchNotifications = async () => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) return;
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/admin/analytics/notifications/system`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setNotifications(data.notifications);
+      }
+    } catch (err) {
+      console.error('Error fetching admin notifications:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   const quickLinks = [
     { name: 'Banner Manager', path: '/admin/storefront/banners' },
@@ -61,6 +82,36 @@ const AdminLayout = () => {
     { name: 'Inventory Stock', path: '/admin/inventory/all' },
     { name: 'System Settings', path: '/admin/settings' },
   ];
+
+  const [searchResults, setSearchResults] = useState([]);
+
+  useEffect(() => {
+    if (!searchQuery) {
+      setSearchResults([]);
+      return;
+    }
+
+    const delayDebounce = setTimeout(async () => {
+      const token = localStorage.getItem('adminToken');
+      if (!token) return;
+      try {
+        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${apiBase}/admin/analytics/search/global?q=${encodeURIComponent(searchQuery)}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setSearchResults(data.results);
+        }
+      } catch (err) {
+        console.error('Error performing global search:', err);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery]);
 
   const filteredLinks = quickLinks.filter(link => 
     link.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -336,26 +387,59 @@ const AdminLayout = () => {
                 {showSearchDropdown && (
                   <motion.div 
                     initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
-                    className="absolute top-full left-0 right-0 mt-3 bg-white border border-slate-100 rounded-[24px] shadow-2xl overflow-hidden z-50 p-2"
+                    className="absolute top-full left-0 right-0 mt-3 bg-white border border-slate-100 rounded-[24px] shadow-2xl overflow-hidden z-50 p-3 max-h-96 overflow-y-auto no-scrollbar"
                   >
-                    <p className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Quick Navigation</p>
-                    {filteredLinks.length > 0 ? filteredLinks.map(link => (
-                      <button
-                        key={link.path}
-                        onClick={() => {
-                          navigate(link.path);
-                          setSearchQuery('');
-                          setShowSearchDropdown(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-blue-50 rounded-xl text-sm font-bold text-slate-700 transition-all text-left"
-                      >
-                        <div className="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
-                          <Layers size={14} />
-                        </div>
-                        {link.name}
-                      </button>
-                    )) : (
-                      <p className="px-4 py-6 text-sm text-slate-400 font-medium text-center">No matching records found.</p>
+                    {/* Quick Navigation Section */}
+                    {filteredLinks.length > 0 && (
+                      <div className="mb-2">
+                        <p className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Quick Navigation</p>
+                        {filteredLinks.map(link => (
+                          <button
+                            key={link.path}
+                            onClick={() => {
+                              navigate(link.path);
+                              setSearchQuery('');
+                              setShowSearchDropdown(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 rounded-xl text-xs font-bold text-slate-700 transition-all text-left"
+                          >
+                            <div className="w-7 h-7 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                              <Layers size={12} />
+                            </div>
+                            {link.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Database Results Section */}
+                    {searchResults.length > 0 && (
+                      <div>
+                        <p className="px-4 py-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">Database Records</p>
+                        {searchResults.map((res, i) => (
+                          <button
+                            key={i}
+                            onClick={() => {
+                              navigate(res.path);
+                              setSearchQuery('');
+                              setShowSearchDropdown(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 rounded-xl text-xs font-bold text-slate-700 transition-all text-left"
+                          >
+                            <div className={`w-7 h-7 rounded-lg flex items-center justify-center text-[10px] font-black ${res.type === 'Product' ? 'bg-amber-100 text-amber-600' : res.type === 'Customer' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
+                              {res.type.charAt(0)}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-slate-800 truncate">{res.name}</p>
+                              <p className="text-[9px] text-slate-400 font-medium truncate">{res.type} • {res.extra}</p>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {filteredLinks.length === 0 && searchResults.length === 0 && (
+                      <p className="px-4 py-6 text-xs text-slate-400 font-medium text-center">No matching records found.</p>
                     )}
                   </motion.div>
                 )}
@@ -369,7 +453,7 @@ const AdminLayout = () => {
                     className={`w-12 h-12 border rounded-2xl flex items-center justify-center relative transition-all ${showNotifications ? 'bg-blue-500 text-white border-blue-500 shadow-lg' : 'bg-white border-slate-100 text-slate-400 hover:text-slate-900 shadow-sm'}`}
                   >
                      <Bell size={20} />
-                     {!showNotifications && <div className="absolute top-3.5 right-3.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />}
+                     {!showNotifications && notifications.length > 0 && <div className="absolute top-3.5 right-3.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />}
                   </button>
 
                   {/* Notifications Dropdown */}
@@ -379,23 +463,28 @@ const AdminLayout = () => {
                         initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }}
                         className="absolute top-full right-0 mt-3 w-80 bg-white border border-slate-100 rounded-[28px] shadow-2xl z-50 overflow-hidden"
                       >
-                        <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-                           <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-900">Notifications</h4>
-                           <span className="bg-blue-100 text-blue-600 text-[9px] font-black px-2 py-0.5 rounded-full">3 New</span>
-                        </div>
-                        <div className="max-h-[400px] overflow-y-auto no-scrollbar">
-                           {mockNotifications.map(n => (
-                             <button key={n.id} className="w-full p-5 flex gap-4 hover:bg-slate-50 transition-all text-left border-b border-slate-50 last:border-0">
-                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${n.type === 'warning' ? 'bg-amber-100 text-amber-600' : n.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
-                                   {n.type === 'warning' ? <AlertCircle size={18} /> : n.type === 'success' ? <CheckCircle2 size={18} /> : <Bell size={18} />}
-                                </div>
-                                <div>
-                                   <p className={`text-xs font-bold ${n.read ? 'text-slate-500' : 'text-slate-900'}`}>{n.title}</p>
-                                   <p className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-wider">{n.time}</p>
-                                </div>
-                             </button>
-                           ))}
-                        </div>
+                         <div className="p-5 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                            <h4 className="font-black text-[11px] uppercase tracking-widest text-slate-900">Notifications</h4>
+                            <span className="bg-blue-100 text-blue-600 text-[9px] font-black px-2 py-0.5 rounded-full">{notifications.length} New</span>
+                         </div>
+                         <div className="max-h-[400px] overflow-y-auto no-scrollbar">
+                            {notifications.length === 0 ? (
+                              <p className="px-5 py-8 text-center text-xs font-bold text-slate-400">No new notifications</p>
+                            ) : (
+                              notifications.map(n => (
+                                <button key={n.id} className="w-full p-5 flex gap-4 hover:bg-slate-50 transition-all text-left border-b border-slate-50 last:border-0">
+                                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${n.type === 'warning' ? 'bg-amber-100 text-amber-600' : n.type === 'success' ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}`}>
+                                      {n.type === 'warning' ? <AlertCircle size={18} /> : n.type === 'success' ? <CheckCircle2 size={18} /> : <Bell size={18} />}
+                                   </div>
+                                   <div>
+                                      <p className={`text-xs font-bold ${n.read ? 'text-slate-500' : 'text-slate-900'}`}>{n.title}</p>
+                                      <p className="text-[10px] text-slate-400 font-medium mt-1 uppercase tracking-wider">{n.time}</p>
+                                      <p className="text-[10px] text-slate-500 font-normal mt-0.5">{n.desc}</p>
+                                   </div>
+                                </button>
+                              ))
+                            )}
+                         </div>
                         <button 
                           onClick={() => { navigate('/admin/comms/notifications'); setShowNotifications(false); }}
                           className="w-full py-4 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-blue-50 transition-all"

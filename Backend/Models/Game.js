@@ -37,7 +37,18 @@ const gameSchema = new mongoose.Schema({
   status: {
     type: Boolean,
     default: true,
-  }
+  },
+  questions: [
+    {
+      question: { type: String, required: true },
+      highlighted: { type: String },
+      image: { type: String },
+      brand: { type: String },
+      productName: { type: String },
+      options: [{ type: String }],
+      correctIdx: { type: Number, required: true }
+    }
+  ]
 }, { timestamps: true });
 
 module.exports = mongoose.model('Game', gameSchema);
