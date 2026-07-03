@@ -91,7 +91,58 @@ export default function Layout({ children }) {
   const hideNavbar = isMobile ? hideNavbarMobile : (isLoginPage || isStudioPage);
   const hideMobileNav = isMobile ? hideMobileNavMobile : true;
 
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+
   const isFixedLayoutPage = location.pathname.toLowerCase().startsWith('/studio') || location.pathname.toLowerCase().startsWith('/categories');
+
+  const handleTouchStart = (e) => {
+    if (isRefreshing || isFixedLayoutPage) return;
+    const container = document.getElementById('main-scroll-container');
+    const scrollTop = container ? container.scrollTop : window.scrollY;
+    
+    if (scrollTop === 0) {
+      setStartY(e.touches[0].clientY);
+      setIsPulling(true);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isPulling || isRefreshing) return;
+    
+    const currentY = e.touches[0].clientY;
+    const diffY = currentY - startY;
+
+    if (diffY > 0) {
+      const distance = Math.min(diffY * 0.4, 70); // Max 70px pull
+      setPullDistance(distance);
+      
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    } else {
+      setIsPulling(false);
+      setPullDistance(0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isPulling || isRefreshing) return;
+    
+    setIsPulling(false);
+    if (pullDistance >= 50) {
+      setIsRefreshing(true);
+      setPullDistance(50);
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 700);
+    } else {
+      setPullDistance(0);
+    }
+  };
 
   return (
     <div className="min-h-screen md:h-auto bg-slate-100 md:bg-slate-50 flex justify-center md:block items-start text-slate-800 antialiased font-sans overflow-x-hidden">
@@ -100,8 +151,22 @@ export default function Layout({ children }) {
         <main 
           key={location.pathname}
           id="main-scroll-container" 
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           className={`flex-grow flex flex-col bg-white md:bg-transparent relative scrollbar-none ${isFixedLayoutPage ? 'overflow-hidden' : 'overflow-y-auto md:overflow-y-visible overflow-x-hidden'}`}
         >
+          {pullDistance > 0 && (
+            <div 
+              style={{ height: `${pullDistance}px`, opacity: pullDistance / 50 }} 
+              className="w-full flex items-center justify-center overflow-hidden transition-all duration-75 bg-slate-50/90 border-b border-slate-100/50 shrink-0 sticky top-0 z-[60]"
+            >
+              <div 
+                className={`w-6 h-6 rounded-full border-2 border-[#ee4923] border-t-transparent ${isRefreshing ? 'animate-spin' : ''}`} 
+                style={{ transform: isRefreshing ? 'none' : `rotate(${pullDistance * 5}deg)` }}
+              />
+            </div>
+          )}
           {!hideNavbar && <Navbar />}
           {children}
         </main>

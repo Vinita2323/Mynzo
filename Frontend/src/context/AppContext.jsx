@@ -808,6 +808,7 @@ export const AppProvider = ({ children }) => {
         fetchAddresses,
         addAddress,
         updateAddress,
+        deleteAddress,
         socketRef,
         systemSettings,
         notifications,

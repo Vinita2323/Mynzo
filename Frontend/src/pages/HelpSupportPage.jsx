@@ -138,7 +138,7 @@ export default function HelpSupportPage() {
   return (
     <div className="bg-slate-50 min-h-screen font-sans pb-20 select-none">
       {/* Header (Mobile Only) */}
-      <div className="bg-white px-4 py-4 shadow-sm z-10 sticky top-0 flex items-center gap-3 md:hidden">
+      <div className="bg-white px-4 py-4 shadow-sm z-50 sticky top-0 flex items-center gap-3 md:hidden">
         <button 
           onClick={() => navigate(-1)}
           className="w-8 h-8 rounded-full bg-slate-55 flex items-center justify-center text-[#02006c] hover:bg-slate-100 active:scale-95 transition-all cursor-pointer shadow-sm flex-shrink-0"

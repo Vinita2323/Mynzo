@@ -1127,11 +1127,11 @@ export default function Home() {
 
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {trendingBrandsList.map(brand => (
-                    <div key={`cat-brand-${brand.id}`} className="flex flex-col cursor-pointer group" onClick={() => navigate('/brand/' + brand.id)}>
+                    <div key={`cat-brand-${brand.id}`} className="flex flex-col cursor-pointer group" onClick={() => { sessionStorage.setItem('scrollToBrands', '1'); navigate('/brand/' + brand.id); }}>
                       <div className="w-full aspect-[4/3] rounded-2xl bg-slate-100 relative overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-slate-100">
                         <div className="absolute top-0 left-2.5 bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-b-lg shadow-sm z-10">
                           <span className={`text-[9px] md:text-[10px] font-black ${brand.badgeColor}`}>{brand.brand.toUpperCase()}</span>
-                        </div>
+                        </div>        
                         <OptimizedImage src={brand.image} alt={brand.brand} type="product" className="absolute inset-0 group-hover:scale-110 transition-transform duration-500" />
                       </div>
                       <div className="mt-2 text-center">

@@ -80,69 +80,69 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#f8fafc] px-4 font-nunito relative">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-lg">
         {/* Admin Branding */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center mb-4">
+        <div className="text-center mb-10">
+          <div className="inline-flex items-center justify-center mb-5">
             <img 
               src="/HopeFinal.webp" 
               alt="Cocia Logo" 
-              className="h-12 w-auto object-contain"
+              className="h-16 w-auto object-contain"
               onError={(e) => {
                 e.target.style.display = 'none';
                 e.target.nextSibling.style.display = 'flex';
               }}
             />
-            <div className="hidden w-12 h-12 bg-blue-600 rounded-xl items-center justify-center shadow-lg shadow-blue-100">
-               <ShieldCheck size={24} className="text-white" />
+            <div className="hidden w-16 h-16 bg-blue-600 rounded-xl items-center justify-center shadow-lg shadow-blue-100">
+               <ShieldCheck size={32} className="text-white" />
             </div>
           </div>
-          <h1 className="text-2xl font-semibold text-slate-900 tracking-tight font-montserrat uppercase">
+          <h1 className="text-3xl font-semibold text-slate-900 tracking-tight font-montserrat uppercase">
             Mynzo<span className="text-[#ee4923]">.</span> Admin
           </h1>
-          <p className="text-slate-600 font-black uppercase tracking-[2px] text-[9px] mt-1">Verified Management Session</p>
+          <p className="text-slate-600 font-black uppercase tracking-[2px] text-[11px] mt-1.5">Verified Management Session</p>
         </div>
 
         {/* Login Card */}
-        <div className="bg-white border border-slate-100 p-8 rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.04)]">
-          <form onSubmit={handleLogin} className="space-y-5">
+        <div className="bg-white border border-slate-100 p-10 rounded-[28px] shadow-[0_20px_50px_rgba(0,0,0,0.04)]">
+          <form onSubmit={handleLogin} className="space-y-6">
             {error && (
-              <div className="bg-red-50 border border-red-100 text-red-500 text-[10px] font-bold p-3 rounded-xl text-center uppercase tracking-widest animate-pulse">
+              <div className="bg-red-50 border border-red-100 text-red-500 text-xs font-bold p-4 rounded-xl text-center uppercase tracking-widest animate-pulse">
                 {error}
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Admin Email</label>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black text-slate-600 uppercase tracking-widest ml-1">Admin Email</label>
               <div className="relative group">
-                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                <Mail className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
                 <input 
                   type="email" 
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="admin@gmail.com"
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3.5 pl-14 pr-6 text-slate-900 font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all text-sm"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 pl-14 pr-6 text-slate-900 font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all text-base"
                 />
               </div>
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-[9px] font-black text-slate-600 uppercase tracking-widest ml-1">Secure Password</label>
+            <div className="space-y-2">
+              <label className="text-[11px] font-black text-slate-600 uppercase tracking-widest ml-1">Secure Password</label>
               <div className="relative group">
-                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={16} />
+                <Lock className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={18} />
                 <input 
                   type={showPassword ? "text" : "password"} 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl py-3.5 pl-14 pr-14 text-slate-900 font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all text-sm"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 pl-14 pr-14 text-slate-900 font-bold placeholder:text-slate-400 focus:outline-none focus:ring-4 focus:ring-blue-50 focus:border-blue-500 transition-all text-base"
                 />
                 <button 
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors"
                 >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </button>
               </div>
             </div>
@@ -154,9 +154,9 @@ const Auth = () => {
                 id="agree-checkbox" 
                 checked={agreed}
                 onChange={(e) => setAgreed(e.target.checked)}
-                className="w-4 h-4 text-blue-600 border-slate-200 rounded focus:ring-blue-500 mt-0.5 cursor-pointer"
+                className="w-5 h-5 text-blue-600 border-slate-200 rounded focus:ring-blue-500 mt-0.5 cursor-pointer"
               />
-              <label htmlFor="agree-checkbox" className="text-[11px] font-bold text-slate-700 select-none leading-normal cursor-pointer">
+              <label htmlFor="agree-checkbox" className="text-xs font-bold text-slate-700 select-none leading-normal cursor-pointer">
                 I agree to the{' '}
                 <button 
                   type="button" 
@@ -179,11 +179,11 @@ const Auth = () => {
             <button 
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold text-[11px] uppercase tracking-[2px] py-4 rounded-xl shadow-lg shadow-blue-100 active:scale-[0.98] transition-all mt-2 flex items-center justify-center gap-2"
+              className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white font-semibold text-xs uppercase tracking-[2px] py-4.5 rounded-xl shadow-lg shadow-blue-100 active:scale-[0.98] transition-all mt-2 flex items-center justify-center gap-2"
             >
               {loading ? (
                 <>
-                  <Loader2 size={14} className="animate-spin" />
+                  <Loader2 size={16} className="animate-spin" />
                   Signing In...
                 </>
               ) : (
@@ -192,13 +192,13 @@ const Auth = () => {
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-slate-50 flex justify-between items-center text-[9px] font-bold uppercase tracking-widest text-slate-500">
+          <div className="mt-8 pt-6 border-t border-slate-50 flex justify-between items-center text-[11px] font-bold uppercase tracking-widest text-slate-500">
             <button className="hover:text-blue-500 transition-colors">Recover Access</button>
             <span>v2.4.0-Stable</span>
           </div>
         </div>
 
-        <p className="text-center text-slate-600 text-[10px] font-bold mt-8 uppercase tracking-widest">
+        <p className="text-center text-slate-600 text-xs font-bold mt-8 uppercase tracking-widest">
           Not an admin? <button onClick={() => navigate('/')} className="text-blue-600 hover:underline">Back to Storefront</button>
         </p>
       </div>

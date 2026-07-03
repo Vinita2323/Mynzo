@@ -678,6 +678,12 @@ export default function ProductDetailsPage() {
                   value={pincode}
                   onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   maxLength={6}
+                  onFocus={(e) => {
+                    const target = e.target;
+                    setTimeout(() => {
+                      target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }, 300);
+                  }}
                 />
                 <button 
                   onClick={handleCheckPincode}

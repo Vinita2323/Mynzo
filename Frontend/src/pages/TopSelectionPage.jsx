@@ -32,7 +32,7 @@ export default function TopSelectionPage() {
   return (
     <div className="min-h-screen bg-white flex flex-col pb-20 animate-fade-in">
       {/* Header */}
-      <div className="bg-white px-4 py-4 flex items-center justify-between shadow-sm z-10 sticky top-0">
+      <div className="bg-white px-4 py-4 flex items-center justify-between shadow-sm z-50 sticky top-0">
         <h1 className="text-[#02006c] text-[17px] font-bold tracking-wide uppercase font-sans">Top Selection</h1>
         <button onClick={() => navigate(-1)} className="p-1 hover:bg-slate-50 rounded-full transition-colors border border-slate-200">
           <ArrowLeft className="w-5 h-5 text-[#02006c]" />

@@ -10,7 +10,7 @@ export default function SimilarProductsPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col pb-20 animate-fade-in">
       {/* Header */}
-      <div className="bg-[#FFE4D6] px-4 py-4 flex items-center gap-3 shadow-sm z-10 sticky top-0">
+      <div className="bg-[#FFE4D6] px-4 py-4 flex items-center gap-3 shadow-sm z-50 sticky top-0">
         <button onClick={() => navigate(-1)} className="p-1.5 -ml-1 hover:bg-orange-200/50 rounded-full transition-colors">
           <ArrowLeft className="w-5 h-5 text-[#02006c]" />
         </button>
