@@ -152,6 +152,21 @@ export default function ProductDetailsPage() {
   const [deliveryEtd, setDeliveryEtd] = useState('');
   const [isCheckingPincode, setIsCheckingPincode] = useState(false);
 
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
+  useEffect(() => {
+    const checkKeyboard = () => {
+      if (window.visualViewport) {
+        const viewportHeight = window.visualViewport.height;
+        const windowHeight = window.innerHeight;
+        setIsKeyboardOpen(windowHeight - viewportHeight > 150);
+      }
+    };
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', checkKeyboard);
+      return () => window.visualViewport.removeEventListener('resize', checkKeyboard);
+    }
+  }, []);
+
   // Auto-fetch user's default address pincode and estimate shipping
   useEffect(() => {
     if (user && product) {
@@ -448,7 +463,7 @@ export default function ProductDetailsPage() {
       </header>
 
       {/* Main Content wrapper */}
-      <div className={`max-w-7xl mx-auto w-full px-0 md:px-6 lg:px-8 md:py-8 grid grid-cols-1 md:grid-cols-12 gap-8 items-start ${(!product.stock || product.stock <= 0) ? 'grayscale opacity-90' : ''}`}>
+      <div className={`max-w-7xl mx-auto w-full px-0 md:px-6 lg:px-8 md:py-8 pb-28 md:pb-8 grid grid-cols-1 md:grid-cols-12 gap-8 items-start ${(!product.stock || product.stock <= 0) ? 'grayscale opacity-90' : ''}`}>
         
         {/* Left Column: Image Gallery on desktop */}
         <div className="md:col-span-7 bg-white p-0 md:p-6 md:rounded-2xl md:border md:border-slate-100 md:shadow-xs space-y-6">

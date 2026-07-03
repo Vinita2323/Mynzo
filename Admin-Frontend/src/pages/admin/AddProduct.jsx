@@ -430,8 +430,8 @@ const AddProduct = () => {
       return;
     }
 
-    if (discountLabel && Number(discountLabel) < 0) {
-      toast.info('Discount label cannot be negative!');
+    if (discountLabel !== '' && (Number(discountLabel) < 0 || Number(discountLabel) > 100)) {
+      toast.info('Discount label percentage must be between 0 and 100!');
       return;
     }
     
@@ -652,7 +652,10 @@ const AddProduct = () => {
                 <input 
                   type="number" 
                   value={mrp}
-                  onChange={e => setMrp(e.target.value)}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val === '' || Number(val) >= 0) setMrp(val);
+                  }}
                   placeholder="0.00" 
                   className={inputCls} 
                 />
@@ -662,7 +665,10 @@ const AddProduct = () => {
                 <input 
                   type="number" 
                   value={discountPercent}
-                  onChange={e => setDiscountPercent(e.target.value)}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val === '' || (Number(val) >= 0 && Number(val) <= 100)) setDiscountPercent(val);
+                  }}
                   placeholder="e.g. 20" 
                   className={inputCls} 
                   min="0"
@@ -674,7 +680,10 @@ const AddProduct = () => {
                 <input 
                   type="number" 
                   value={sellingPrice}
-                  onChange={e => setSellingPrice(e.target.value)}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val === '' || Number(val) >= 0) setSellingPrice(val);
+                  }}
                   placeholder="0.00" 
                   className={inputCls} 
                 />
@@ -684,7 +693,10 @@ const AddProduct = () => {
                 <input 
                   type="number" 
                   value={stock}
-                  onChange={e => setStock(e.target.value)}
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val === '' || Number(val) >= 0) setStock(val);
+                  }}
                   placeholder="1" 
                   className={inputCls} 
                 />
@@ -698,9 +710,12 @@ const AddProduct = () => {
                   type="number" 
                   value={discountLabel}
                   onChange={e => {
-                    const val = Number(e.target.value);
-                    if (val >= 0 && val <= 100) {
-                      setDiscountLabel(e.target.value);
+                    const val = e.target.value;
+                    if (val === '' || Number(val) >= 0) {
+                      const numVal = Number(val);
+                      if (numVal <= 100) {
+                        setDiscountLabel(val);
+                      }
                     }
                   }}
                   placeholder="e.g. 40" 
@@ -967,7 +982,12 @@ const AddProduct = () => {
                   <input 
                     type="number" 
                     value={shippingSpecs[f.key]}
-                    onChange={e => setShippingSpecs(p => ({ ...p, [f.key]: e.target.value }))}
+                    onChange={e => {
+                      const val = e.target.value;
+                      if (val === '' || Number(val) >= 0) {
+                        setShippingSpecs(p => ({ ...p, [f.key]: val }));
+                      }
+                    }}
                     placeholder={f.def} 
                     className={inputCls} 
                   />

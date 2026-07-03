@@ -78,6 +78,15 @@ exports.createCoupon = async (req, res) => {
     if (type === 'Percentage' && Number(value) > 100) {
       return res.status(400).json({ success: false, message: 'Percentage discount cannot exceed 100%.' });
     }
+    if (minOrder !== undefined && Number(minOrder) < 0) {
+      return res.status(400).json({ success: false, message: 'Minimum order amount cannot be negative.' });
+    }
+    if (usageLimit !== undefined && Number(usageLimit) < 0) {
+      return res.status(400).json({ success: false, message: 'Usage limit cannot be negative.' });
+    }
+    if (perUserLimit !== undefined && Number(perUserLimit) < 0) {
+      return res.status(400).json({ success: false, message: 'Usage limit per user cannot be negative.' });
+    }
 
     const uppercaseCode = code.toUpperCase().trim();
 
@@ -194,6 +203,15 @@ exports.updateCoupon = async (req, res) => {
     const finalType = type || (await Coupon.findById(req.params.id))?.type;
     if (finalType === 'Percentage' && value !== undefined && Number(value) > 100) {
       return res.status(400).json({ success: false, message: 'Percentage discount cannot exceed 100%.' });
+    }
+    if (minOrder !== undefined && Number(minOrder) < 0) {
+      return res.status(400).json({ success: false, message: 'Minimum order amount cannot be negative.' });
+    }
+    if (usageLimit !== undefined && Number(usageLimit) < 0) {
+      return res.status(400).json({ success: false, message: 'Usage limit cannot be negative.' });
+    }
+    if (perUserLimit !== undefined && Number(perUserLimit) < 0) {
+      return res.status(400).json({ success: false, message: 'Usage limit per user cannot be negative.' });
     }
 
     const uppercaseCode = code ? code.toUpperCase().trim() : undefined;

@@ -15,7 +15,9 @@ export default function LoginPage() {
   const refCode = searchParams.get('ref');
 
   // Phone + OTP states
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState(() => {
+    return sessionStorage.getItem('tempLoginPhone') || '';
+  });
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -137,6 +139,7 @@ export default function LoginPage() {
       localStorage.setItem('userToken', data.token);
       localStorage.setItem('userInfo', JSON.stringify(data.user));
       localStorage.setItem('isLoggedIn', 'true');
+      sessionStorage.removeItem('tempLoginPhone');
 
       // Track analytics signup/login
       if (data.isNewUser) {
@@ -310,7 +313,9 @@ export default function LoginPage() {
                     placeholder="Enter 10-digit number"
                     value={phoneNumber}
                     onChange={(e) => {
-                      setPhoneNumber(e.target.value.replace(/\D/g, '').slice(0, 10));
+                      const cleaned = e.target.value.replace(/\D/g, '').slice(0, 10);
+                      setPhoneNumber(cleaned);
+                      sessionStorage.setItem('tempLoginPhone', cleaned);
                       setSignInError('');
                     }}
                     className="w-full text-lg text-[#02006c] font-bold outline-none placeholder-slate-300 bg-transparent"

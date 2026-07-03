@@ -96,6 +96,12 @@ export default function Layout({ children }) {
   const [startY, setStartY] = useState(0);
   const [isPulling, setIsPulling] = useState(false);
 
+  useEffect(() => {
+    setPullDistance(0);
+    setIsRefreshing(false);
+    setIsPulling(false);
+  }, [location.pathname]);
+
   const isFixedLayoutPage = isStudioPage || location.pathname.toLowerCase().startsWith('/categories');
 
   const getActiveScrollTop = (target) => {
