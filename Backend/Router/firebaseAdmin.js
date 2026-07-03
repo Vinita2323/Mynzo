@@ -53,8 +53,8 @@ const sendNotificationToUser = async (userId, payload) => {
       return;
     }
 
-    const webTokens = user.fcmWebTokens || [];
-    const mobileTokens = user.fcmMobileTokens || [];
+    const webTokens = (user.fcmWebTokens && user.fcmWebTokens.length > 0) ? [user.fcmWebTokens[user.fcmWebTokens.length - 1]] : [];
+    const mobileTokens = (user.fcmMobileTokens && user.fcmMobileTokens.length > 0) ? [user.fcmMobileTokens[user.fcmMobileTokens.length - 1]] : [];
     // Remove duplicates by using Set
     const allTokens = [...new Set([...webTokens, ...mobileTokens])];
 

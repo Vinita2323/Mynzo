@@ -629,7 +629,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <h3 className="text-xl font-black text-white mt-3 font-syne tracking-wide drop-shadow-md">
+              <h3 className="text-xl font-black text-[#02006c] mt-3 font-syne tracking-wide drop-shadow-md">
                 {mockUser.name}
               </h3>
               <div className="flex items-center gap-1 mt-1.5 bg-orange-50 border border-orange-100 px-3 py-1 rounded-full shadow-sm">

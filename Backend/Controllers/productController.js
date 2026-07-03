@@ -85,7 +85,7 @@ const resolveCategoryAndSubcategory = async (categoryInput, subCategoryInput) =>
 // @access  Public
 const getProducts = async (req, res) => {
   try {
-    const { category, status, search } = req.query;
+    const { category, status, search, full } = req.query;
     const filter = {};
 
     if (category && category !== 'All') {
@@ -103,10 +103,11 @@ const getProducts = async (req, res) => {
       ];
     }
 
-    const products = await Product.find(filter)
-      .select('-highlights -technicalSpecs -description -variations -shippingSpecs')
-      .sort({ createdAt: -1 })
-      .lean();
+    let query = Product.find(filter);
+    if (full !== 'true') {
+      query = query.select('-highlights -technicalSpecs -description -variations -shippingSpecs');
+    }
+    const products = await query.sort({ createdAt: -1 }).lean();
     res.status(200).json({ success: true, products });
   } catch (error) {
     console.error('Get Products Error:', error);
@@ -255,7 +256,7 @@ const updateProduct = async (req, res) => {
     });
 
     if (req.body.brandId !== undefined) {
-      if (req.body.brandId && req.body.brandId !== 'null' && req.body.brandId !== '') {
+      if (req.body.brandId && req.body.brandId !== 'null' && req.body.brandId !== '' && req.body.brandId !== '[object Object]') {
         product.brandId = req.body.brandId;
         const brand = await Brand.findById(req.body.brandId);
         if (brand) {
@@ -325,7 +326,7 @@ const deleteProduct = async (req, res) => {
 const getProductById = async (req, res) => {
   try {
     const mongoose = require('mongoose');
-    const product = await Product.findById(req.params.id).lean();
+    const product = await Product.findById(req.params.id).populate('brandId').lean();
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
@@ -364,7 +365,8 @@ const getProductById = async (req, res) => {
     const enrichedProduct = {
       ...product,
       categoryName: categoryLabel,
-      subCategoryName: subCategoryLabel
+      subCategoryName: subCategoryLabel,
+      brandName: product.brandId ? product.brandId.name : (product.brandName || 'Generic')
     };
 
     res.status(200).json({ success: true, product: enrichedProduct });

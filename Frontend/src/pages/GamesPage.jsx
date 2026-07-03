@@ -69,6 +69,11 @@ export default function GamesPage() {
   }, [user]);
 
   const handleOpenGame = (gameKey) => {
+    const isGameActive = games.some(g => g.key === gameKey);
+    if (!isGameActive) {
+      toast.error("This game is currently inactive!");
+      return;
+    }
     analytics.trackGamePlay(gameKey, 'start');
     setActiveGame(gameKey);
   };
@@ -392,6 +397,7 @@ export default function GamesPage() {
         <QuizGame 
           onClose={handleCloseGame} 
           addCoins={(amount) => handleRecordPlay('quiz', amount)} 
+          questions={selectedGameData?.questions}
         />
       )}
 

@@ -97,7 +97,7 @@ exports.createCoupon = async (req, res) => {
       minOrder: minOrder ? Number(minOrder) : 0,
       usageLimit: usageLimit ? Number(usageLimit) : 1000,
       perUserLimit: perUserLimit ? Number(perUserLimit) : 1,
-      expiry: new Date(expiry),
+      expiry: (() => { const d = new Date(expiry); d.setHours(23, 59, 59, 999); return d; })(),
       status: 'Active'
     });
 
@@ -216,7 +216,7 @@ exports.updateCoupon = async (req, res) => {
       ...(minOrder !== undefined && { minOrder: Number(minOrder) }),
       ...(usageLimit !== undefined && { usageLimit: Number(usageLimit) }),
       ...(perUserLimit !== undefined && { perUserLimit: Number(perUserLimit) }),
-      ...(expiry && { expiry: new Date(expiry) })
+      ...(expiry && { expiry: (() => { const d = new Date(expiry); d.setHours(23, 59, 59, 999); return d; })() })
     };
 
     const coupon = await Coupon.findByIdAndUpdate(

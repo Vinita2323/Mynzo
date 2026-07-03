@@ -29,6 +29,7 @@ const ProductDetails = () => {
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [activeImage, setActiveImage] = useState('');
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -39,6 +40,9 @@ const ProductDetails = () => {
         
         if (res.ok && data.success) {
           setProduct(data.product);
+          if (data.product.images && data.product.images.length > 0) {
+            setActiveImage(data.product.images[0]);
+          }
         } else {
           toast.error(data.message || 'Failed to load product details');
           navigate('/admin/inventory/all');
@@ -139,19 +143,32 @@ const ProductDetails = () => {
           {product.variations && product.variations.length > 0 && (
             <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
               <SectionTitle icon={Layers} color="bg-indigo-50 text-indigo-600">Variations (SKUs)</SectionTitle>
-              <div className="space-y-4">
-                {product.variations.map((v, idx) => (
-                  <div key={idx} className="bg-slate-50 p-4 rounded-xl border border-slate-100 flex items-center gap-4">
-                    <div className="font-bold text-slate-700 w-1/4">{v.name}</div>
-                    <div className="flex flex-wrap gap-2">
-                      {(v.values || []).map((val, vIdx) => (
-                        <span key={vIdx} className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-sm text-slate-600 font-medium">
-                          {val}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                      <th className="py-3 px-4">SKU</th>
+                      <th className="py-3 px-4">Attributes</th>
+                      <th className="py-3 px-4">Price</th>
+                      <th className="py-3 px-4">Stock</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50 text-sm font-semibold text-slate-700">
+                    {product.variations.map((v, idx) => {
+                      const attrText = v.attributes 
+                        ? Object.entries(v.attributes).map(([key, val]) => `${key}: ${val}`).join(', ')
+                        : '-';
+                      return (
+                        <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="py-3.5 px-4 font-mono text-xs text-[#ee4923]">{v.sku}</td>
+                          <td className="py-3.5 px-4 text-slate-500 text-xs">{attrText}</td>
+                          <td className="py-3.5 px-4">₹{v.price}</td>
+                          <td className="py-3.5 px-4">{v.stock}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
           )}
@@ -163,12 +180,34 @@ const ProductDetails = () => {
           <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm">
             <SectionTitle icon={ImageIcon} color="bg-rose-50 text-rose-600">Product Visuals</SectionTitle>
             {product.images && product.images.length > 0 ? (
-              <div className="grid grid-cols-2 gap-3">
-                {product.images.map((img, i) => (
-                  <div key={i} className={`rounded-xl border border-slate-100 overflow-hidden ${i === 0 ? 'col-span-2 aspect-[4/3]' : 'aspect-square'}`}>
-                    <OptimizedImage src={img} alt={`${product.name} ${i+1}`} type="product" className="w-full h-full object-cover" />
+              <div className="space-y-4">
+                {/* Main Large Preview */}
+                <div className="rounded-xl border border-slate-100 overflow-hidden aspect-[4/3] bg-slate-50">
+                  <OptimizedImage 
+                    src={activeImage || product.images[0]} 
+                    alt={product.name} 
+                    type="product" 
+                    className="w-full h-full object-cover" 
+                  />
+                </div>
+                {/* Thumbnails Row */}
+                {product.images.length > 1 && (
+                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-200">
+                    {product.images.map((img, i) => (
+                      <button 
+                        key={i} 
+                        onClick={() => setActiveImage(img)}
+                        className={`w-16 h-16 rounded-lg border overflow-hidden shrink-0 transition-all ${
+                          (activeImage || product.images[0]) === img 
+                            ? 'border-[#ee4923] ring-2 ring-orange-50' 
+                            : 'border-slate-200 hover:border-slate-400'
+                        }`}
+                      >
+                        <OptimizedImage src={img} alt={`Thumbnail ${i+1}`} type="product" className="w-full h-full object-cover" />
+                      </button>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
             ) : (
               <div className="p-8 border-2 border-dashed border-slate-200 rounded-xl flex flex-col items-center justify-center text-slate-400">

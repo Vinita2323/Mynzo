@@ -427,7 +427,7 @@ export default function ProductDetailsPage() {
             placeholder="Search for products" 
             className="w-full bg-transparent outline-none text-sm text-slate-700"
             value={localSearchQuery}
-            onChange={(e) => setLocalSearchQuery(e.target.value)}
+            onChange={(e) => setLocalSearchQuery(e.target.value.trimStart())}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && localSearchQuery.trim() !== '') {
                 setSearchQuery(localSearchQuery);

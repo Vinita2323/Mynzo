@@ -399,7 +399,7 @@ export default function CartPage() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>GST (18% inclusive)</span>
+                  <span>GST ({gstPercentage}% inclusive)</span>
                   <span className="text-slate-900">₹{Number(gstAmount).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">

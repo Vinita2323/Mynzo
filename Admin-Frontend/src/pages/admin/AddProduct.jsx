@@ -4,7 +4,8 @@ import {
   Save, CheckCircle2,
   Info, Image as ImageIcon, Layers,
   DollarSign, Tag, FileText, 
-  Truck, ShieldCheck, ToggleLeft, ToggleRight
+  Truck, ShieldCheck, ToggleLeft, ToggleRight,
+  ArrowLeft
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from '../../utils/toast';
@@ -73,6 +74,8 @@ const AddProduct = () => {
   const [stock, setStock] = useState(1);
   const [discountLabel, setDiscountLabel] = useState('');
   const [sku, setSku] = useState('');
+  const [categories, setCategories] = useState([]);
+  const [subCategoriesMap, setSubCategoriesMap] = useState({});
 
   useEffect(() => {
     if (mrp && discountPercent) {
@@ -149,7 +152,7 @@ const AddProduct = () => {
            }
            setSku(p.sku || '');
           setBrandName(p.brandName || '');
-          setBrandId(p.brandId || '');
+          setBrandId(p.brandId && typeof p.brandId === 'object' ? p.brandId._id : (p.brandId || ''));
           setIsTrending(p.isTrending || false);
           setTags(Array.isArray(p.tags) ? p.tags.join(', ') : '');
           setManufacturerInfo(p.manufacturerInfo || '');
@@ -220,11 +223,13 @@ const AddProduct = () => {
         const brandData = await brandRes.json();
 
         if (catRes.ok && catData.success && subRes.ok && subData.success) {
-          const catsList = (catData.chips || []).filter(c => c.active !== false).map(c => ({
-            id: c._id,
-            slug: c.id,
-            name: c.categoryName
-          }));
+          const catsList = (catData.chips || [])
+            .filter(c => c.active !== false && c.id !== 'for-you' && c._id !== 'for-you')
+            .map(c => ({
+              id: c._id,
+              slug: c.id,
+              name: c.categoryName
+            }));
           setCategories(catsList);
           
           const map = {};
@@ -366,8 +371,7 @@ const AddProduct = () => {
   const [images, setImages] = useState([]); // holds urls or previews
   const [imageFiles, setImageFiles] = useState([]); // holds files for multipart uploading
 
-  const [categories, setCategories] = useState([]);
-  const [subCategoriesMap, setSubCategoriesMap] = useState({});
+
 
   const handleAddImageUrl = () => {
     const url = prompt('Enter Image URL');
@@ -401,8 +405,23 @@ const AddProduct = () => {
       return;
     }
     
+    if (Number(sellingPrice) <= 0) {
+      toast.info('Selling Price must be greater than zero!');
+      return;
+    }
+    
+    if (mrp && Number(mrp) <= 0) {
+      toast.info('Actual Price (MRP) must be greater than zero!');
+      return;
+    }
+
     if (mrp && Number(mrp) < Number(sellingPrice)) {
       toast.info('Actual Price (MRP) cannot be less than Selling Price!');
+      return;
+    }
+
+    if (discountPercent !== '' && (Number(discountPercent) < 0 || Number(discountPercent) > 100)) {
+      toast.info('Discount percentage must be between 0 and 100!');
       return;
     }
 
@@ -410,10 +429,49 @@ const AddProduct = () => {
       toast.info('Stock cannot be negative!');
       return;
     }
+
+    if (discountLabel && Number(discountLabel) < 0) {
+      toast.info('Discount label cannot be negative!');
+      return;
+    }
     
     if (!shippingSpecs.weight) {
       toast.info('Product Weight is mandatory for shipping calculation!');
       return;
+    }
+
+    if (Number(shippingSpecs.weight) <= 0) {
+      toast.info('Weight must be greater than zero!');
+      return;
+    }
+
+    if (shippingSpecs.length && Number(shippingSpecs.length) < 0) {
+      toast.info('Length cannot be negative!');
+      return;
+    }
+
+    if (shippingSpecs.width && Number(shippingSpecs.width) < 0) {
+      toast.info('Width cannot be negative!');
+      return;
+    }
+
+    if (shippingSpecs.height && Number(shippingSpecs.height) < 0) {
+      toast.info('Height cannot be negative!');
+      return;
+    }
+
+    if (variations && variations.length > 0) {
+      for (let i = 0; i < variations.length; i++) {
+        const v = variations[i];
+        if (Number(v.price) <= 0) {
+          toast.info(`Variation ${i + 1} price must be greater than zero!`);
+          return;
+        }
+        if (Number(v.stock) < 0) {
+          toast.info(`Variation ${i + 1} stock cannot be negative!`);
+          return;
+        }
+      }
     }
 
     const token = localStorage.getItem('adminToken');
@@ -497,10 +555,18 @@ const AddProduct = () => {
   return (
     <div className="space-y-6 pb-20 max-w-[1200px]">
       {/* Header */}
-      <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-3xl font-semibold text-slate-900 tracking-tight font-montserrat">{isEditMode ? 'Edit Product' : 'Add New Product'}</h1>
-          <p className="text-slate-500 mt-1">{isEditMode ? 'Modify the product details and save changes.' : 'Fill in the details below to publish a product to the catalog.'}</p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => navigate('/admin/inventory/all')}
+            className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-colors shrink-0 shadow-sm"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <div>
+            <h1 className="text-3xl font-semibold text-slate-900 tracking-tight font-montserrat">{isEditMode ? 'Edit Product' : 'Add New Product'}</h1>
+            <p className="text-slate-500 mt-1">{isEditMode ? 'Modify the product details and save changes.' : 'Fill in the details below to publish a product to the catalog.'}</p>
+          </div>
         </div>
         <div className="flex gap-3">
           <button className="px-5 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl text-sm font-semibold hover:bg-slate-50 transition-all shadow-sm">
@@ -1041,18 +1107,6 @@ const AddProduct = () => {
               </select>
             </div>
 
-            <div className="flex items-center gap-2 py-1 select-none">
-              <input 
-                type="checkbox"
-                id="isTrending"
-                checked={isTrending}
-                onChange={e => setIsTrending(e.target.checked)}
-                className="w-4 h-4 accent-orange-500 rounded border-slate-300 cursor-pointer"
-              />
-              <label htmlFor="isTrending" className="text-xs font-bold text-slate-600 cursor-pointer">
-                Is Trending / Popular Product
-              </label>
-            </div>
             <div>
               <Label>Tags (Comma Separated)</Label>
               <input 

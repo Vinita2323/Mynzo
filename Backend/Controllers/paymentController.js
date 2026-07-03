@@ -230,8 +230,12 @@ exports.webhookReceiver = async (req, res) => {
           }
         }
 
-        const gstAmount = Math.round(Math.max(0, calculatedSubtotal - discountAmount) * 0.18);
-        const platformCommission = 15;
+        const SystemConfig = require('../Models/SystemConfig');
+        const systemConfig = await SystemConfig.findOne({});
+        const gstPercentage = systemConfig && systemConfig.gstPercentage !== undefined ? systemConfig.gstPercentage : 18;
+        const platformCommission = systemConfig && systemConfig.commission !== undefined ? systemConfig.commission : 15;
+
+        const gstAmount = Math.round(Math.max(0, calculatedSubtotal - discountAmount) * (gstPercentage / 100));
 
         // Estimate Delivery
         let deliveryCharge = 0;

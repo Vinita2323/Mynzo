@@ -452,8 +452,8 @@ export default function OrderDetailsPage() {
             <td style="padding: 8px 12px; font-size: 13px; font-weight: 600; color: #475569; text-align: right;">₹${subtotal}</td>
           </tr>
           <tr>
-            <td style="padding: 8px 12px; font-size: 13px; font-weight: 600; color: #475569;">GST (18%):</td>
-            <td style="padding: 8px 12px; font-size: 13px; font-weight: 600; color: #475569; text-align: right;">₹${gstAmount}</td>
+            <td style="padding: 8px 12px; font-size: 13px; font-weight: 600; color: #475569;">GST (${gstPercentage}%):</td>
+            <td style="padding: 8px 12px; font-size: 13px; font-weight: 600; color: #475569; text-align: right;">₹\${gstAmount}</td>
           </tr>
           ${deliveryCharge > 0 ? `
             <tr>
@@ -923,7 +923,7 @@ export default function OrderDetailsPage() {
                    <span>₹{subtotal}</span>
                  </div>
                  <div className="flex justify-between items-center text-slate-600 font-semibold">
-                   <span>GST (18%)</span>
+                   <span>GST ({gstPercentage}%)</span>
                    <span>₹{gstAmount}</span>
                  </div>
                  <div className="flex justify-between items-center text-slate-600 font-semibold">

@@ -137,25 +137,124 @@ export default function InventoryList() {
     toast.success('Inventory exported successfully!');
   };
 
-  const handleDownloadSample = () => {
-    const headers = [
-      'Name', 'Category', 'Sub Category', 'Description', 'Selling Price', 'MRP', 'Stock', 'Discount Label', 'SKU',
-      'Pack Of', 'Fabric', 'Sleeve', 'Pattern', 'Collar', 'Color',
-      'Fit', 'Fabric Care', 'Suitable For', 'Hem',
-      'Weight (kg)', 'Length (cm)', 'Width (cm)', 'Height (cm)',
-      'Top Section', 'Crazy Deals', 'Flash Sale',
-      'Brand Name', 'Tags', 'Manufacturer Info', 'HSN Code', 'GST Category', 'Is Trending', 'Image URLs'
-    ];
-    const sampleRow = [
-      'Premium Leather Satchel', 'Fashion', 'Accessories', 'A high-quality leather satchel for everyday use.', 2999, 4999, 100, '-40% OFF', 'FSH-SAT-001',
-      '1', 'Leather', '', 'Solid', '', 'Brown',
-      'Regular', 'Wipe with damp cloth', 'Casual', '',
-      0.8, 30, 20, 10,
-      'false', 'true', 'false',
-      'LeatherCraft', 'bags, leather, premium', 'LeatherCraft Mfg.', '4202', 'Standard GST', 'true', 'https://example.com/img1.jpg, https://example.com/img2.jpg'
-    ];
-
-    const xmlContent = `<?xml version="1.0"?>
+  const handleDownloadSample = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      
+      toast.loading('Preparing template data...', { id: 'prep-template' });
+      
+      // Fetch all products with full schema details
+      const res = await fetch(`${apiBase}/admin/catalog/products?full=true`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      const data = await res.json();
+      
+      let productsList = [];
+      if (res.ok && data.success && Array.isArray(data.products)) {
+        productsList = data.products;
+      }
+      
+      const headers = [
+        'Name', 'Category', 'Sub Category', 'Description', 'Selling Price', 'MRP', 'Stock', 'Discount Label', 'SKU',
+        'Pack Of', 'Fabric', 'Sleeve', 'Pattern', 'Collar', 'Color',
+        'Fit', 'Fabric Care', 'Suitable For', 'Hem',
+        'Weight (kg)', 'Length (cm)', 'Width (cm)', 'Height (cm)',
+        'Top Section', 'Crazy Deals', 'Flash Sale',
+        'Brand Name', 'Tags', 'Manufacturer Info', 'HSN Code', 'GST Category', 'Is Trending', 'Image URLs'
+      ];
+      
+      const rows = [];
+      
+      if (productsList.length > 0) {
+        // Fetch categories list to map category _id to categoryName
+        const catRes = await fetch(`${apiBase}/admin/catalog/chips`);
+        const catData = await catRes.json();
+        const cats = (catRes.ok && catData.success) ? catData.chips : [];
+        
+        const subRes = await fetch(`${apiBase}/admin/catalog/subchips`);
+        const subData = await subRes.json();
+        const subs = (subRes.ok && subData.success) ? subData.subchips : [];
+        
+        productsList.forEach(p => {
+          const catObj = cats.find(c => c._id === p.category || c.id === p.category);
+          const catName = catObj ? catObj.categoryName : p.category;
+          
+          const subObj = subs.find(s => s._id === p.subCategory || s.id === p.subCategory);
+          const subName = subObj ? subObj.subCategoryName : (p.subCategory || '');
+          
+          const row = [
+            p.name || '',
+            catName || '',
+            subName || '',
+            p.description || '',
+            p.sellingPrice || 0,
+            p.mrp || '',
+            p.stock || 1,
+            p.discountLabel || '',
+            p.sku || '',
+            p.highlights?.packOf || '',
+            p.highlights?.fabric || '',
+            p.highlights?.sleeve || '',
+            p.highlights?.pattern || '',
+            p.highlights?.collar || '',
+            p.highlights?.color || '',
+            p.technicalSpecs?.fit || '',
+            p.technicalSpecs?.fabricCare || '',
+            p.technicalSpecs?.suitableFor || '',
+            p.technicalSpecs?.hem || '',
+            p.shippingSpecs?.weight || '',
+            p.shippingSpecs?.length || '',
+            p.shippingSpecs?.width || '',
+            p.shippingSpecs?.height || '',
+            p.flags?.topSection ? 'true' : 'false',
+            p.flags?.crazyDeals ? 'true' : 'false',
+            p.flags?.flashSale ? 'true' : 'false',
+            p.brandName || '',
+            Array.isArray(p.tags) ? p.tags.join(', ') : '',
+            p.manufacturerInfo || '',
+            p.hsnCode || '',
+            p.gstCategory || '',
+            p.isTrending ? 'true' : 'false',
+            Array.isArray(p.images) ? p.images.join(', ') : ''
+          ];
+          rows.push(row);
+        });
+      } else {
+        const sampleRow = [
+          'Premium Leather Satchel', 'Fashion', 'Accessories', 'A high-quality leather satchel for everyday use.', 2999, 4999, 100, '-40% OFF', 'FSH-SAT-001',
+          '1', 'Leather', '', 'Solid', '', 'Brown',
+          'Regular', 'Wipe with damp cloth', 'Casual', '',
+          0.8, 30, 20, 10,
+          'false', 'true', 'false',
+          'LeatherCraft', 'bags, leather, premium', 'LeatherCraft Mfg.', '4202', 'Standard GST', 'true', 'https://example.com/img1.jpg, https://example.com/img2.jpg'
+        ];
+        rows.push(sampleRow);
+      }
+      
+      const escapeXml = (unsafe) => {
+        if (unsafe === undefined || unsafe === null) return '';
+        return String(unsafe)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&apos;');
+      };
+      
+      const xmlRows = rows.map(row => {
+        return `    <Row>
+      ${row.map(v => {
+        const escaped = escapeXml(v);
+        const typeAttr = typeof v === 'number' ? 'Number' : 'String';
+        return `<Cell><Data ss:Type="${typeAttr}">${escaped}</Data></Cell>`;
+      }).join('\n      ')}
+    </Row>`;
+      }).join('\n');
+      
+      const xmlContent = `<?xml version="1.0"?>
 <?mso-application progid="Excel.Sheet"?>
 <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
  xmlns:o="urn:schemas-microsoft-com:office:office"
@@ -165,25 +264,29 @@ export default function InventoryList() {
  <Worksheet ss:Name="Sheet1">
   <Table>
    <Row>
-    ${headers.map(h => `<Cell><Data ss:Type="String">${h}</Data></Cell>`).join('\n    ')}
+    ${headers.map(h => `<Cell><Data ss:Type="String">${escapeXml(h)}</Data></Cell>`).join('\n    ')}
    </Row>
-   <Row>
-    ${sampleRow.map(v => `<Cell><Data ss:Type="${typeof v === 'number' ? 'Number' : 'String'}">${v}</Data></Cell>`).join('\n    ')}
-   </Row>
+${xmlRows}
   </Table>
  </Worksheet>
 </Workbook>`;
-
-    const blob = new Blob([xmlContent], { type: 'application/vnd.ms-excel' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'product_upload_template.xls');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('Excel sample template downloaded!');
+      
+      toast.dismiss('prep-template');
+      const blob = new Blob([xmlContent], { type: 'application/vnd.ms-excel' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'product_upload_template.xls');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('Excel template downloaded successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.dismiss('prep-template');
+      toast.error('Failed to download template');
+    }
   };
 
   const handleFileUpload = async (e) => {
@@ -620,12 +723,12 @@ export default function InventoryList() {
           <p className="text-slate-500 font-medium mt-1 font-raleway">Manage all inventory, stock levels and product status.</p>
         </div>
         <div className="flex flex-wrap gap-3 shrink-0">
-          <button 
+           <button 
             onClick={handleDownloadSample}
             className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-blue-600 hover:bg-blue-50 transition-all shadow-sm"
           >
             <FileSpreadsheet size={15} />
-            Sample Format
+            Download Template
           </button>
           <label className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-green-600 hover:bg-green-50 transition-all shadow-sm cursor-pointer">
             <Upload size={15} />

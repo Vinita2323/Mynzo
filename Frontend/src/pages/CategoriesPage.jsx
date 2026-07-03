@@ -91,7 +91,7 @@ export default function CategoriesPage() {
         category: selectedCategory,
         subCategory: selectedSubCategory,
         sortBy,
-        search: debouncedSearchQuery
+        search: (debouncedSearchQuery || '').trim()
       });
 
       const data = await cachedFetch(`/admin/catalog/products/combined?${queryParams.toString()}`, { ttl: 5 });

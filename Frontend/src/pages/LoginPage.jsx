@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
 import { ArrowLeft, Edit2, Loader2 } from 'lucide-react';
 import toast from '../utils/toast';
@@ -11,6 +11,8 @@ const API_URL = `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/auth
 export default function LoginPage() {
   const navigate = useNavigate();
   const { setUser } = useApp();
+  const [searchParams] = useSearchParams();
+  const refCode = searchParams.get('ref');
 
   // Phone + OTP states
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -119,7 +121,7 @@ export default function LoginPage() {
       const res = await fetch(`${API_URL}/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phoneNumber, otp: fullOtp })
+        body: JSON.stringify({ phone: phoneNumber, otp: fullOtp, referralCode: refCode })
       });
 
       const data = await res.json();
@@ -294,13 +296,13 @@ export default function LoginPage() {
             {/* Form Header */}
             <div className="space-y-1">
               <h2 className="text-2xl font-extrabold text-[#02006c]">Sign In / Register</h2>
-              <p className="text-[10px] text-slate-400 font-bold">Sign in to your Registered Account</p>
+              <p className="text-[10px] text-slate-500 font-bold">Sign in to your Registered Account</p>
               <div className="w-6 h-0.75 bg-[#ee4923] rounded-full mt-1.5"></div>
             </div>
 
             <form onSubmit={handleSendOtp} className="space-y-4 pt-2">
               <div className="space-y-1 text-left">
-                <label className="text-sm font-syne font-black text-slate-500 uppercase tracking-widest">Phone Number</label>
+                <label className="text-sm font-syne font-black text-slate-700 uppercase tracking-widest">Phone Number</label>
                 <div className="flex gap-2 border-b-2 border-slate-200 focus-within:border-[#ee4923] transition-colors py-2">
                   <span className="text-lg text-[#02006c] font-black pr-2 border-r-2 border-slate-100 flex items-center select-none">+91</span>
                   <input
@@ -330,7 +332,7 @@ export default function LoginPage() {
                 </button>
               </div>
 
-              <div className="text-center pt-2 text-[10px] text-slate-400 font-bold leading-relaxed max-w-xs mx-auto">
+              <div className="text-center pt-2 text-[10px] text-slate-500 font-bold leading-relaxed max-w-xs mx-auto">
                 By continuing, you agree to our{' '}
                 <Link to="/privacy" className="text-[#FF8E4D] hover:underline">Privacy Policy</Link>
                 {' '}and{' '}
@@ -347,7 +349,7 @@ export default function LoginPage() {
             <div className="space-y-1">
               <h2 className="text-2xl font-extrabold text-[#02006c]">Verify OTP</h2>
               <div className="flex items-center gap-2">
-                <p className="text-[10px] text-slate-400 font-bold">Code sent to +91 {phoneNumber}</p>
+                <p className="text-[10px] text-slate-500 font-bold">Code sent to +91 {phoneNumber}</p>
                 <button
                   onClick={() => {
                     setOtpSent(false);
@@ -364,7 +366,7 @@ export default function LoginPage() {
 
             <form onSubmit={handleVerifyOtpAndLogin} className="flex flex-col gap-2 pt-4">
               <div className="space-y-3 text-left">
-                <label className="text-sm font-syne font-black text-slate-500 uppercase tracking-widest text-center block">
+                <label className="text-sm font-syne font-black text-slate-700 uppercase tracking-widest text-center block">
                   Enter 6-Digit OTP
                 </label>
 

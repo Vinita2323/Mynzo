@@ -418,7 +418,7 @@ export default function Home() {
 
   const filteredDeals = useMemo(() => {
     if (!searchQuery) return normalisedCrazyDeals;
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.trim().toLowerCase();
     return normalisedCrazyDeals.filter(
       (deal) =>
         deal.name.toLowerCase().includes(query) ||

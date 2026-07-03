@@ -211,7 +211,7 @@ const Coupons = () => {
     const rows = coupons.map(c => [
       c.code,
       c.type,
-      c.type === 'Percentage' ? `${c.value}%` : `₹${c.value}`,
+      c.type === 'Percentage' ? `${c.value}%` : `INR ${c.value}`,
       c.minOrder || 0,
       new Date(c.expiry).toLocaleDateString(),
       c.usageLimit || 1,

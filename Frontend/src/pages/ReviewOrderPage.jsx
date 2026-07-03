@@ -760,7 +760,7 @@ export default function ReviewOrderPage() {
               </div>
             )}
             <div className="flex justify-between items-center">
-              <span>Product GST (18%)</span>
+              <span>Product GST ({gstPercentage}%)</span>
               <span className="text-slate-800">₹{Number(gstAmount).toFixed(2)}</span>
             </div>
             <div className="flex justify-between items-center">
@@ -792,7 +792,7 @@ export default function ReviewOrderPage() {
           <button 
             onClick={handlePlaceOrder}
             disabled={isPlacingOrder}
-            className="w-full bg-[#ee4923] hover:bg-orange-600 text-white py-4 rounded-xl font-black text-xs uppercase tracking-wider shadow-md shadow-orange-500/20 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:bg-slate-200"
+            className="hidden md:flex w-full bg-[#ee4923] hover:bg-orange-600 text-white py-4 rounded-xl font-black text-xs uppercase tracking-wider shadow-md shadow-orange-500/20 transition-all cursor-pointer items-center justify-center gap-2 disabled:bg-slate-200"
           >
             <ShieldCheck className="w-4 h-4" /> Confirm & Place Order
           </button>

@@ -96,13 +96,27 @@ export default function Layout({ children }) {
   const [startY, setStartY] = useState(0);
   const [isPulling, setIsPulling] = useState(false);
 
-  const isFixedLayoutPage = location.pathname.toLowerCase().startsWith('/studio') || location.pathname.toLowerCase().startsWith('/categories');
+  const isFixedLayoutPage = isStudioPage || location.pathname.toLowerCase().startsWith('/categories');
+
+  const getActiveScrollTop = (target) => {
+    let el = target;
+    while (el && el !== document.body && el !== document.documentElement) {
+      if (el.scrollHeight > el.clientHeight) {
+        const overflow = window.getComputedStyle(el).overflowY;
+        if (overflow === 'auto' || overflow === 'scroll') {
+          return el.scrollTop;
+        }
+      }
+      el = el.parentElement;
+    }
+    const container = document.getElementById('main-scroll-container');
+    return container ? container.scrollTop : window.scrollY;
+  };
 
   const handleTouchStart = (e) => {
-    if (isRefreshing || isFixedLayoutPage) return;
-    const container = document.getElementById('main-scroll-container');
-    const scrollTop = container ? container.scrollTop : window.scrollY;
+    if (isRefreshing || isStudioPage) return;
     
+    const scrollTop = getActiveScrollTop(e.target);
     if (scrollTop === 0) {
       setStartY(e.touches[0].clientY);
       setIsPulling(true);
@@ -158,11 +172,14 @@ export default function Layout({ children }) {
         >
           {pullDistance > 0 && (
             <div 
-              style={{ height: `${pullDistance}px`, opacity: pullDistance / 50 }} 
-              className="w-full flex items-center justify-center overflow-hidden transition-all duration-75 bg-slate-50/90 border-b border-slate-100/50 shrink-0 sticky top-0 z-[60]"
+              style={{ 
+                transform: `translate(-50%, ${pullDistance - 15}px)`, 
+                opacity: Math.min(pullDistance / 40, 1) 
+              }} 
+              className="absolute left-1/2 bg-white rounded-full shadow-md border border-slate-100 w-10 h-10 flex items-center justify-center z-[100] transition-transform duration-75"
             >
               <div 
-                className={`w-6 h-6 rounded-full border-2 border-[#ee4923] border-t-transparent ${isRefreshing ? 'animate-spin' : ''}`} 
+                className={`w-5 h-5 rounded-full border-2 border-[#ee4923] border-t-transparent ${isRefreshing ? 'animate-spin' : ''}`} 
                 style={{ transform: isRefreshing ? 'none' : `rotate(${pullDistance * 5}deg)` }}
               />
             </div>

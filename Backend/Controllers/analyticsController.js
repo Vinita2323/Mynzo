@@ -1179,7 +1179,14 @@ const globalSearch = async (req, res) => {
       return res.status(200).json({ success: true, results: [] });
     }
 
-    const regex = new RegExp(q, 'i');
+    const trimmedQ = q.trim();
+    if (!trimmedQ) {
+      return res.status(200).json({ success: true, results: [] });
+    }
+
+    // Escape regex special characters to prevent crash
+    const escapedQ = trimmedQ.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+    const regex = new RegExp(escapedQ, 'i');
     const results = [];
 
     // 1. Search Products
@@ -1197,7 +1204,7 @@ const globalSearch = async (req, res) => {
         type: 'Product',
         name: p.name,
         extra: `SKU: ${p.sku || 'N/A'} • Price: ₹${p.sellingPrice}`,
-        path: `/admin/inventory/all`
+        path: `/admin/inventory/view/${p._id}`
       });
     });
 
@@ -1216,34 +1223,41 @@ const globalSearch = async (req, res) => {
         type: 'Customer',
         name: u.name || 'Unnamed User',
         extra: u.email,
-        path: `/admin/users`
+        path: `/admin/users/${u._id}`
       });
     });
 
-    // 3. Search Orders
+    // 3. Search Orders (matching visual ID suffix, full ID, or customer name)
     const Order = require('../Models/Order');
-    let orderQuery = {};
-    if (q.match(/^[0-9a-fA-F]{24}$/)) {
-      orderQuery = { _id: q };
-    }
-
-    const orders = await Order.find(orderQuery)
+    // Fetch last 200 orders to find matches efficiently
+    const orders = await Order.find({})
       .populate('userId', 'name')
       .sort({ createdAt: -1 })
-      .limit(20);
+      .limit(200);
 
     const filteredOrders = orders.filter(o => {
-      if (q.match(/^[0-9a-fA-F]{24}$/)) return true;
+      if (!o || !o._id) return false;
+      const orderIdStr = o._id.toString();
+      const lastSix = orderIdStr.substring(orderIdStr.length - 6).toUpperCase();
+      const visualId = `OD${lastSix}`;
+      
+      const normalizedQ = trimmedQ.toUpperCase().replace('#', '');
+      const matchesOrderId = orderIdStr.toUpperCase().includes(normalizedQ) || 
+                             lastSix.includes(normalizedQ) || 
+                             visualId.includes(normalizedQ);
+                             
       const customerName = o.userId?.name || '';
-      return customerName.match(regex);
+      const matchesCustomer = customerName.match(regex);
+      
+      return matchesOrderId || matchesCustomer;
     }).slice(0, 5);
 
     filteredOrders.forEach(o => {
       results.push({
         type: 'Order',
-        name: `Order #OD${o._id.toString().substring(18).toUpperCase()}`,
+        name: `Order #OD${o._id.toString().substring(o._id.toString().length - 6).toUpperCase()}`,
         extra: `Customer: ${o.userId?.name || 'Guest'} • Total: ₹${o.total}`,
-        path: `/admin/orders`
+        path: `/admin/orders/${o._id}`
       });
     });
 
