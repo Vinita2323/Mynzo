@@ -332,6 +332,8 @@ ${xmlRows}
         };
 
         const headers = parseRow(rows[0]);
+        console.log('[CSV Import Debug] Parsed Headers:', headers);
+        
         const requiredFields = ['Name', 'Category', 'Selling Price'];
         const missingHeaders = requiredFields.filter(f => !headers.includes(f));
         
@@ -344,7 +346,13 @@ ${xmlRows}
         let errorMsgs = [];
         for (let i = 1; i < rows.length; i++) {
           const rowData = parseRow(rows[i]);
-          if (rowData.length < 2) continue; // skip completely empty rows
+          
+          // skip completely empty rows or rows with only empty columns/commas
+          if (rowData.length < 2 || rowData.every(val => !val || val.trim() === '')) {
+            continue; 
+          }
+
+          console.log(`[CSV Import Debug] Row ${i} parsed data:`, rowData);
 
           requiredFields.forEach(req => {
             const index = headers.indexOf(req);
