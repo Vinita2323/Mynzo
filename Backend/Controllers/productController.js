@@ -629,31 +629,54 @@ const bulkUploadProducts = async (req, res) => {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
     const csvData = req.file.buffer.toString('utf-8');
-    const rows = csvData.split('\n').filter(r => r.trim());
-    if (rows.length < 2) {
-      return res.status(400).json({ success: false, message: 'Empty CSV' });
-    }
 
-    const parseRow = (rowStr) => {
-      const result = [];
-      let insideQuote = false;
+    // Robust CSV parser handling quotes and newlines
+    const parseCSV = (csvText) => {
+      const lines = [];
+      let currentLine = [];
       let currentVal = '';
-      for (let i = 0; i < rowStr.length; i++) {
-        const char = rowStr[i];
+      let insideQuote = false;
+      
+      for (let i = 0; i < csvText.length; i++) {
+        const char = csvText[i];
+        const nextChar = csvText[i + 1];
+        
         if (char === '"') {
-          insideQuote = !insideQuote;
+          if (insideQuote && nextChar === '"') {
+            currentVal += '"';
+            i++; // skip next quote
+          } else {
+            insideQuote = !insideQuote;
+          }
         } else if (char === ',' && !insideQuote) {
-          result.push(currentVal.trim());
+          currentLine.push(currentVal.trim());
+          currentVal = '';
+        } else if ((char === '\r' || char === '\n') && !insideQuote) {
+          if (char === '\r' && nextChar === '\n') {
+            i++; // skip \n
+          }
+          currentLine.push(currentVal.trim());
+          lines.push(currentLine);
+          currentLine = [];
           currentVal = '';
         } else {
           currentVal += char;
         }
       }
-      result.push(currentVal.trim());
-      return result.map(v => v.replace(/^"|"$/g, '').trim());
+      if (currentVal || currentLine.length > 0) {
+        currentLine.push(currentVal.trim());
+        lines.push(currentLine);
+      }
+      // Remove outermost quotes and trim
+      return lines.map(row => row.map(v => v.replace(/^"|"$/g, '').trim()));
     };
 
-    const headers = parseRow(rows[0]);
+    const rows = parseCSV(csvData).filter(row => row.length > 0 && row.some(val => val !== ''));
+    if (rows.length < 2) {
+      return res.status(400).json({ success: false, message: 'Empty CSV' });
+    }
+
+    const headers = rows[0];
     const requiredFields = ['Name', 'Category', 'Selling Price'];
     const missingHeaders = requiredFields.filter(f => !headers.includes(f));
 
@@ -661,9 +684,17 @@ const bulkUploadProducts = async (req, res) => {
       return res.status(400).json({ success: false, message: `Missing columns: ${missingHeaders.join(', ')}` });
     }
 
+    // Helper to extract clean numbers (removes currency symbols, commas, "/-", "pc", "kg" etc.)
+    const cleanNumber = (val, defaultVal = undefined) => {
+      if (val === undefined || val === null || val === '') return defaultVal;
+      const cleaned = val.toString().replace(/[^\d.]/g, '');
+      const num = Number(cleaned);
+      return isNaN(num) ? defaultVal : num;
+    };
+
     let successCount = 0;
     for (let i = 1; i < rows.length; i++) {
-      const rowData = parseRow(rows[i]);
+      const rowData = rows[i];
       if (rowData.length < 2) continue;
 
       const getValue = (colName) => {
@@ -674,7 +705,8 @@ const bulkUploadProducts = async (req, res) => {
       const name = getValue('Name');
       const rawCategory = getValue('Category');
       const sellingPrice = getValue('Selling Price');
-      if (!name || !rawCategory || !sellingPrice) continue;
+      const cleanSellingPrice = cleanNumber(sellingPrice);
+      if (!name || !rawCategory || cleanSellingPrice === undefined) continue;
 
       const rawSubCategory = getValue('Sub Category');
       const { categoryId, subCategoryId } = await resolveCategoryAndSubcategory(rawCategory, rawSubCategory);
@@ -684,9 +716,9 @@ const bulkUploadProducts = async (req, res) => {
         category: categoryId,
         subCategory: subCategoryId,
         description: getValue('Description'),
-        sellingPrice: Number(sellingPrice),
-        mrp: getValue('MRP') ? Number(getValue('MRP')) : undefined,
-        stock: getValue('Stock') ? Number(getValue('Stock')) : 1,
+        sellingPrice: cleanSellingPrice,
+        mrp: cleanNumber(getValue('MRP')),
+        stock: cleanNumber(getValue('Stock'), 1),
         discountLabel: getValue('Discount Label'),
         sku: getValue('SKU') || `SKU-${Date.now()}-${i}`,
         highlights: {
@@ -704,10 +736,10 @@ const bulkUploadProducts = async (req, res) => {
           hem: getValue('Hem')
         },
         shippingSpecs: {
-          weight: getValue('Weight (kg)'),
-          length: getValue('Length (cm)'),
-          width: getValue('Width (cm)'),
-          height: getValue('Height (cm)')
+          weight: cleanNumber(getValue('Weight (kg)'), 0),
+          length: cleanNumber(getValue('Length (cm)')),
+          width: cleanNumber(getValue('Width (cm)')),
+          height: cleanNumber(getValue('Height (cm)'))
         },
         flags: {
           topSection: getValue('Top Section') === 'true',
@@ -738,6 +770,8 @@ const bulkUploadProducts = async (req, res) => {
           const retryProduct = new Product(productData);
           await retryProduct.save();
           successCount++;
+        } else {
+          console.error(`Error saving product row ${i}:`, err.message);
         }
       }
     }

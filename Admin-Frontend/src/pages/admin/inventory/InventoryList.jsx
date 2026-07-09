@@ -305,33 +305,54 @@ ${xmlRows}
       const reader = new FileReader();
       reader.onload = async (event) => {
         const text = event.target.result;
-        // Basic CSV parsing handling quotes
-        const rows = text.split('\n').filter(r => r.trim());
-        if (rows.length < 2) {
-          toast.info('File is empty or has no product data.');
-          return;
-        }
-
-        const parseRow = (rowStr) => {
-          const result = [];
-          let insideQuote = false;
+        // Robust CSV parsing handling quotes and newlines
+        const parseCSV = (csvText) => {
+          const lines = [];
+          let currentLine = [];
           let currentVal = '';
-          for (let i = 0; i < rowStr.length; i++) {
-            const char = rowStr[i];
+          let insideQuote = false;
+          
+          for (let i = 0; i < csvText.length; i++) {
+            const char = csvText[i];
+            const nextChar = csvText[i + 1];
+            
             if (char === '"') {
-              insideQuote = !insideQuote;
+              if (insideQuote && nextChar === '"') {
+                currentVal += '"';
+                i++; // skip next quote
+              } else {
+                insideQuote = !insideQuote;
+              }
             } else if (char === ',' && !insideQuote) {
-              result.push(currentVal.trim());
+              currentLine.push(currentVal.trim());
+              currentVal = '';
+            } else if ((char === '\r' || char === '\n') && !insideQuote) {
+              if (char === '\r' && nextChar === '\n') {
+                i++; // skip \n
+              }
+              currentLine.push(currentVal.trim());
+              lines.push(currentLine);
+              currentLine = [];
               currentVal = '';
             } else {
               currentVal += char;
             }
           }
-          result.push(currentVal.trim());
-          return result.map(v => v.replace(/^"|"$/g, '').trim());
+          if (currentVal || currentLine.length > 0) {
+            currentLine.push(currentVal.trim());
+            lines.push(currentLine);
+          }
+          // Remove outermost quotes and trim
+          return lines.map(row => row.map(v => v.replace(/^"|"$/g, '').trim()));
         };
 
-        const headers = parseRow(rows[0]);
+        const rows = parseCSV(text).filter(row => row.length > 0 && row.some(val => val !== ''));
+        if (rows.length < 2) {
+          toast.info('File is empty or has no product data.');
+          return;
+        }
+
+        const headers = rows[0];
         console.log('[CSV Import Debug] Parsed Headers:', headers);
         
         const requiredFields = ['Name', 'Category', 'Selling Price'];
@@ -345,10 +366,10 @@ ${xmlRows}
 
         let errorMsgs = [];
         for (let i = 1; i < rows.length; i++) {
-          const rowData = parseRow(rows[i]);
+          const rowData = rows[i];
           
           // skip completely empty rows or rows with only empty columns/commas
-          if (rowData.length < 2 || rowData.every(val => !val || val.trim() === '')) {
+          if (rowData.length < 2 || rowData.every(val => !val || val === '')) {
             continue; 
           }
 
@@ -356,7 +377,7 @@ ${xmlRows}
 
           requiredFields.forEach(req => {
             const index = headers.indexOf(req);
-            if (index === -1 || !rowData[index] || rowData[index].trim() === '') {
+            if (index === -1 || !rowData[index] || rowData[index] === '') {
               errorMsgs.push(`Row ${i} (Data): Missing '${req}'`);
             }
           });
