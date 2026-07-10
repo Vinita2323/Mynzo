@@ -118,7 +118,7 @@ const AddProduct = () => {
   const [flags, setFlags] = useState({ topSection: false, crazyDeals: false, flashSale: false });
 
   // Organization state
-  const [brandName, setBrandName] = useState('');
+  const [brandName, setBrandName] = useState('Generic');
   const [brandId, setBrandId] = useState('');
   const [isTrending, setIsTrending] = useState(false);
   const [brands, setBrands] = useState([]);
@@ -218,10 +218,6 @@ const AddProduct = () => {
         const subRes = await fetch(`${apiBase}/admin/catalog/subchips`);
         const subData = await subRes.json();
 
-        // Fetch Brands
-        const brandRes = await fetch(`${apiBase}/catalog/brands`);
-        const brandData = await brandRes.json();
-
         if (catRes.ok && catData.success && subRes.ok && subData.success) {
           const catsList = (catData.chips || [])
             .filter(c => c.active !== false && c.id !== 'for-you' && c._id !== 'for-you')
@@ -257,9 +253,6 @@ const AddProduct = () => {
           setSubCategoriesMap(map);
         }
 
-        if (brandRes.ok && brandData.success) {
-          setBrands(brandData.brands || []);
-        }
       } catch (err) {
         console.error('Failed to fetch categories/subcategories/brands:', err);
       }
@@ -1108,24 +1101,7 @@ const AddProduct = () => {
           <section className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
             <SectionTitle icon={Tag} color="bg-amber-50 text-amber-500">Organization</SectionTitle>
 
-            <div>
-              <Label>Brand Name</Label>
-              <select 
-                value={brandId}
-                onChange={e => {
-                  const selectedId = e.target.value;
-                  setBrandId(selectedId);
-                  const selectedBrand = brands.find(b => b._id === selectedId);
-                  setBrandName(selectedBrand ? selectedBrand.name : 'Generic');
-                }}
-                className={inputCls}
-              >
-                <option value="">Generic / None</option>
-                {brands.map(b => (
-                  <option key={b._id} value={b._id}>{b.name}</option>
-                ))}
-              </select>
-            </div>
+
 
             <div>
               <Label>Tags (Comma Separated)</Label>

@@ -1,6 +1,8 @@
 const Product = require('../Models/Product');
 const Brand = require('../Models/Brand');
 const { getImageUrl } = require('../utils/imageHelper');
+const ExcelJS = require('exceljs');
+const XLSX = require('xlsx');
 
 const parseJsonField = (field, defaultVal = {}) => {
   if (!field) return defaultVal;
@@ -377,13 +379,68 @@ const getProductById = async (req, res) => {
 // @desc    Get Top 10 Buys (products sorted by sales)
 // @route   GET /api/admin/catalog/products/top-buys
 // @access  Public
+const fetchDynamicTopBuys = async () => {
+  const Order = require('../Models/Order');
+  const Product = require('../Models/Product');
+  
+  const topBuyStats = await Order.aggregate([
+    { 
+      $match: { 
+        status: 'Delivered', 
+        paymentStatus: 'Paid' 
+      } 
+    },
+    { $unwind: '$items' },
+    {
+      $group: {
+        _id: '$items.productId',
+        totalQuantity: { $sum: '$items.quantity' }
+      }
+    },
+    { $sort: { totalQuantity: -1 } },
+    { $limit: 10 }
+  ]);
+
+  const productIds = topBuyStats.map(stat => stat._id);
+  
+  let products = [];
+  if (productIds.length > 0) {
+    products = await Product.find({ 
+      _id: { $in: productIds }, 
+      status: 'Approved' 
+    })
+    .select('name brandName mrp sellingPrice discountLabel images rating sales category subCategory description flags stock')
+    .lean();
+    
+    products.sort((a, b) => {
+      const aIdx = productIds.findIndex(id => id.toString() === a._id.toString());
+      const bIdx = productIds.findIndex(id => id.toString() === b._id.toString());
+      return aIdx - bIdx;
+    });
+  }
+
+  if (products.length < 10) {
+    const existingIds = products.map(p => p._id.toString());
+    const remainingCount = 10 - products.length;
+    
+    const fallbackProducts = await Product.find({
+      status: 'Approved',
+      _id: { $nin: existingIds }
+    })
+    .select('name brandName mrp sellingPrice discountLabel images rating sales category subCategory description flags stock')
+    .sort({ sales: -1 })
+    .limit(remainingCount)
+    .lean();
+    
+    products = [...products, ...fallbackProducts];
+  }
+
+  return products;
+};
+
 const getTopBuys = async (req, res) => {
   try {
-    const products = await Product.find({ status: 'Approved' })
-      .select('name brandName mrp sellingPrice discountLabel images rating sales category subCategory description flags stock')
-      .sort({ sales: -1 })
-      .limit(10)
-      .lean();
+    const products = await fetchDynamicTopBuys();
     res.status(200).json({ success: true, products });
   } catch (error) {
     console.error('Get Top Buys Error:', error);
@@ -451,11 +508,7 @@ const getHomepageData = async (req, res) => {
         .select('-highlights -technicalSpecs -description -variations -shippingSpecs')
         .sort({ createdAt: -1 })
         .lean(),
-      Product.find({ status: 'Approved' })
-        .select('name brandName mrp sellingPrice discountLabel images rating sales category subCategory description flags stock')
-        .sort({ sales: -1 })
-        .limit(10)
-        .lean(),
+      fetchDynamicTopBuys(),
       Brand.find({ isTrending: true, status: 'Active' }).lean()
     ]);
 
@@ -626,63 +679,153 @@ const bulkUploadProducts = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'No file uploaded' });
     }
-    const csvData = req.file.buffer.toString('utf-8');
 
-    // Robust CSV parser handling quotes and newlines
-    const parseCSV = (csvText) => {
-      const lines = [];
-      let currentLine = [];
-      let currentVal = '';
-      let insideQuote = false;
-      
-      for (let i = 0; i < csvText.length; i++) {
-        const char = csvText[i];
-        const nextChar = csvText[i + 1];
-        
-        if (char === '"') {
-          if (insideQuote && nextChar === '"') {
-            currentVal += '"';
-            i++; // skip next quote
-          } else {
-            insideQuote = !insideQuote;
-          }
-        } else if (char === ',' && !insideQuote) {
-          currentLine.push(currentVal.trim());
-          currentVal = '';
-        } else if ((char === '\r' || char === '\n') && !insideQuote) {
-          if (char === '\r' && nextChar === '\n') {
-            i++; // skip \n
-          }
-          currentLine.push(currentVal.trim());
-          lines.push(currentLine);
-          currentLine = [];
-          currentVal = '';
-        } else {
-          currentVal += char;
+    // Read the sheet using XLSX
+    let workbook;
+    try {
+      workbook = XLSX.read(req.file.buffer, { type: 'buffer' });
+    } catch (err) {
+      return res.status(400).json({ success: false, message: 'Failed to parse file. Make sure it is a valid Excel or CSV file.' });
+    }
+
+    const sheetName = workbook.SheetNames[0];
+    const sheet = workbook.Sheets[sheetName];
+    // Convert sheet to a 2D array of rows
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' })
+      .filter(row => row.length > 0 && row.some(val => val !== undefined && val !== null && val.toString().trim() !== ''));
+
+    if (rows.length < 2) {
+      return res.status(400).json({ success: false, message: 'Excel/CSV file must contain headers and at least one product row.' });
+    }
+
+    const headers = rows[0].map(h => (h || '').toString().trim());
+    const requiredFields = ['Name', 'Category', 'Selling Price'];
+    
+    // Support aliases like 'Product Name' and 'Price'
+    const hasNameCol = headers.includes('Name') || headers.includes('Product Name');
+    const hasCategoryCol = headers.includes('Category');
+    const hasPriceCol = headers.includes('Selling Price') || headers.includes('Price');
+
+    if (!hasNameCol || !hasCategoryCol || !hasPriceCol) {
+      const missing = [];
+      if (!hasNameCol) missing.push('Name/Product Name');
+      if (!hasCategoryCol) missing.push('Category');
+      if (!hasPriceCol) missing.push('Selling Price/Price');
+      return res.status(400).json({ success: false, message: `Missing required columns: ${missing.join(', ')}` });
+    }
+
+    const CategoryChip = require('../Models/CategoryChip');
+    const SubCategoryChip = require('../Models/SubCategoryChip');
+    const Brand = require('../Models/Brand');
+    const mongoose = require('mongoose');
+
+    // 1. Fetch all records from database for in-memory caching
+    const dbCategories = await CategoryChip.find({});
+    const dbSubCategories = await SubCategoryChip.find({});
+
+    // 2. Build lookups (case-insensitive keys)
+    const categoryMap = {}; // name.toLowerCase() -> category doc
+    const categoryByIdMap = {}; // _id -> category doc
+    const categoryBySlugMap = {}; // id (slug) -> category doc
+
+    dbCategories.forEach(cat => {
+      categoryMap[cat.categoryName.trim().toLowerCase()] = cat;
+      categoryByIdMap[cat._id.toString()] = cat;
+      categoryBySlugMap[cat.id.trim().toLowerCase()] = cat;
+    });
+
+    const subCategoryMap = {}; // "parentCatSlug:subName" -> subCategory doc
+    const subCategoryByIdMap = {}; // _id -> subCategory doc
+
+    dbSubCategories.forEach(sub => {
+      subCategoryByIdMap[sub._id.toString()] = sub;
+      const parentSlug = (sub.categoryId || '').trim().toLowerCase();
+      const subName = sub.subCategoryName.trim().toLowerCase();
+      subCategoryMap[`${parentSlug}:${subName}`] = sub;
+    });
+
+    const autoCreate = req.query.autoCreate === 'true' || req.body.autoCreate === 'true' || req.query.autoCreate === true || req.body.autoCreate === true;
+
+    // Helper to resolve Category
+    const resolveCategory = async (catInput) => {
+      if (!catInput) return null;
+      const cleanInput = catInput.toString().trim();
+      const lowerInput = cleanInput.toLowerCase();
+
+      if (mongoose.Types.ObjectId.isValid(cleanInput)) {
+        if (categoryByIdMap[cleanInput]) return categoryByIdMap[cleanInput];
+      }
+
+      if (categoryMap[lowerInput]) return categoryMap[lowerInput];
+      if (categoryBySlugMap[lowerInput]) return categoryBySlugMap[lowerInput];
+
+      if (autoCreate) {
+        const generatedId = cleanInput.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+        let uniqueId = generatedId;
+        let suffix = 1;
+        while (await CategoryChip.findOne({ id: uniqueId })) {
+          uniqueId = `${generatedId}-${suffix}`;
+          suffix++;
         }
+
+        const newCat = await CategoryChip.create({
+          id: uniqueId,
+          categoryName: cleanInput,
+          active: true
+        });
+
+        categoryMap[lowerInput] = newCat;
+        categoryByIdMap[newCat._id.toString()] = newCat;
+        categoryBySlugMap[uniqueId] = newCat;
+        return newCat;
       }
-      if (currentVal || currentLine.length > 0) {
-        currentLine.push(currentVal.trim());
-        lines.push(currentLine);
-      }
-      // Remove outermost quotes and trim
-      return lines.map(row => row.map(v => v.replace(/^"|"$/g, '').trim()));
+
+      return null;
     };
 
-    const rows = parseCSV(csvData).filter(row => row.length > 0 && row.some(val => val !== ''));
-    if (rows.length < 2) {
-      return res.status(400).json({ success: false, message: 'Empty CSV' });
-    }
+    // Helper to resolve Sub Category
+    const resolveSubCategory = async (subInput, parentCategoryDoc) => {
+      if (!subInput) return null;
+      const cleanInput = subInput.toString().trim();
+      const lowerInput = cleanInput.toLowerCase();
 
-    const headers = rows[0];
-    const requiredFields = ['Name', 'Category', 'Selling Price'];
-    const missingHeaders = requiredFields.filter(f => !headers.includes(f));
+      if (mongoose.Types.ObjectId.isValid(cleanInput)) {
+        if (subCategoryByIdMap[cleanInput]) return subCategoryByIdMap[cleanInput];
+      }
 
-    if (missingHeaders.length > 0) {
-      return res.status(400).json({ success: false, message: `Missing columns: ${missingHeaders.join(', ')}` });
-    }
+      if (!parentCategoryDoc) return null;
+      const parentSlug = parentCategoryDoc.id.trim().toLowerCase();
+      const key = `${parentSlug}:${lowerInput}`;
 
-    // Helper to extract clean numbers (removes currency symbols, commas, "/-", "pc", "kg" etc.)
+      if (subCategoryMap[key]) return subCategoryMap[key];
+
+      if (autoCreate) {
+        const generatedSubId = `${parentCategoryDoc.id}-${cleanInput.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`;
+        let uniqueSubId = generatedSubId;
+        let suffix = 1;
+        while (await SubCategoryChip.findOne({ id: uniqueSubId })) {
+          uniqueSubId = `${generatedSubId}-${suffix}`;
+          suffix++;
+        }
+
+        const newSub = await SubCategoryChip.create({
+          id: uniqueSubId,
+          categoryId: parentCategoryDoc.id,
+          subCategoryName: cleanInput,
+          active: true
+        });
+
+        subCategoryMap[key] = newSub;
+        subCategoryByIdMap[newSub._id.toString()] = newSub;
+        return newSub;
+      }
+      return null;
+    };
+
+    let successCount = 0;
+    let failedCount = 0;
+    const errorsList = [];
+
     const cleanNumber = (val, defaultVal = undefined) => {
       if (val === undefined || val === null || val === '') return defaultVal;
       const cleaned = val.toString().replace(/[^\d.]/g, '');
@@ -690,48 +833,81 @@ const bulkUploadProducts = async (req, res) => {
       return isNaN(num) ? defaultVal : num;
     };
 
-    let successCount = 0;
     for (let i = 1; i < rows.length; i++) {
       const rowData = rows[i];
-      if (rowData.length < 2) continue;
+      if (rowData.length === 0 || rowData.every(val => val === undefined || val === null || val === '')) {
+        continue;
+      }
 
       const getValue = (colName) => {
         const idx = headers.indexOf(colName);
-        return idx !== -1 ? rowData[idx] : undefined;
+        return (idx !== -1 && idx < rowData.length) ? rowData[idx] : undefined;
       };
 
-      const name = getValue('Name');
+      const name = getValue('Name') || getValue('Product Name');
       const rawCategory = getValue('Category');
-      const sellingPrice = getValue('Selling Price');
-      const cleanSellingPrice = cleanNumber(sellingPrice);
-      if (!name || !rawCategory || cleanSellingPrice === undefined) continue;
-
       const rawSubCategory = getValue('Sub Category');
-      const { categoryId, subCategoryId } = await resolveCategoryAndSubcategory(rawCategory, rawSubCategory);
+      const sellingPrice = getValue('Selling Price') || getValue('Price');
+      const cleanSellingPrice = cleanNumber(sellingPrice);
+
+      if (!name) {
+        failedCount++;
+        errorsList.push({ row: i + 1, message: 'Product Name is required.' });
+        continue;
+      }
+      if (!rawCategory) {
+        failedCount++;
+        errorsList.push({ row: i + 1, message: 'Category is required.' });
+        continue;
+      }
+      if (cleanSellingPrice === undefined) {
+        failedCount++;
+        errorsList.push({ row: i + 1, message: 'Valid Price/Selling Price is required.' });
+        continue;
+      }
+
+      // Resolve Category
+      const categoryDoc = await resolveCategory(rawCategory);
+      if (!categoryDoc) {
+        failedCount++;
+        errorsList.push({ row: i + 1, message: `Category "${rawCategory}" not found.` });
+        continue;
+      }
+
+      // Resolve Subcategory
+      let subCategoryDoc = null;
+      if (rawSubCategory) {
+        subCategoryDoc = await resolveSubCategory(rawSubCategory, categoryDoc);
+        if (!subCategoryDoc) {
+          failedCount++;
+          errorsList.push({ row: i + 1, message: `Sub Category "${rawSubCategory}" not found under Category "${categoryDoc.categoryName}".` });
+          continue;
+        }
+      }
 
       const productData = {
         name,
-        category: categoryId,
-        subCategory: subCategoryId,
-        description: getValue('Description'),
+        category: categoryDoc._id.toString(),
+        subCategory: subCategoryDoc ? subCategoryDoc._id.toString() : undefined,
+        description: getValue('Description') || '',
         sellingPrice: cleanSellingPrice,
         mrp: cleanNumber(getValue('MRP')),
         stock: cleanNumber(getValue('Stock'), 1),
-        discountLabel: getValue('Discount Label'),
-        sku: getValue('SKU') || `SKU-${Date.now()}-${i}`,
+        discountLabel: getValue('Discount Label') || '',
+        sku: getValue('SKU') || `SKU-${Date.now()}-${i}-${Math.random().toString().slice(2, 6)}`,
         highlights: {
-          packOf: getValue('Pack Of'),
-          fabric: getValue('Fabric'),
-          sleeve: getValue('Sleeve'),
-          pattern: getValue('Pattern'),
-          collar: getValue('Collar'),
-          color: getValue('Color')
+          packOf: getValue('Pack Of') || '',
+          fabric: getValue('Fabric') || '',
+          sleeve: getValue('Sleeve') || '',
+          pattern: getValue('Pattern') || '',
+          collar: getValue('Collar') || '',
+          color: getValue('Color') || ''
         },
         technicalSpecs: {
-          fit: getValue('Fit'),
-          fabricCare: getValue('Fabric Care'),
-          suitableFor: getValue('Suitable For'),
-          hem: getValue('Hem')
+          fit: getValue('Fit') || '',
+          fabricCare: getValue('Fabric Care') || '',
+          suitableFor: getValue('Suitable For') || '',
+          hem: getValue('Hem') || ''
         },
         shippingSpecs: {
           weight: cleanNumber(getValue('Weight (kg)'), 0),
@@ -740,44 +916,159 @@ const bulkUploadProducts = async (req, res) => {
           height: cleanNumber(getValue('Height (cm)'))
         },
         flags: {
-          topSection: getValue('Top Section') === 'true',
-          crazyDeals: getValue('Crazy Deals') === 'true',
-          flashSale: getValue('Flash Sale') === 'true'
+          topSection: getValue('Top Section') === 'true' || getValue('Top Section') === true,
+          crazyDeals: getValue('Crazy Deals') === 'true' || getValue('Crazy Deals') === true,
+          flashSale: getValue('Flash Sale') === 'true' || getValue('Flash Sale') === true
         },
-        brandName: getValue('Brand Name') || 'Generic',
-        tags: getValue('Tags') ? getValue('Tags').split(',').map(t => t.trim()) : [],
-        manufacturerInfo: getValue('Manufacturer Info'),
-        hsnCode: getValue('HSN Code'),
-        gstCategory: getValue('GST Category'),
-        isTrending: getValue('Is Trending') === 'true',
+        brandName: 'Generic',
+        brandId: undefined,
+        tags: getValue('Tags') ? getValue('Tags').split(',').map(t => t.trim()).filter(Boolean) : [],
+        manufacturerInfo: getValue('Manufacturer Info') || '',
+        hsnCode: getValue('HSN Code') || '',
+        gstCategory: getValue('GST Category') || '',
+        isTrending: getValue('Is Trending') === 'true' || getValue('Is Trending') === true,
         status: 'Approved'
       };
 
       const imageURLsStr = getValue('Image URLs');
       if (imageURLsStr) {
-        productData.images = imageURLsStr.split(',').map(url => url.trim()).filter(Boolean);
+        productData.images = imageURLsStr.toString().split(',').map(url => url.trim()).filter(Boolean);
       }
 
-      const newProduct = new Product(productData);
       try {
+        const newProduct = new Product(productData);
         await newProduct.save();
         successCount++;
       } catch (err) {
         if (err.code === 11000) {
+          // Retry SKU uniqueness once
           productData.sku = `SKU-${Date.now()}-${i}-${Math.random().toString().slice(2, 6)}`;
-          const retryProduct = new Product(productData);
-          await retryProduct.save();
-          successCount++;
+          try {
+            const retryProduct = new Product(productData);
+            await retryProduct.save();
+            successCount++;
+          } catch (retryErr) {
+            failedCount++;
+            errorsList.push({ row: i + 1, message: `Database error (SKU retry failed): ${retryErr.message}` });
+          }
         } else {
-          console.error(`Error saving product row ${i}:`, err.message);
+          failedCount++;
+          errorsList.push({ row: i + 1, message: `Database error: ${err.message}` });
         }
       }
     }
 
-    res.status(200).json({ success: true, message: `Successfully uploaded ${successCount} products.` });
+    res.status(200).json({
+      success: true,
+      message: `Processed ${successCount + failedCount} rows.`,
+      report: {
+        success: successCount,
+        failed: failedCount,
+        errors: errorsList
+      }
+    });
   } catch (error) {
     console.error('Bulk Upload Error:', error);
     res.status(500).json({ success: false, message: 'Server error during bulk upload', error: error.message });
+  }
+};
+
+const downloadTemplate = async (req, res) => {
+  try {
+    const CategoryChip = require('../Models/CategoryChip');
+    const SubCategoryChip = require('../Models/SubCategoryChip');
+
+    const categories = await CategoryChip.find({ active: { $ne: false } }).sort({ categoryName: 1 });
+    const subcategories = await SubCategoryChip.find({ active: { $ne: false } }).sort({ subCategoryName: 1 });
+
+    const workbook = new ExcelJS.Workbook();
+    
+    // 1. Products Sheet
+    const sheet = workbook.addWorksheet('Products');
+    
+    const headers = [
+      'Name', 'Category', 'Sub Category', 'Description', 'Selling Price', 'MRP', 'Stock', 'Discount Label', 'SKU',
+      'Pack Of', 'Fabric', 'Sleeve', 'Pattern', 'Collar', 'Color',
+      'Fit', 'Fabric Care', 'Suitable For', 'Hem',
+      'Weight (kg)', 'Length (cm)', 'Width (cm)', 'Height (cm)',
+      'Top Section', 'Crazy Deals', 'Flash Sale',
+      'Tags', 'Manufacturer Info', 'HSN Code', 'GST Category', 'Is Trending', 'Image URLs'
+    ];
+
+    const headerRow = sheet.getRow(1);
+    headerRow.values = headers;
+    headerRow.font = { name: 'Arial', family: 4, size: 10, bold: true, color: { argb: 'FFFFFF' } };
+    headerRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: '1E3A8A' } // Professional Dark Blue
+    };
+    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+    
+    sheet.views = [{ state: 'frozen', ySplit: 1 }];
+
+    sheet.columns = headers.map(h => ({
+      header: h,
+      width: h === 'Description' || h === 'Image URLs' ? 30 : 15
+    }));
+
+    const sampleRow = [
+      'Premium Leather Satchel', 'Fashion', 'Accessories', 'A high-quality leather satchel for everyday use.', 2999, 4999, 100, '-40% OFF', 'FSH-SAT-001',
+      '1', 'Leather', '', 'Solid', '', 'Brown',
+      'Regular', 'Wipe with damp cloth', 'Casual', '',
+      0.8, 30, 20, 10,
+      'false', 'true', 'false',
+      'bags, leather, premium', 'LeatherCraft Mfg.', '4202', 'Standard GST', 'true', 'https://example.com/img1.jpg, https://example.com/img2.jpg'
+    ];
+    sheet.addRow(sampleRow);
+
+    // 2. Lists Sheet
+    const listsSheet = workbook.addWorksheet('Lists');
+    listsSheet.getCell('A1').value = 'Categories';
+    listsSheet.getCell('B1').value = 'Sub Categories';
+    listsSheet.getRow(1).font = { bold: true };
+
+    categories.forEach((cat, idx) => {
+      listsSheet.getCell(`A${idx + 2}`).value = cat.categoryName;
+    });
+    subcategories.forEach((sub, idx) => {
+      listsSheet.getCell(`B${idx + 2}`).value = sub.subCategoryName;
+    });
+
+    const categoryFormula = `Lists!$A$2:$A$${Math.max(2, categories.length + 1)}`;
+    const subCategoryFormula = `Lists!$B$2:$B$${Math.max(2, subcategories.length + 1)}`;
+
+    const categoryColIndex = headers.indexOf('Category') + 1;
+    const subCategoryColIndex = headers.indexOf('Sub Category') + 1;
+
+    for (let r = 2; r <= 1000; r++) {
+      sheet.getRow(r).getCell(categoryColIndex).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [categoryFormula],
+        showErrorMessage: true,
+        errorTitle: 'Invalid Category',
+        error: 'Please select a Category from the dropdown.'
+      };
+
+      sheet.getRow(r).getCell(subCategoryColIndex).dataValidation = {
+        type: 'list',
+        allowBlank: true,
+        formulae: [subCategoryFormula],
+        showErrorMessage: true,
+        errorTitle: 'Invalid Sub Category',
+        error: 'Please select a Sub Category from the dropdown.'
+      };
+    }
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=product_upload_template.xlsx');
+    
+    await workbook.xlsx.write(res);
+    res.end();
+  } catch (error) {
+    console.error('Download Template Error:', error);
+    res.status(500).json({ success: false, message: 'Server error generating template', error: error.message });
   }
 };
 
@@ -791,5 +1082,6 @@ module.exports = {
   getTrendingBrands,
   getCombinedCatalog,
   bulkUploadProducts,
-  getHomepageData
+  getHomepageData,
+  downloadTemplate
 };

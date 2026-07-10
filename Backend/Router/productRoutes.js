@@ -11,7 +11,8 @@ const {
   getTopBuys,
   getTrendingBrands,
   getCombinedCatalog,
-  bulkUploadProducts
+  bulkUploadProducts,
+  downloadTemplate
 } = require('../Controllers/productController');
 const { protectAdmin } = require('../Middlewares/authMiddleware');
 const { uploadImages, processImages, handleUploadError } = require('../Middlewares/uploadMiddleware');
@@ -21,6 +22,7 @@ router.get('/', getProducts);
 router.get('/combined', getCombinedCatalog);
 router.get('/top-buys', getTopBuys);
 router.get('/trending-brands', getTrendingBrands);
+router.get('/download-template', protectAdmin, downloadTemplate);
 router.get('/:id', getProductById);
 
 // Admin protected routes

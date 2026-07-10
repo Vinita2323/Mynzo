@@ -91,7 +91,6 @@ const AdminLayout = () => {
         { name: 'Banner Manager', path: '/admin/storefront/banners', icon: <Image size={18} /> },
         { name: 'Category Chips', path: '/admin/storefront/chips', icon: <LayoutGrid size={18} /> },
         { name: 'Subcategory Chips', path: '/admin/storefront/subchips', icon: <LayoutGrid size={18} /> },
-        { name: 'Brands Manager', path: '/admin/storefront/brands', icon: <Tag size={18} /> },
       ]
     },
     {
