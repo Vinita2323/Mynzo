@@ -586,7 +586,7 @@ const getCombinedCatalog = async (req, res) => {
 
     // 2. Subcategory filter
     if (subCategory && subCategory !== 'all') {
-      const foundSubChip = await SubCategoryChip.findOne({
+      const matchedChips = await SubCategoryChip.find({
         $or: [
           { id: subCategory },
           { _id: mongoose.Types.ObjectId.isValid(subCategory) ? subCategory : null },
@@ -594,15 +594,37 @@ const getCombinedCatalog = async (req, res) => {
         ]
       }).lean();
 
-      if (foundSubChip) {
-        andConditions.push({
-          $or: [
-            { subCategory: foundSubChip._id.toString() },
-            { subCategory: foundSubChip.id },
-            { subCategory: { $regex: new RegExp(`^${foundSubChip.subCategoryName.trim()}$`, 'i') } },
-            { subCategory: subCategory }
-          ]
+      if (matchedChips && matchedChips.length > 0) {
+        const subNames = matchedChips.map(c => c.subCategoryName);
+        const allRelatedChips = await SubCategoryChip.find({
+          subCategoryName: { $in: subNames }
+        }).lean();
+
+        const subCategoryIds = new Set();
+        const subCategorySlugs = new Set();
+        const subCategoryNames = new Set();
+
+        allRelatedChips.forEach(c => {
+          if (c._id) subCategoryIds.add(c._id.toString());
+          if (c.id) subCategorySlugs.add(c.id);
+          if (c.subCategoryName) subCategoryNames.add(c.subCategoryName);
         });
+
+        // Add the query string itself just in case
+        subCategoryIds.add(subCategory);
+
+        const orList = [];
+        subCategoryIds.forEach(id => {
+          orList.push({ subCategory: id });
+        });
+        subCategorySlugs.forEach(slug => {
+          orList.push({ subCategory: slug });
+        });
+        subCategoryNames.forEach(name => {
+          orList.push({ subCategory: { $regex: new RegExp(`^${name.trim()}$`, 'i') } });
+        });
+
+        andConditions.push({ $or: orList });
       } else {
         andConditions.push({
           subCategory: { $regex: new RegExp(`^${subCategory.trim()}$`, 'i') }

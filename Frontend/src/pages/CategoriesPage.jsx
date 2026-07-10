@@ -363,65 +363,94 @@ export default function CategoriesPage() {
           </div>
 
           {/* Horizontal Subcategories Scroll */}
-          {selectedCategory !== 'for-you' && subCategories.filter(sc => sc.categoryId.toLowerCase() === selectedCategory.toLowerCase()).length > 0 && (
-            <div className="flex overflow-x-auto gap-3 py-3 scrollbar-none snap-x relative z-20 px-2 flex-shrink-0 bg-white border border-slate-100 rounded-2xl shadow-3xs items-start">
-              <button
-                onClick={() => setSelectedSubCategory('all')}
-                className="flex flex-col items-center w-[68px] group cursor-pointer flex-shrink-0 snap-start"
-              >
-                <div className="relative w-[52px] h-[52px] md:w-11 md:h-11 flex items-center justify-center">
-                  {selectedSubCategory === 'all' ? (
-                    <div className="absolute inset-0 rounded-lg bg-[#ee4923] shadow-md shadow-[#ee4923]/25" />
-                  ) : (
-                    <div className="absolute inset-0 rounded-lg bg-orange-50 group-hover:bg-orange-100 transition-colors duration-300" />
-                  )}
-                  <div className="relative z-10 flex items-center justify-center">
-                    <LayoutGrid className={`w-6 h-6 md:w-5 md:h-5 transition-all duration-300 ${selectedSubCategory === 'all' ? 'text-white scale-110' : 'text-[#ee4923]'}`} />
-                  </div>
-                </div>
-                <span className={`text-[9px] leading-[1.1] font-black tracking-tight select-none px-0.5 text-center mt-1.5 w-full transition-colors ${selectedSubCategory === 'all' ? 'text-[#0F172A]' : 'text-slate-500'
-                  }`}>
-                  ALL
-                </span>
-              </button>
-              {subCategories.filter(sc => sc.categoryId.toLowerCase() === selectedCategory.toLowerCase()).map((sub) => {
-                const subKey = sub._id || sub.id;
-                const isSubActive = selectedSubCategory === subKey;
-                return (
-                  <button
-                    key={subKey}
-                    onClick={() => setSelectedSubCategory(subKey)}
-                    className="flex flex-col items-center w-[68px] group cursor-pointer flex-shrink-0 snap-start"
-                  >
-                    <div className="relative w-[52px] h-[52px] md:w-11 md:h-11 flex items-center justify-center">
-                      {isSubActive ? (
-                        <div className="absolute inset-0 rounded-lg bg-[#ee4923] shadow-md shadow-[#ee4923]/25 animate-scale-up" />
-                      ) : (
-                        <div className="absolute inset-0 rounded-lg bg-orange-50 group-hover:bg-orange-100 transition-colors duration-300" />
-                      )}
-                      <div className="relative z-10 flex items-center justify-center">
-                        {sub.image ? (
-                          <OptimizedImage
-                            src={sub.image}
-                            alt=""
-                            type="subcategory"
-                            objectFit="contain"
-                            className={`w-[34px] h-[34px] md:w-7 md:h-7 drop-shadow-xs transition-transform duration-300 ${isSubActive ? 'scale-110' : 'scale-100'}`}
-                          />
-                        ) : (
-                          <div className="w-[34px] h-[34px] bg-slate-200 rounded" />
-                        )}
-                      </div>
+          {(() => {
+            if (selectedCategory === 'for-you') return null;
+            const selectedCatObj = categories.find(c => c._id === selectedCategory || c.id === selectedCategory);
+            if (!selectedCatObj) return null;
+
+            const catId = (selectedCatObj._id || '').toLowerCase();
+            const catSlug = (selectedCatObj.id || '').toLowerCase();
+
+            // Filter subcategories belonging to this category (by id or slug)
+            const matchedSubs = subCategories.filter(sc => {
+              const scCatId = (sc.categoryId || '').toLowerCase();
+              return scCatId === catId || scCatId === catSlug;
+            });
+
+            // Deduplicate subcategories by name
+            const uniqueMatchedSubs = [];
+            const seenSubNames = new Set();
+            matchedSubs.forEach(sub => {
+              const name = (sub.subCategoryName || '').toLowerCase().trim();
+              if (name && !seenSubNames.has(name)) {
+                seenSubNames.add(name);
+                uniqueMatchedSubs.push(sub);
+              }
+            });
+
+            if (uniqueMatchedSubs.length === 0) return null;
+
+            return (
+              <div className="flex overflow-x-auto gap-3 py-3 scrollbar-none snap-x relative z-20 px-2 flex-shrink-0 bg-white border border-slate-100 rounded-2xl shadow-3xs items-start">
+                <button
+                  onClick={() => setSelectedSubCategory('all')}
+                  className="flex flex-col items-center w-[68px] group cursor-pointer flex-shrink-0 snap-start"
+                >
+                  <div className="relative w-[52px] h-[52px] md:w-11 md:h-11 flex items-center justify-center">
+                    {selectedSubCategory === 'all' ? (
+                      <div className="absolute inset-0 rounded-lg bg-[#ee4923] shadow-md shadow-[#ee4923]/25" />
+                    ) : (
+                      <div className="absolute inset-0 rounded-lg bg-orange-50 group-hover:bg-orange-100 transition-colors duration-300" />
+                    )}
+                    <div className="relative z-10 flex items-center justify-center">
+                      <LayoutGrid className={`w-6 h-6 md:w-5 md:h-5 transition-all duration-300 ${selectedSubCategory === 'all' ? 'text-white scale-110' : 'text-[#ee4923]'}`} />
                     </div>
-                    <span className={`text-[9px] leading-[1.1] font-black tracking-tight select-none px-0.5 text-center line-clamp-2 w-full mt-1.5 transition-colors ${isSubActive ? 'text-[#0F172A]' : 'text-slate-500'
-                      }`}>
-                      {sub.subCategoryName}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+                  </div>
+                  <span className={`text-[9px] leading-[1.1] font-black tracking-tight select-none px-0.5 text-center mt-1.5 w-full transition-colors ${selectedSubCategory === 'all' ? 'text-[#0F172A]' : 'text-slate-500'
+                    }`}>
+                    ALL
+                  </span>
+                </button>
+                {uniqueMatchedSubs.map((sub) => {
+                  const subKey = sub._id || sub.id;
+                  const isSubActive = selectedSubCategory === subKey;
+                  return (
+                    <button
+                      key={subKey}
+                      onClick={() => setSelectedSubCategory(subKey)}
+                      className="flex flex-col items-center w-[68px] group cursor-pointer flex-shrink-0 snap-start"
+                    >
+                      <div className="relative w-[52px] h-[52px] md:w-11 md:h-11 flex items-center justify-center">
+                        {isSubActive ? (
+                          <div className="absolute inset-0 rounded-lg bg-[#ee4923] shadow-md shadow-[#ee4923]/25 animate-scale-up" />
+                        ) : (
+                          <div className="absolute inset-0 rounded-lg bg-orange-50 group-hover:bg-orange-100 transition-colors duration-300" />
+                        )}
+                        <div className="relative z-10 flex items-center justify-center">
+                          {sub.image ? (
+                            <OptimizedImage
+                              src={sub.image}
+                              alt=""
+                              type="subcategory"
+                              objectFit="contain"
+                              className={`w-[34px] h-[34px] md:w-7 md:h-7 drop-shadow-xs transition-transform duration-300 ${isSubActive ? 'scale-110' : 'scale-100'}`}
+                            />
+                          ) : (
+                            <div className="w-[34px] h-[34px] bg-slate-200 rounded" />
+                          )}
+                        </div>
+                      </div>
+                      <span className={`text-[9px] leading-[1.1] font-black tracking-tight select-none px-0.5 text-center line-clamp-2 w-full mt-1.5 transition-colors ${isSubActive ? 'text-[#0F172A]' : 'text-slate-500'
+                        }`}>
+                        {sub.subCategoryName}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            );
+          })()}
+
 
           {/* Dynamic product list */}
           {loading ? (

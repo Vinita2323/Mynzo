@@ -936,10 +936,31 @@ export default function Home() {
           <div className="space-y-6">
             {/* Sub-categories row */}
             {(() => {
-              const subs = subCategoryChips.filter(
-                sc => sc.categoryId === selectedCategory
-              );
-              if (subs.length === 0) return null;
+              if (selectedCategory === 'for-you') return null;
+              const selectedCatObj = categories.find(c => c._id === selectedCategory || c.id === selectedCategory);
+              if (!selectedCatObj) return null;
+
+              const catId = (selectedCatObj._id || '').toLowerCase();
+              const catSlug = (selectedCatObj.id || '').toLowerCase();
+
+              // Filter subcategories belonging to this category (by id or slug)
+              const matchedSubs = subCategoryChips.filter(sc => {
+                const scCatId = (sc.categoryId || '').toLowerCase();
+                return scCatId === catId || scCatId === catSlug;
+              });
+
+              // Deduplicate subcategories by name
+              const uniqueMatchedSubs = [];
+              const seenSubNames = new Set();
+              matchedSubs.forEach(sub => {
+                const name = (sub.subCategoryName || '').toLowerCase().trim();
+                if (name && !seenSubNames.has(name)) {
+                  seenSubNames.add(name);
+                  uniqueMatchedSubs.push(sub);
+                }
+              });
+
+              if (uniqueMatchedSubs.length === 0) return null;
 
               return (
                 <div className="flex gap-4 overflow-x-auto scrollbar-none pb-2 mt-2 md:grid md:grid-cols-8 md:gap-4 md:overflow-visible">
@@ -954,7 +975,7 @@ export default function Home() {
                     <span className={`text-[10px] md:text-xs font-bold ${selectedSubCategory === 'all' ? 'text-[#ee4923]' : 'text-slate-700'}`}>All</span>
                   </div>
 
-                  {subs.map(sub => {
+                  {uniqueMatchedSubs.map(sub => {
                     const subKey = sub._id || sub.id;
                     const isSubActive = selectedSubCategory.toLowerCase() === subKey.toLowerCase();
                     return (
