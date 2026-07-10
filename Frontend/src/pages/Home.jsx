@@ -96,16 +96,38 @@ export default function Home() {
     if (selectedCategory === 'for-you') {
       return [];
     }
-    let filtered = rawAllProducts.filter(
-      p => (p.category || '').toLowerCase() === selectedCategory.toLowerCase()
-    );
+    const selectedCatObj = categories.find(c => c._id === selectedCategory || c.id === selectedCategory);
+    const catName = selectedCatObj ? (selectedCatObj.categoryName || selectedCatObj.name || '').toLowerCase() : '';
+    const catSlug = selectedCatObj ? (selectedCatObj.id || '').toLowerCase() : '';
+    const catId = selectedCategory.toLowerCase();
+
+    let filtered = rawAllProducts.filter(p => {
+      const prodCat = (p.category || '').toLowerCase();
+      if (prodCat === catId || prodCat === catSlug) return true;
+      const pCatObj = categories.find(c => (c._id || '').toLowerCase() === prodCat || (c.id || '').toLowerCase() === prodCat);
+      const pCatName = pCatObj ? (pCatObj.categoryName || pCatObj.name || '').toLowerCase() : '';
+      return pCatName === catName && catName !== '';
+    });
+
     if (selectedSubCategory !== 'all') {
+      const targetSub = selectedSubCategory.toLowerCase();
+      const activeSubObj = subCategoryChips.find(sc => (sc._id || sc.id || '').toLowerCase() === targetSub);
+      const subName = activeSubObj ? (activeSubObj.subCategoryName || '').toLowerCase() : '';
+      const subSlug = activeSubObj ? (activeSubObj.id || '').toLowerCase() : '';
+
       filtered = filtered.filter(p => {
         const prodSub = (p.subCategory || '').toLowerCase();
-        const targetSub = selectedSubCategory.toLowerCase();
-        const activeSubObj = subCategoryChips.find(sc => (sc._id || sc.id || '').toLowerCase() === targetSub);
-        const subName = activeSubObj ? activeSubObj.subCategoryName.toLowerCase() : '';
-        return prodSub === targetSub || prodSub === subName;
+        if (prodSub === targetSub || prodSub === subSlug) return true;
+        if (subName && prodSub === subName) return true;
+
+        const pSubObj = subCategoryChips.find(sc => (sc._id || '').toLowerCase() === prodSub || (sc.id || '').toLowerCase() === prodSub);
+        if (pSubObj) {
+          const pSubName = (pSubObj.subCategoryName || '').toLowerCase();
+          const pSubSlug = (pSubObj.id || '').toLowerCase();
+          if (subName && pSubName === subName) return true;
+          if (subSlug && pSubSlug === subSlug) return true;
+        }
+        return false;
       });
     }
     return filtered.map(normaliseProduct);
@@ -342,20 +364,42 @@ export default function Home() {
     if (selectedCategory === 'for-you') {
       return [];
     }
-    let filtered = rawAllProducts.filter(
-      p => (p.category || '').toLowerCase() === selectedCategory.toLowerCase()
-    );
+    const selectedCatObj = categories.find(c => c._id === selectedCategory || c.id === selectedCategory);
+    const catName = selectedCatObj ? (selectedCatObj.categoryName || selectedCatObj.name || '').toLowerCase() : '';
+    const catSlug = selectedCatObj ? (selectedCatObj.id || '').toLowerCase() : '';
+    const catId = selectedCategory.toLowerCase();
+
+    let filtered = rawAllProducts.filter(p => {
+      const prodCat = (p.category || '').toLowerCase();
+      if (prodCat === catId || prodCat === catSlug) return true;
+      const pCatObj = categories.find(c => (c._id || '').toLowerCase() === prodCat || (c.id || '').toLowerCase() === prodCat);
+      const pCatName = pCatObj ? (pCatObj.categoryName || pCatObj.name || '').toLowerCase() : '';
+      return pCatName === catName && catName !== '';
+    });
+
     if (selectedSubCategory !== 'all') {
       const targetSub = selectedSubCategory.toLowerCase();
       const activeSubObj = subCategoryChips.find(sc => (sc._id || sc.id || '').toLowerCase() === targetSub);
-      const subName = activeSubObj ? activeSubObj.subCategoryName.toLowerCase() : '';
+      const subName = activeSubObj ? (activeSubObj.subCategoryName || '').toLowerCase() : '';
+      const subSlug = activeSubObj ? (activeSubObj.id || '').toLowerCase() : '';
+
       filtered = filtered.filter(p => {
         const prodSub = (p.subCategory || '').toLowerCase();
-        return prodSub === targetSub || prodSub === subName;
+        if (prodSub === targetSub || prodSub === subSlug) return true;
+        if (subName && prodSub === subName) return true;
+
+        const pSubObj = subCategoryChips.find(sc => (sc._id || '').toLowerCase() === prodSub || (sc.id || '').toLowerCase() === prodSub);
+        if (pSubObj) {
+          const pSubName = (pSubObj.subCategoryName || '').toLowerCase();
+          const pSubSlug = (pSubObj.id || '').toLowerCase();
+          if (subName && pSubName === subName) return true;
+          if (subSlug && pSubSlug === subSlug) return true;
+        }
+        return false;
       });
     }
     return filtered.map(normaliseProduct);
-  }, [rawAllProducts, selectedCategory, selectedSubCategory, subCategoryChips]);
+  }, [rawAllProducts, selectedCategory, selectedSubCategory, subCategoryChips, categories]);
 
 
 
