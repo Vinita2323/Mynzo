@@ -7,22 +7,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../../../components/ConfirmModal';
 import OptimizedImage from '../../../components/common/OptimizedImage';
+import { getImageUrl } from '../../../utils/imageHelper';
 
 const EMPTY_BRAND = { name: '', description: '', isTrending: false, status: 'Active' };
 
-const getImageUrl = (imagePath) => {
-  if (!imagePath) return '';
-  if (
-    imagePath.startsWith('http://') || 
-    imagePath.startsWith('https://') || 
-    imagePath.startsWith('data:') ||
-    imagePath.startsWith('blob:')
-  ) {
-    return imagePath;
-  }
-  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  return `${apiBase}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
-};
 
 const BrandForm = ({ onSave, onCancel, label, formData, setFormData, logoPreview, setLogoFile, setLogoPreview }) => (
   <motion.div

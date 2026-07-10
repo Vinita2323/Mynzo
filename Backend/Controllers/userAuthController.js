@@ -1,5 +1,6 @@
 const User = require('../Models/User');
 const jwt = require('jsonwebtoken');
+const { getImageUrl } = require('../utils/imageHelper');
 
 // Generate JWT Token
 const generateToken = (id, phone, tokenVersion = 0) => {
@@ -265,8 +266,7 @@ const updateProfile = async (req, res) => {
     }
 
     if (req.file) {
-      const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-      user.avatar = `${backendUrl}${req.file.url}`;
+      user.avatar = getImageUrl(req.file.url);
     }
 
     await user.save();

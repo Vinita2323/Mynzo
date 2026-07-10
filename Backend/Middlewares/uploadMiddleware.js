@@ -2,6 +2,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const path = require('path');
 const fs = require('fs');
+const { getImageUrl } = require('../utils/imageHelper');
 
 // Ensure upload directory exists
 const uploadDir = path.join(__dirname, '../uploads');
@@ -127,8 +128,6 @@ const processBrandFiles = async (req, res, next) => {
   }
 
   try {
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-
     if (req.files.logo && req.files.logo[0]) {
       const file = req.files.logo[0];
       const filename = `brand-logo-${Date.now()}-${Math.round(Math.random() * 1e9)}.webp`;
@@ -140,7 +139,7 @@ const processBrandFiles = async (req, res, next) => {
         .webp({ quality: 85 })
         .toFile(outputPath);
 
-      req.logoUrl = `${backendUrl}/uploads/${filename}`;
+      req.logoUrl = getImageUrl(`/uploads/${filename}`);
     }
 
     next();

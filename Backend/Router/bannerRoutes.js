@@ -10,14 +10,15 @@ const {
 const { protectAdmin } = require('../Middlewares/authMiddleware');
 const { uploadImage, processImage, handleUploadError } = require('../Middlewares/uploadMiddleware');
 
+const { getImageUrl } = require('../utils/imageHelper');
+
 // Public route to list banners
 router.get('/', getBanners);
 
 // Admin protected routes
 router.post('/upload', protectAdmin, uploadImage, processImage, handleUploadError, (req, res) => {
   if (req.file) {
-    const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-    return res.status(200).json({ success: true, url: `${backendUrl}${req.file.url}` });
+    return res.status(200).json({ success: true, url: getImageUrl(req.file.url) });
   }
   res.status(400).json({ success: false, message: 'File upload failed' });
 });

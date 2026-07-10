@@ -7,6 +7,7 @@ import {
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import OptimizedImage from '../../../components/common/OptimizedImage';
+import { getImageUrl } from '../../../utils/imageHelper';
 
 const StockAlerts = () => {
   const [products, setProducts] = useState([]);
@@ -132,20 +133,6 @@ const StockAlerts = () => {
     );
   };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return '';
-    if (
-      imagePath.startsWith('http://') || 
-      imagePath.startsWith('https://') || 
-      imagePath.startsWith('data:') ||
-      imagePath.startsWith('/src/') ||
-      imagePath.startsWith('/assets/')
-    ) {
-      return imagePath;
-    }
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    return `${apiBase}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
-  };
 
   return (
     <div className="space-y-6 pb-20 animate-in fade-in duration-700">

@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from '../../../utils/toast';
 import ConfirmModal from '../../../components/ConfirmModal';
 import OptimizedImage from '../../../components/common/OptimizedImage';
+import { getImageUrl } from '../../../utils/imageHelper';
 
 const STATUSES = ['All', 'Approved', 'Pending', 'Out of Stock'];
 
@@ -724,20 +725,6 @@ ${xmlRows}
     }
   };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return '';
-    if (
-      imagePath.startsWith('http://') || 
-      imagePath.startsWith('https://') || 
-      imagePath.startsWith('data:') ||
-      imagePath.startsWith('/src/') ||
-      imagePath.startsWith('/assets/')
-    ) {
-      return imagePath;
-    }
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    return `${apiBase}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
-  };
 
   const SortIcon = ({ col }) => (
     <ArrowUpDown size={13} className={`ml-1 inline ${sortBy === col ? 'text-[#ee4923]' : 'text-slate-300'}`} />

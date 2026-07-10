@@ -1,5 +1,6 @@
 const Product = require('../Models/Product');
 const Brand = require('../Models/Brand');
+const { getImageUrl } = require('../utils/imageHelper');
 
 const parseJsonField = (field, defaultVal = {}) => {
   if (!field) return defaultVal;
@@ -151,11 +152,9 @@ const createProduct = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Stock cannot be negative' });
     }
 
-    // Process Images
     let imageUrls = [];
     if (req.processedFiles && req.processedFiles.length > 0) {
-      const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-      imageUrls = req.processedFiles.map(f => `${backendUrl}${f.url}`);
+      imageUrls = req.processedFiles.map(f => getImageUrl(f.url));
     }
 
     // Check if additional image URLs were sent in body
@@ -289,8 +288,7 @@ const updateProduct = async (req, res) => {
     }
 
     if (req.processedFiles && req.processedFiles.length > 0) {
-      const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-      const newUrls = req.processedFiles.map(f => `${backendUrl}${f.url}`);
+      const newUrls = req.processedFiles.map(f => getImageUrl(f.url));
       updatedImages = [...updatedImages, ...newUrls];
     }
 

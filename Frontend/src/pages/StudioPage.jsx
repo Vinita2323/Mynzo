@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Heart, MessageCircle, Share2, ShoppingBag, Gift, ArrowLeft, CheckCircle2, Play, Edit2, Trash2, X, Copy, Volume2, VolumeX } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import OptimizedImage from '../components/ui/OptimizedImage';
+import { getImageUrl } from '../utils/imageHelper';
 import analytics from '../utils/analytics';
 
 // Optimized Video component with preloading and unmuting control
@@ -179,10 +180,10 @@ export default function StudioPage() {
             name: r.productId.name,
             price: r.productId.sellingPrice,
             originalPrice: r.productId.mrp || r.productId.sellingPrice,
-            image: r.productId.images?.[0] ? (r.productId.images[0].startsWith('http') ? r.productId.images[0] : `${apiBase}${r.productId.images[0]}`) : "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=80&w=800",
+            image: r.productId.images?.[0] ? getImageUrl(r.productId.images[0]) : "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=80&w=800",
             discount: r.productId.discountLabel || "10% OFF"
           } : null,
-          videoUrl: r.video.startsWith('http') ? r.video : `${apiBase}${r.video}`
+          videoUrl: getImageUrl(r.video)
         }));
 
         if (sharedReelId) {
