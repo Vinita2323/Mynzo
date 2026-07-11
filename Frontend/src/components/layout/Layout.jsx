@@ -165,9 +165,8 @@ export default function Layout({ children }) {
   };
 
   return (
-    <div className="min-h-screen md:h-auto bg-slate-100 md:bg-slate-50 flex justify-center md:block items-start text-slate-800 antialiased font-sans overflow-x-hidden">
-      {/* Centered Mobile Phone Frame on mobile, full width on desktop */}
-      <div className={`w-full max-w-md md:max-w-none ${isFixedLayoutPage ? 'h-[100dvh] md:h-[100dvh]' : 'h-[100dvh] md:h-auto md:min-h-screen'} bg-white md:bg-transparent shadow-2xl md:shadow-none flex flex-col relative ${(hideMobileNav || isKeyboardOpen) ? 'pb-0' : 'pb-16 md:pb-0'}`}>
+    <div className="min-h-screen md:h-auto bg-slate-50 text-slate-800 antialiased font-sans overflow-x-hidden">
+      <div className={`w-full ${isFixedLayoutPage ? 'h-[100dvh] md:h-[100dvh]' : 'h-[100dvh] md:h-auto md:min-h-screen'} bg-white md:bg-transparent flex flex-col relative ${(hideMobileNav || isKeyboardOpen) ? 'pb-0' : 'pb-16 md:pb-0'}`}>
         <main 
           key={location.pathname}
           id="main-scroll-container" 
