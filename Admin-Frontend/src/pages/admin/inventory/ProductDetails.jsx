@@ -238,7 +238,19 @@ const ProductDetails = () => {
               <DetailItem label="MRP / Strike-off" value={product.mrp ? `₹${product.mrp}` : null} />
               <DetailItem label="Current Stock" value={product.stock} />
               <DetailItem label="SKU / Product Code" value={product.sku} />
-              <DetailItem label="Discount Label" value={product.discountLabel} />
+              <DetailItem label="Discount Label" value={(() => {
+                if (!product.discountLabel) return null;
+                const parsed = parseFloat(product.discountLabel);
+                if (!isNaN(parsed) && parsed > 0 && parsed < 1) {
+                  return `-${Math.round(parsed * 100)}% OFF`;
+                }
+                const cleanStr = String(product.discountLabel).replace('-', '').replace('%', '').trim();
+                const cleanNum = parseFloat(cleanStr);
+                if (!isNaN(cleanNum)) {
+                  return `-${Math.round(cleanNum)}% OFF`;
+                }
+                return String(product.discountLabel).includes('%') ? `-${String(product.discountLabel).replace('-', '')}` : String(product.discountLabel);
+              })()} />
             </div>
           </div>
 

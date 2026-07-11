@@ -145,8 +145,13 @@ const AddProduct = () => {
           setMrp(p.mrp || '');
           setStock(p.stock || 1);
           if (p.discountLabel) {
-             const match = String(p.discountLabel).match(/\d+/);
-             setDiscountLabel(match ? match[0] : '');
+             const parsed = parseFloat(p.discountLabel);
+             if (!isNaN(parsed) && parsed > 0 && parsed < 1) {
+               setDiscountLabel(String(Math.round(parsed * 100)));
+             } else {
+               const match = String(p.discountLabel).match(/\d+/);
+               setDiscountLabel(match ? match[0] : '');
+             }
            } else {
              setDiscountLabel('');
            }

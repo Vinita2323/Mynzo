@@ -780,9 +780,19 @@ export default function InventoryList() {
                           <div>
                             <p className="text-sm font-black text-slate-900 leading-none">{product.name}</p>
                             <div className="flex flex-wrap gap-1 mt-1.5 items-center">
-                              {product.discount && (
-                                <span className="text-[9px] font-black text-[#ee4923]">{product.discount} OFF</span>
-                              )}
+                              {product.discount && (() => {
+                                const raw = product.discount;
+                                const parsed = parseFloat(raw);
+                                if (!isNaN(parsed) && parsed > 0 && parsed < 1) {
+                                  return <span className="text-[9px] font-black text-[#ee4923]">{`-${Math.round(parsed * 100)}% OFF`}</span>;
+                                }
+                                const cleanStr = String(raw).replace('-', '').replace('%', '').trim();
+                                const cleanNum = parseFloat(cleanStr);
+                                if (!isNaN(cleanNum)) {
+                                  return <span className="text-[9px] font-black text-[#ee4923]">{`-${Math.round(cleanNum)}% OFF`}</span>;
+                                }
+                                return <span className="text-[9px] font-black text-[#ee4923]">{raw.includes('%') ? `-${raw.replace('-', '')} OFF` : `${raw} OFF`}</span>;
+                              })()}
                               {product.flags?.topSection && (
                                 <span className="text-[8px] font-black bg-blue-50 text-blue-600 px-1 py-0.5 rounded border border-blue-100 uppercase tracking-tight scale-95 origin-left">Top</span>
                               )}

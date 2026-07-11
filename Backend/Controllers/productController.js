@@ -964,7 +964,17 @@ const bulkUploadProducts = async (req, res) => {
         sellingPrice: cleanSellingPrice,
         mrp: cleanNumber(getValue('MRP')),
         stock: cleanNumber(getValue('Stock'), 1),
-        discountLabel: getValue('Discount Label') || '',
+        discountLabel: (() => {
+          let rawDiscount = getValue('Discount Label') || '';
+          if (rawDiscount) {
+            const parsed = parseFloat(rawDiscount);
+            if (!isNaN(parsed) && parsed > 0 && parsed < 1) {
+              return `${Math.round(parsed * 100)}%`;
+            }
+            return String(rawDiscount).trim();
+          }
+          return '';
+        })(),
         sku: getValue('SKU') || `SKU-${Date.now()}-${i}-${Math.random().toString().slice(2, 6)}`,
         highlights: {
           packOf: getValue('Pack Of') || '',
