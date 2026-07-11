@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+  import React, { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Trophy, Gift, ArrowLeft, RotateCcw, Home, ShoppingBag, Percent, ShoppingCart, User, Gamepad2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
