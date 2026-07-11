@@ -209,8 +209,8 @@ export default function OrdersPage() {
                   className="flex items-center gap-4 cursor-pointer group"
                   onClick={() => navigate(`/order-details/${order.id}`)}
                 >
-                  <div className="w-16 h-16 rounded-xl bg-slate-50 p-2 flex-shrink-0 flex items-center justify-center border border-slate-100 relative">
-                    <OptimizedImage src={order.image} alt={order.name} type="product" className="absolute inset-0 p-1 object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
+                  <div className="w-16 h-16 rounded-xl bg-white p-2 flex-shrink-0 flex items-center justify-center border border-slate-100 relative">
+                    <OptimizedImage src={order.image} alt={order.name} type="product" objectFit="contain" className="absolute inset-0 p-1 mix-blend-multiply group-hover:scale-105 transition-transform duration-300" />
                   </div>
                   <div className="flex-1 flex flex-col justify-center min-w-0">
                     <h3 className="font-extrabold text-slate-800 text-xs md:text-sm group-hover:text-[#ee4923] transition-colors">{order.date}</h3>
@@ -272,7 +272,7 @@ export default function OrdersPage() {
             {selectedOrderForReview && (
               <div className="flex items-center gap-3 mb-6 bg-slate-50 p-3 rounded-xl border border-slate-100">
                 <div className="w-12 h-12 rounded-lg bg-white p-1 flex-shrink-0 border border-slate-100 flex items-center justify-center relative">
-                  <OptimizedImage src={selectedOrderForReview.image} alt="" type="product" className="absolute inset-0 p-0.5 object-contain mix-blend-multiply" />
+                  <OptimizedImage src={selectedOrderForReview.image} alt="" type="product" objectFit="contain" className="absolute inset-0 p-0.5 mix-blend-multiply" />
                 </div>
                 <div className="flex-1">
                   <h3 className="font-medium text-[13px] text-slate-800 line-clamp-1">{selectedOrderForReview.name}</h3>

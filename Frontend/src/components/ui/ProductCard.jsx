@@ -43,12 +43,13 @@ function ProductCard({ product }) {
       className={`flex flex-col group cursor-pointer w-full bg-white rounded-xl shadow-xs hover:shadow-md border border-slate-100/80 overflow-hidden transition-shadow duration-300 ${product.stock === 0 ? 'opacity-70 grayscale' : ''}`}
     >
       {/* Image container */}
-      <div className={`relative aspect-[1/1.1] w-full bg-slate-100 ${product.stock === 0 ? 'grayscale' : ''}`}>
+      <div className={`relative aspect-square w-full bg-white overflow-hidden flex items-center justify-center ${product.stock === 0 ? 'grayscale' : ''}`}>
         <OptimizedImage
           src={product.image}
           alt={product.name}
           type="product"
-          className="absolute inset-0 group-hover:scale-105 transition-transform duration-500 ease-out"
+          objectFit="contain"
+          className="absolute inset-0 w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-500 ease-out"
         />
         
         {/* Out of Stock Overlay */}
@@ -91,33 +92,33 @@ function ProductCard({ product }) {
       </div>
 
       {/* Info Section */}
-      <div className="flex flex-col w-full p-1.5 pt-1">
+      <div className="flex flex-col w-full p-1.5 pt-1 bg-white">
         
         {/* Title */}
-        <div className="flex items-start justify-between gap-1">
-          <h3 className="text-sm font-bold text-slate-800 truncate leading-tight mt-0.5">
+        <div className="flex items-start justify-between gap-1 h-4.5 overflow-hidden">
+          <h3 className="text-xs md:text-sm font-bold text-slate-800 truncate leading-tight w-full">
             {product.brandName || getProductBrand(product.type)}
           </h3>
         </div>
         
         {/* Description / Product Name */}
-        <p className="text-[10px] text-slate-500 truncate mt-0">
-          {product.name} - {product.desc}
-        </p>
+        <div className="h-3.5 overflow-hidden mt-0.5">
+          <p className="text-[9.5px] md:text-[10px] text-slate-500 truncate w-full">
+            {product.name} - {product.desc}
+          </p>
+        </div>
 
         {/* Prices */}
-        <div className="mt-1 flex items-baseline gap-1.5 flex-wrap leading-none">
-          <span className="text-[11px] text-slate-400 line-through">₹{product.originalPrice}</span>
-          <span className="text-[14px] font-black text-slate-800">₹{product.price}</span>
+        <div className="mt-1 flex items-baseline gap-1.5 flex-wrap leading-none h-4.5 overflow-hidden">
+          <span className="text-[10px] md:text-[11px] text-slate-400 line-through">₹{product.originalPrice}</span>
+          <span className="text-xs md:text-[14px] font-black text-slate-800">₹{product.price}</span>
         </div>
 
         {/* Discount Line */}
-        <div className="mt-0.5 text-[9.5px] font-bold text-[#FF7A45] leading-tight">
-          {product.discount.replace('-', '').replace('%', '% OFF')}
+        <div className="mt-0.5 text-[9px] md:text-[9.5px] font-bold text-[#FF7A45] leading-tight h-3.5 overflow-hidden">
+          {product.discount ? product.discount.replace('-', '').replace('%', '% OFF') : '10% OFF'}
         </div>
-
-        {/* Best Price (Coupon) */}
-       
+        
       </div>
     </div>
   );

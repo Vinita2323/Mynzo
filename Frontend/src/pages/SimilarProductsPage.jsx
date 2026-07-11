@@ -25,8 +25,8 @@ export default function SimilarProductsPage() {
             onClick={() => navigate(`/product/${deal.id}`)}
             className="bg-white flex flex-col items-center pt-0 px-0 pb-3 cursor-pointer hover:shadow-md transition-all shadow-sm"
           >
-            <div className="w-full aspect-[4/5] mb-2 flex items-center justify-center overflow-hidden relative">
-              <OptimizedImage src={deal.image} alt={deal.name} type="product" className="absolute inset-0" />
+            <div className="w-full aspect-square bg-white mb-2 flex items-center justify-center overflow-hidden relative">
+              <OptimizedImage src={deal.image} alt={deal.name} type="product" objectFit="contain" className="absolute inset-0" />
             </div>
             <h3 className="text-[12px] font-medium text-slate-600 text-center tracking-wide mt-1" style={{ fontFamily: "'Times New Roman', Times, serif" }}>
               {deal.name}

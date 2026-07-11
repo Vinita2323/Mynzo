@@ -107,8 +107,8 @@ export default function CrazyDealsPage() {
                 </button>
                 
                 {/* Image */}
-                <div className="aspect-square w-full bg-[#F8F9FD] relative overflow-hidden">
-                  <OptimizedImage src={getImageUrl(deal.image)} alt={deal.name} type="product" className="absolute inset-0 group-hover:scale-105 transition-transform duration-500" />
+                <div className="aspect-square w-full bg-white relative overflow-hidden flex items-center justify-center">
+                  <OptimizedImage src={getImageUrl(deal.image)} alt={deal.name} type="product" objectFit="contain" className="absolute inset-0 group-hover:scale-105 transition-transform duration-500" />
                   {/* Out of Stock Overlay */}
                   {deal.stock === 0 && (
                     <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-[0.5px] flex items-center justify-center z-20">

@@ -456,10 +456,10 @@ export default function CategoriesPage() {
           {loading ? (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-8">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                <div key={i} className="bg-white flex flex-col items-center pb-3 animate-pulse shadow-sm border border-slate-100 rounded-lg overflow-hidden">
-                  <div className="w-full aspect-[4/5] bg-slate-200 mb-2" />
-                  <div className="w-3/4 h-3 bg-slate-200 rounded mb-1.5" />
-                  <div className="w-1/2 h-2.5 bg-slate-200 rounded" />
+                <div key={i} className="bg-white flex flex-col items-center pb-3 shadow-sm border border-slate-100 rounded-lg overflow-hidden">
+                  <div className="w-full aspect-square skeleton-shimmer mb-2" />
+                  <div className="w-3/4 h-3 skeleton-shimmer rounded mb-1.5" />
+                  <div className="w-1/2 h-2.5 skeleton-shimmer rounded" />
                 </div>
               ))}
             </div>
@@ -481,10 +481,10 @@ export default function CategoriesPage() {
               {loadingMore && (
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mt-4">
                   {[1, 2, 3, 4].map((i) => (
-                    <div key={`skeleton-more-${i}`} className="bg-white flex flex-col items-center pb-3 animate-pulse shadow-sm border border-slate-100 rounded-lg overflow-hidden">
-                      <div className="w-full aspect-[4/5] bg-slate-200 mb-2" />
-                      <div className="w-3/4 h-3 bg-slate-200 rounded mb-1.5" />
-                      <div className="w-1/2 h-2.5 bg-slate-200 rounded" />
+                    <div key={`skeleton-more-${i}`} className="bg-white flex flex-col items-center pb-3 shadow-sm border border-slate-100 rounded-lg overflow-hidden">
+                      <div className="w-full aspect-square skeleton-shimmer mb-2" />
+                      <div className="w-3/4 h-3 skeleton-shimmer rounded mb-1.5" />
+                      <div className="w-1/2 h-2.5 skeleton-shimmer rounded" />
                     </div>
                   ))}
                 </div>

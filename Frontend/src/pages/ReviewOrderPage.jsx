@@ -546,8 +546,8 @@ export default function ReviewOrderPage() {
               <div className="space-y-3.5 mt-2">
                 {cart && cart.map((item, idx) => (
                   <div key={item.id || idx} className="flex items-center gap-3.5 bg-slate-50/70 p-3 rounded-xl border border-slate-150/40">
-                    <div className="w-14 h-14 relative flex-shrink-0">
-                      <OptimizedImage src={item.image} alt={item.name} type="product" className="absolute inset-0 rounded-lg shadow-3xs border border-slate-200" />
+                    <div className="w-14 h-14 relative flex-shrink-0 bg-white rounded-lg border border-slate-200 overflow-hidden flex items-center justify-center">
+                      <OptimizedImage src={item.image} alt={item.name} type="product" objectFit="contain" className="absolute inset-0 shadow-3xs" />
                     </div>
                     <div className="flex-1 flex flex-col justify-center min-w-0">
                       <h3 className="text-xs md:text-sm font-bold text-slate-800 leading-snug truncate">{item.name}</h3>

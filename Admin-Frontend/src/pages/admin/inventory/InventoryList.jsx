@@ -60,7 +60,7 @@ export default function InventoryList() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [loading, setLoading] = useState(true);
-  const [autoCreate, setAutoCreate] = useState(false);
+  const [autoCreate, setAutoCreate] = useState(true);
   const [uploadReport, setUploadReport] = useState(null);
 
 

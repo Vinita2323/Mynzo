@@ -484,10 +484,10 @@ export default function ProductDetailsPage() {
                 {(product.images && product.images.length > 0 ? product.images : [product.image]).map((img, idx) => (
                   <div
                     key={idx}
-                    className="w-full h-full flex-shrink-0 snap-center relative overflow-hidden cursor-pointer"
+                    className="w-full h-full flex-shrink-0 snap-center relative overflow-hidden bg-white flex items-center justify-center cursor-pointer"
                     onClick={() => setFullscreenImage(img)}
                   >
-                    <OptimizedImage src={img} alt={`${product.name} - view ${idx + 1}`} type="product" className="absolute inset-0" />
+                    <OptimizedImage src={img} alt={`${product.name} - view ${idx + 1}`} type="product" objectFit="contain" className="absolute inset-0" />
                   </div>
                 ))}
               </div>
@@ -1019,8 +1019,8 @@ export default function ProductDetailsPage() {
                 className="w-32 md:w-auto flex-shrink-0 snap-start flex flex-col cursor-pointer group" 
                 onClick={() => { navigate(`/product/${deal._id}`); window.scrollTo(0,0); }}
               >
-                <div className="aspect-[3/4] bg-[#F8F9FD] rounded-xl overflow-hidden relative mb-2.5">
-                  <OptimizedImage src={getImageUrl(deal.images && deal.images[0])} alt={deal.name} type="product" className="absolute inset-0 group-hover:scale-105 transition-transform duration-500" />
+                <div className="aspect-square bg-white rounded-xl overflow-hidden relative mb-2.5 flex items-center justify-center border border-slate-100/50">
+                  <OptimizedImage src={getImageUrl(deal.images && deal.images[0])} alt={deal.name} type="product" objectFit="contain" className="absolute inset-0 group-hover:scale-105 transition-transform duration-500" />
                   <div className="absolute bottom-2 left-2 bg-white/90 px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm">
                     <span className="text-[9.5px] font-bold text-slate-800">{deal.rating || '4.2'}</span>
                     <Star className="w-2.5 h-2.5 fill-emerald-600 text-emerald-600" />
@@ -1039,8 +1039,8 @@ export default function ProductDetailsPage() {
                 className="w-32 md:w-auto flex-shrink-0 snap-start flex flex-col cursor-pointer group" 
                 onClick={() => { navigate(`/product/${deal.id}`); window.scrollTo(0,0); }}
               >
-                <div className="aspect-[3/4] bg-[#F8F9FD] rounded-xl overflow-hidden relative mb-2.5">
-                  <OptimizedImage src={deal.image} alt={deal.name} type="product" className="absolute inset-0 group-hover:scale-105 transition-transform duration-500" />
+                <div className="aspect-square bg-white rounded-xl overflow-hidden relative mb-2.5 flex items-center justify-center border border-slate-100/50">
+                  <OptimizedImage src={deal.image} alt={deal.name} type="product" objectFit="contain" className="absolute inset-0 group-hover:scale-105 transition-transform duration-500" />
                   <div className="absolute bottom-2 left-2 bg-white/90 px-1.5 py-0.5 rounded flex items-center gap-0.5 shadow-sm">
                     <span className="text-[9.5px] font-bold text-slate-800">4.2</span>
                     <Star className="w-2.5 h-2.5 fill-emerald-600 text-emerald-600" />

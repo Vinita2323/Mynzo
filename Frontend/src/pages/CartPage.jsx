@@ -295,8 +295,8 @@ export default function CartPage() {
                     <div className="flex gap-4">
                       {/* Left side: Image and Qty */}
                       <div className="flex flex-col gap-3 w-20 md:w-24 flex-shrink-0">
-                        <div className="aspect-[4/5] bg-[#F8F9FD] border border-slate-100 p-1.5 rounded-xl relative overflow-hidden">
-                          <OptimizedImage src={item.image} alt={item.name} type="product" className="absolute inset-0" />
+                        <div className="aspect-square bg-white border border-slate-100 p-1.5 rounded-xl relative overflow-hidden flex items-center justify-center">
+                          <OptimizedImage src={item.image} alt={item.name} type="product" objectFit="contain" className="absolute inset-0" />
                         </div>
                         
                         <div className="relative border border-slate-200 rounded-lg flex items-center justify-between px-2.5 py-1.5 bg-white shadow-3xs cursor-pointer hover:border-slate-350 transition-colors">

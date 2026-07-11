@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { getImageUrl } from '../../utils/imageHelper';
+import { Image } from 'lucide-react';
 
 /**
  * OptimizedImage – A reusable image component with:
  *   • Native lazy loading (loading="lazy")
- *   • Tiny blur placeholder while loading
- *   • Error fallback (per image type)
+ *   • Skeleton shimmer or gradient pulse placeholder while loading
+ *   • Error fallback (per image type, showing a clean placeholder for products)
  *   • Auto URL resolution for relative uploads paths
  */
 
@@ -13,7 +14,7 @@ import { getImageUrl } from '../../utils/imageHelper';
 const FALLBACK_GRADIENTS = {
   banner:     'linear-gradient(135deg, #f97316 0%, #ec4899 100%)',
   category:   'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-  product:    'linear-gradient(135deg, #0ea5e9 0%, #06b6d4 100%)',
+  product:    '#f8fafc',
   subcategory:'linear-gradient(135deg, #10b981 0%, #059669 100%)',
   default:    'linear-gradient(135deg, #64748b 0%, #94a3b8 100%)',
 };
@@ -24,7 +25,7 @@ export default function OptimizedImage({
   className = '',
   style = {},
   type = 'default',  // 'banner' | 'category' | 'product' | 'subcategory'
-  objectFit = 'cover',
+  objectFit,
   onLoad,
   onError,
   ...props
@@ -34,8 +35,28 @@ export default function OptimizedImage({
 
   const resolvedSrc = getImageUrl(src);
   const fallback = FALLBACK_GRADIENTS[type] || FALLBACK_GRADIENTS.default;
+  const finalObjectFit = objectFit || (type === 'product' ? 'contain' : 'cover');
 
   if (error || !resolvedSrc) {
+    if (type === 'product') {
+      return (
+        <div
+          className={`flex flex-col items-center justify-center text-slate-350 bg-slate-50 border border-slate-100/50 rounded-xl ${className}`}
+          style={{
+            width: '100%',
+            height: '100%',
+            aspectRatio: '1/1',
+            ...style,
+          }}
+          aria-label={alt}
+          {...props}
+        >
+          <Image className="w-6 h-6 stroke-[1.5]" />
+          <span className="text-[8px] font-black uppercase tracking-wider text-slate-400 mt-1">No Image</span>
+        </div>
+      );
+    }
+
     return (
       <div
         className={className}
@@ -58,11 +79,10 @@ export default function OptimizedImage({
       style={style}
       {...props}
     >
-      {/* Blur placeholder shown while loading */}
+      {/* Skeleton Shimmer / Gradient pulse placeholder shown while loading */}
       {!loaded && (
         <div
-          className="absolute inset-0 animate-pulse"
-          style={{ background: fallback, opacity: 0.35 }}
+          className="absolute inset-0 skeleton-shimmer z-10"
         />
       )}
 
@@ -80,9 +100,10 @@ export default function OptimizedImage({
           onError?.(e);
         }}
         className={`w-full h-full transition-opacity duration-300 ${loaded ? 'opacity-100' : 'opacity-0'}`}
-        style={{ objectFit }}
+        style={{ objectFit: finalObjectFit, objectPosition: 'center' }}
       />
     </div>
   );
 }
+
 
