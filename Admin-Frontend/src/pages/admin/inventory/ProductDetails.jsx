@@ -204,12 +204,12 @@ const ProductDetails = () => {
                 </div>
                 {/* Thumbnails Row */}
                 {product.images.length > 1 && (
-                  <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-200">
+                  <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
                     {product.images.map((img, i) => (
                       <button 
                         key={i} 
                         onClick={() => setActiveImage(img)}
-                        className={`w-16 h-16 bg-white rounded-lg border overflow-hidden shrink-0 transition-all flex items-center justify-center p-1 ${
+                        className={`w-20 h-20 bg-white rounded-lg border overflow-hidden shrink-0 transition-all flex items-center justify-center p-1 ${
                           (activeImage || product.images[0]) === img 
                             ? 'border-[#ee4923] ring-2 ring-orange-50' 
                             : 'border-slate-200 hover:border-slate-400'
