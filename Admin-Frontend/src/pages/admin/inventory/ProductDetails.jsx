@@ -193,12 +193,13 @@ const ProductDetails = () => {
             {product.images && product.images.length > 0 ? (
               <div className="space-y-4">
                 {/* Main Large Preview */}
-                <div className="rounded-xl border border-slate-100 overflow-hidden aspect-[4/3] bg-slate-50">
+                <div className="rounded-xl border border-slate-100 overflow-hidden aspect-square bg-white flex items-center justify-center relative">
                   <OptimizedImage 
                     src={activeImage || product.images[0]} 
                     alt={product.name} 
                     type="product" 
-                    className="w-full h-full object-cover" 
+                    objectFit="contain"
+                    className="absolute inset-0 w-full h-full object-contain p-2" 
                   />
                 </div>
                 {/* Thumbnails Row */}
@@ -208,13 +209,13 @@ const ProductDetails = () => {
                       <button 
                         key={i} 
                         onClick={() => setActiveImage(img)}
-                        className={`w-16 h-16 rounded-lg border overflow-hidden shrink-0 transition-all ${
+                        className={`w-16 h-16 bg-white rounded-lg border overflow-hidden shrink-0 transition-all flex items-center justify-center p-1 ${
                           (activeImage || product.images[0]) === img 
                             ? 'border-[#ee4923] ring-2 ring-orange-50' 
                             : 'border-slate-200 hover:border-slate-400'
                         }`}
                       >
-                        <OptimizedImage src={img} alt={`Thumbnail ${i+1}`} type="product" className="w-full h-full object-cover" />
+                        <OptimizedImage src={img} alt={`Thumbnail ${i+1}`} type="product" objectFit="contain" className="w-full h-full object-contain" />
                       </button>
                     ))}
                   </div>
