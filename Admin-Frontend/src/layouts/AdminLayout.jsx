@@ -76,54 +76,6 @@ const AdminLayout = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const quickLinks = [
-    { name: 'Banner Manager', path: '/admin/storefront/banners' },
-    { name: 'Customer Database', path: '/admin/users' },
-    { name: 'Inventory Stock', path: '/admin/inventory/all' },
-    { name: 'System Settings', path: '/admin/settings' },
-  ];
-
-  const [searchResults, setSearchResults] = useState([]);
-
-  useEffect(() => {
-    if (!searchQuery) {
-      setSearchResults([]);
-      return;
-    }
-
-    const delayDebounce = setTimeout(async () => {
-      const token = localStorage.getItem('adminToken');
-      if (!token) return;
-      try {
-        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        const res = await fetch(`${apiBase}/admin/analytics/search/global?q=${encodeURIComponent(searchQuery)}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        const data = await res.json();
-        if (res.ok && data.success) {
-          setSearchResults(data.results);
-        }
-      } catch (err) {
-        console.error('Error performing global search:', err);
-      }
-    }, 300);
-
-    return () => clearTimeout(delayDebounce);
-  }, [searchQuery]);
-
-  const filteredLinks = quickLinks.filter(link => 
-    link.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const toggleSubMenu = (name) => {
-    setOpenMenus(prev => ({
-      ...prev,
-      [name]: !prev[name]
-    }));
-  };
-
   const menuGroups = [
     {
       title: 'OVERVIEW',
@@ -138,8 +90,7 @@ const AdminLayout = () => {
       items: [
         { name: 'Banner Manager', path: '/admin/storefront/banners', icon: <Image size={18} /> },
         { name: 'Category Chips', path: '/admin/storefront/chips', icon: <LayoutGrid size={18} /> },
-        { name: 'Subcatgeory Chips', path: '/admin/storefront/subchips', icon: <LayoutGrid size={18} /> },
-        { name: 'Brands Manager', path: '/admin/storefront/brands', icon: <Tag size={18} /> },
+        { name: 'Subcategory Chips', path: '/admin/storefront/subchips', icon: <LayoutGrid size={18} /> },
       ]
     },
     {
@@ -194,6 +145,60 @@ const AdminLayout = () => {
       ]
     }
   ];
+
+  const quickLinks = [];
+  menuGroups.forEach(group => {
+    group.items.forEach(item => {
+      if (item.subItems) {
+        item.subItems.forEach(sub => {
+          quickLinks.push({ name: sub.name, path: sub.path });
+        });
+      } else {
+        quickLinks.push({ name: item.name, path: item.path });
+      }
+    });
+  });
+
+  const [searchResults, setSearchResults] = useState([]);
+
+  useEffect(() => {
+    if (!searchQuery) {
+      setSearchResults([]);
+      return;
+    }
+
+    const delayDebounce = setTimeout(async () => {
+      const token = localStorage.getItem('adminToken');
+      if (!token) return;
+      try {
+        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+        const res = await fetch(`${apiBase}/admin/analytics/search/global?q=${encodeURIComponent(searchQuery)}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setSearchResults(data.results);
+        }
+      } catch (err) {
+        console.error('Error performing global search:', err);
+      }
+    }, 300);
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery]);
+
+  const filteredLinks = quickLinks.filter(link => 
+    link.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const toggleSubMenu = (name) => {
+    setOpenMenus(prev => ({
+      ...prev,
+      [name]: !prev[name]
+    }));
+  };
 
 
   const getPageTitle = () => {

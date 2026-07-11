@@ -300,7 +300,7 @@ export default function ProfilePage() {
       <div className="bg-slate-50 min-h-screen pb-24 font-sans animate-fade-in flex flex-col items-center justify-center select-none">
         
         {/* Sticky App Header (Mobile Only) */}
-        <div className="bg-[#FFE4D6] w-full px-4 py-4 shadow-sm z-10 sticky top-0 flex items-center gap-3 md:hidden">
+        <div className="bg-[#FFE4D6] w-full px-4 py-4 shadow-sm z-50 sticky top-0 flex items-center gap-3 md:hidden">
           <button 
             onClick={() => navigate(-1)}
             className="w-8 h-8 rounded-full bg-white/50 flex items-center justify-center text-[#02006c] hover:bg-white active:scale-95 transition-all cursor-pointer shadow-sm flex-shrink-0"
@@ -629,7 +629,7 @@ export default function ProfilePage() {
                 </div>
               </div>
 
-              <h3 className="text-xl font-black text-white mt-3 font-syne tracking-wide drop-shadow-md">
+              <h3 className="text-xl font-black text-[#02006c] mt-3 font-syne tracking-wide drop-shadow-md">
                 {mockUser.name}
               </h3>
               <div className="flex items-center gap-1 mt-1.5 bg-orange-50 border border-orange-100 px-3 py-1 rounded-full shadow-sm">
@@ -1102,7 +1102,7 @@ export default function ProfilePage() {
               </div>
 
               {/* Live Character Preview Window (Sticky) */}
-              <div className="flex justify-center items-center py-6 bg-slate-50/80 border-b border-slate-100 sticky top-0 z-10 backdrop-blur-xl">
+              <div className="flex justify-center items-center py-6 bg-slate-50/80 border-b border-slate-100 sticky top-0 z-50 backdrop-blur-xl">
                 <div className="p-2.5 border border-slate-200/80 rounded-full bg-white shadow-xl shadow-[#ee4923]/5 relative group">
                   <div className="absolute inset-0 rounded-full bg-[#ee4923]/10 blur-xl group-hover:bg-[#ee4923]/20 transition-colors"></div>
                   <DynamicAvatar config={tempConfig} size="w-32 h-32 relative z-10" />

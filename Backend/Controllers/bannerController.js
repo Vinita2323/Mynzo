@@ -1,4 +1,5 @@
 const Banner = require('../Models/Banner');
+const { getImageUrl } = require('../utils/imageHelper');
 
 // @desc    Get all Banners
 // @route   GET /api/admin/catalog/banners
@@ -25,8 +26,7 @@ const createBanner = async (req, res) => {
 
     let image = null;
     if (req.file) {
-      const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-      image = `${backendUrl}${req.file.url}`;
+      image = getImageUrl(req.file.url);
     } else if (req.body.image) {
       image = req.body.image;
     }
@@ -67,8 +67,7 @@ const updateBanner = async (req, res) => {
     if (active !== undefined) banner.active = (active === false || active === 'false') ? false : true;
 
     if (req.file) {
-      const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-      banner.image = `${backendUrl}${req.file.url}`;
+      banner.image = getImageUrl(req.file.url);
     } else if (req.body.image !== undefined) {
       banner.image = req.body.image;
     }

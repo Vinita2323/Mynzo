@@ -2,6 +2,7 @@
 import { motion } from 'framer-motion';
 import { Trophy, Gift, ArrowLeft, RotateCcw, Home, ShoppingBag, Percent, ShoppingCart, User, Gamepad2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { getImageUrl } from '../../../utils/imageHelper';
 
 export default function QuizResult({ score, total, onPlayAgain, onClose, addCoins }) {
   const coinsEarned = score * 10;
@@ -215,7 +216,7 @@ export default function QuizResult({ score, total, onPlayAgain, onClose, addCoin
                   <span className="absolute top-2 left-2 bg-[#EE4923] text-white text-[8px] font-black px-1.5 py-0.5 rounded-sm">
                     {prod.discount} OFF
                   </span>
-                  <img src={prod.image} alt={prod.name} className="w-full h-full object-cover rounded-lg drop-shadow-sm mix-blend-multiply" />
+                  <img src={getImageUrl(prod.image)} alt={prod.name} className="w-full h-full object-cover rounded-lg drop-shadow-sm mix-blend-multiply" />
                 </div>
                 <div className="flex-1">
                   <span className="block text-[8px] font-bold text-slate-400 uppercase">{prod.brand}</span>

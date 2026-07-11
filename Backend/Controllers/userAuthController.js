@@ -1,5 +1,6 @@
 const User = require('../Models/User');
 const jwt = require('jsonwebtoken');
+const { getImageUrl } = require('../utils/imageHelper');
 
 // Generate JWT Token
 const generateToken = (id, phone, tokenVersion = 0) => {
@@ -123,7 +124,7 @@ const sendOtp = async (req, res) => {
 // @access  Public
 const verifyOtp = async (req, res) => {
   try {
-    const { phone, otp } = req.body;
+    const { phone, otp, referralCode } = req.body;
 
     if (!phone || !otp) {
       return res.status(400).json({ success: false, message: 'Phone and OTP required' });
@@ -160,6 +161,29 @@ const verifyOtp = async (req, res) => {
     user.otp = null;
     user.otpExpiry = null;
     user.lastLogin = new Date();
+
+    if (isNewUser && referralCode) {
+      try {
+        const uppercaseCode = referralCode.toUpperCase().trim();
+        const referrer = await User.findOne({ referralCode: uppercaseCode });
+        if (referrer && !referrer._id.equals(user._id)) {
+          user.referredBy = referrer._id;
+          
+          const Referral = require('../Models/Referral');
+          const existingReferral = await Referral.findOne({ referrer: referrer._id, referee: user._id });
+          if (!existingReferral) {
+            await Referral.create({
+              referrer: referrer._id,
+              referee: user._id,
+              referralCode: uppercaseCode,
+              status: 'pending'
+            });
+          }
+        }
+      } catch (refErr) {
+        console.error('Auto referral link error during registration:', refErr.message);
+      }
+    }
 
     await user.save();
 
@@ -242,8 +266,7 @@ const updateProfile = async (req, res) => {
     }
 
     if (req.file) {
-      const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-      user.avatar = `${backendUrl}${req.file.url}`;
+      user.avatar = getImageUrl(req.file.url);
     }
 
     await user.save();

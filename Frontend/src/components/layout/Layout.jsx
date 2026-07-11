@@ -91,7 +91,78 @@ export default function Layout({ children }) {
   const hideNavbar = isMobile ? hideNavbarMobile : (isLoginPage || isStudioPage);
   const hideMobileNav = isMobile ? hideMobileNavMobile : true;
 
-  const isFixedLayoutPage = location.pathname.toLowerCase().startsWith('/studio') || location.pathname.toLowerCase().startsWith('/categories');
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [startY, setStartY] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+
+  useEffect(() => {
+    setPullDistance(0);
+    setIsRefreshing(false);
+    setIsPulling(false);
+  }, [location.pathname]);
+
+  const isFixedLayoutPage = isStudioPage || location.pathname.toLowerCase().startsWith('/categories');
+
+  const getActiveScrollTop = (target) => {
+    let el = target;
+    while (el && el !== document.body && el !== document.documentElement) {
+      if (el.scrollHeight > el.clientHeight) {
+        const overflow = window.getComputedStyle(el).overflowY;
+        if (overflow === 'auto' || overflow === 'scroll') {
+          return el.scrollTop;
+        }
+      }
+      el = el.parentElement;
+    }
+    const container = document.getElementById('main-scroll-container');
+    return container ? container.scrollTop : window.scrollY;
+  };
+
+  const handleTouchStart = (e) => {
+    if (isRefreshing || isStudioPage) return;
+    
+    const scrollTop = getActiveScrollTop(e.target);
+    if (scrollTop === 0) {
+      setStartY(e.touches[0].clientY);
+      setIsPulling(true);
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (!isPulling || isRefreshing) return;
+    
+    const currentY = e.touches[0].clientY;
+    const diffY = currentY - startY;
+
+    if (diffY > 0) {
+      const distance = Math.min(diffY * 0.4, 70); // Max 70px pull
+      setPullDistance(distance);
+      
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    } else {
+      setIsPulling(false);
+      setPullDistance(0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isPulling || isRefreshing) return;
+    
+    setIsPulling(false);
+    if (pullDistance >= 50) {
+      setIsRefreshing(true);
+      setPullDistance(50);
+      
+      setTimeout(() => {
+        window.location.reload();
+      }, 700);
+    } else {
+      setPullDistance(0);
+    }
+  };
 
   return (
     <div className="min-h-screen md:h-auto bg-slate-50 text-slate-800 antialiased font-sans overflow-x-hidden">
@@ -99,8 +170,25 @@ export default function Layout({ children }) {
         <main 
           key={location.pathname}
           id="main-scroll-container" 
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           className={`flex-grow flex flex-col bg-white md:bg-transparent relative scrollbar-none ${isFixedLayoutPage ? 'overflow-hidden' : 'overflow-y-auto md:overflow-y-visible overflow-x-hidden'}`}
         >
+          {pullDistance > 0 && (
+            <div 
+              style={{ 
+                transform: `translate(-50%, ${pullDistance - 15}px)`, 
+                opacity: Math.min(pullDistance / 40, 1) 
+              }} 
+              className="absolute left-1/2 bg-white rounded-full shadow-md border border-slate-100 w-10 h-10 flex items-center justify-center z-[100] transition-transform duration-75"
+            >
+              <div 
+                className={`w-5 h-5 rounded-full border-2 border-[#ee4923] border-t-transparent ${isRefreshing ? 'animate-spin' : ''}`} 
+                style={{ transform: isRefreshing ? 'none' : `rotate(${pullDistance * 5}deg)` }}
+              />
+            </div>
+          )}
           {!hideNavbar && <Navbar />}
           {children}
         </main>

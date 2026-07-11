@@ -100,9 +100,16 @@ export default function AccountInfoPage() {
   };
 
   const handleSave = async () => {
+    let cleanedPhone = '';
     if (formData.phone) {
-      const phoneRegex = /^[0-9]{10}$/;
-      if (!phoneRegex.test(formData.phone)) {
+      cleanedPhone = formData.phone.trim().replace(/\D/g, '');
+      if (cleanedPhone.length === 12 && cleanedPhone.startsWith('91')) {
+        cleanedPhone = cleanedPhone.slice(2);
+      } else if (cleanedPhone.length === 11 && cleanedPhone.startsWith('0')) {
+        cleanedPhone = cleanedPhone.slice(1);
+      }
+
+      if (cleanedPhone.length !== 10) {
         toast.info('Phone number must be exactly 10 digits!');
         return;
       }
@@ -121,7 +128,7 @@ export default function AccountInfoPage() {
     const token = localStorage.getItem('userToken');
     if (!token) {
       if (setUser) {
-        setUser({ ...user, ...formData });
+        setUser({ ...user, ...formData, phone: cleanedPhone });
       }
       toast.info('Changes saved successfully! (Offline mode)');
       setTimeout(() => navigate(-1), 1200);
@@ -133,7 +140,7 @@ export default function AccountInfoPage() {
         const submitData = new FormData();
         submitData.append('name', formData.name);
         submitData.append('email', formData.email);
-        submitData.append('phone', formData.phone);
+        submitData.append('phone', cleanedPhone);
         submitData.append('dob', formData.dob);
         submitData.append('gender', formData.gender);
         if (imageFile) {

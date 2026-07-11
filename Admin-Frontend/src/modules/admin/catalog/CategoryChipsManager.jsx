@@ -7,24 +7,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import ConfirmModal from '../../../components/ConfirmModal';
 import OptimizedImage from '../../../components/common/OptimizedImage';
+import { getImageUrl } from '../../../utils/imageHelper';
 
 const BANNER_TABS = ['Home', 'Fashion', 'Beauty', 'Toys', 'Electronics', 'Jewellery', 'Art. Jewellery', '1g Gold', 'Cosmetics'];
 
 const EMPTY_CAT = { categoryName: '', image: '', active: true };
 
-const getImageUrl = (imagePath) => {
-  if (!imagePath) return '';
-  if (
-    imagePath.startsWith('http://') || 
-    imagePath.startsWith('https://') || 
-    imagePath.startsWith('data:') ||
-    imagePath.startsWith('blob:')
-  ) {
-    return imagePath;
-  }
-  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  return `${apiBase}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
-};
 
 // Define CategoryForm OUTSIDE of CategoryChipsManager to prevent recreating the component on every state change (which causes loss of focus/keyboard re-rendering).
 const CategoryForm = ({ onSave, onCancel, label, formData, setFormData, imagePreview, setImageFile, setImagePreview }) => (

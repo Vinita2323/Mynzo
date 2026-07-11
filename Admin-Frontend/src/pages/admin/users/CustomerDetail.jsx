@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { getImageUrl } from '../../../utils/imageHelper';
 
 const CustomerDetail = () => {
   const { userId } = useParams();
@@ -134,7 +135,7 @@ const CustomerDetail = () => {
               <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-black shadow-xl shadow-blue-100 uppercase overflow-hidden border border-slate-100 bg-slate-100">
                  {customer.avatar ? (
                     <img 
-                      src={customer.avatar.startsWith('http') ? customer.avatar : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${customer.avatar}`} 
+                      src={getImageUrl(customer.avatar)} 
                       alt={customer.name || 'User'} 
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -358,7 +359,7 @@ const CustomerDetail = () => {
                                  {review.video && (
                                    <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-black w-24 aspect-[9/16] shadow-sm flex-shrink-0">
                                       <video 
-                                        src={review.video.startsWith('http') ? review.video : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${review.video.startsWith('/') ? '' : '/'}${review.video}`} 
+                                        src={getImageUrl(review.video)} 
                                         className="w-full h-full object-cover" 
                                         muted 
                                         controls 

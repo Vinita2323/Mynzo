@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from '../../../utils/toast';
 import ConfirmModal from '../../../components/ConfirmModal';
 import OptimizedImage from '../../../components/common/OptimizedImage';
+import { getImageUrl } from '../../../utils/imageHelper';
 
 const STATUSES = ['All', 'Approved', 'Pending', 'Out of Stock'];
 
@@ -59,6 +60,9 @@ export default function InventoryList() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [loading, setLoading] = useState(true);
+  const [autoCreate, setAutoCreate] = useState(false);
+  const [uploadReport, setUploadReport] = useState(null);
+
 
   // Confirm Modal state
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -137,53 +141,42 @@ export default function InventoryList() {
     toast.success('Inventory exported successfully!');
   };
 
-  const handleDownloadSample = () => {
-    const headers = [
-      'Name', 'Category', 'Sub Category', 'Description', 'Selling Price', 'MRP', 'Stock', 'Discount Label', 'SKU',
-      'Pack Of', 'Fabric', 'Sleeve', 'Pattern', 'Collar', 'Color',
-      'Fit', 'Fabric Care', 'Suitable For', 'Hem',
-      'Weight (kg)', 'Length (cm)', 'Width (cm)', 'Height (cm)',
-      'Top Section', 'Crazy Deals', 'Flash Sale',
-      'Brand Name', 'Tags', 'Manufacturer Info', 'HSN Code', 'GST Category', 'Is Trending', 'Image URLs'
-    ];
-    const sampleRow = [
-      'Premium Leather Satchel', 'Fashion', 'Accessories', 'A high-quality leather satchel for everyday use.', 2999, 4999, 100, '-40% OFF', 'FSH-SAT-001',
-      '1', 'Leather', '', 'Solid', '', 'Brown',
-      'Regular', 'Wipe with damp cloth', 'Casual', '',
-      0.8, 30, 20, 10,
-      'false', 'true', 'false',
-      'LeatherCraft', 'bags, leather, premium', 'LeatherCraft Mfg.', '4202', 'Standard GST', 'true', 'https://example.com/img1.jpg, https://example.com/img2.jpg'
-    ];
-
-    const xmlContent = `<?xml version="1.0"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:o="urn:schemas-microsoft-com:office:office"
- xmlns:x="urn:schemas-microsoft-com:office:excel"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:html="http://www.w3.org/TR/REC-html40">
- <Worksheet ss:Name="Sheet1">
-  <Table>
-   <Row>
-    ${headers.map(h => `<Cell><Data ss:Type="String">${h}</Data></Cell>`).join('\n    ')}
-   </Row>
-   <Row>
-    ${sampleRow.map(v => `<Cell><Data ss:Type="${typeof v === 'number' ? 'Number' : 'String'}">${v}</Data></Cell>`).join('\n    ')}
-   </Row>
-  </Table>
- </Worksheet>
-</Workbook>`;
-
-    const blob = new Blob([xmlContent], { type: 'application/vnd.ms-excel' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.setAttribute('href', url);
-    link.setAttribute('download', 'product_upload_template.xls');
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    toast.success('Excel sample template downloaded!');
+  const handleDownloadSample = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      
+      toast.loading('Downloading template...', { id: 'prep-template' });
+      
+      const res = await fetch(`${apiBase}/admin/catalog/products/download-template`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      toast.dismiss('prep-template');
+      
+      if (!res.ok) {
+        throw new Error('Failed to generate template');
+      }
+      
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'product_upload_template.xlsx');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success('Excel template downloaded successfully!');
+    } catch (err) {
+      console.error(err);
+      toast.dismiss('prep-template');
+      toast.error('Failed to download template: ' + err.message);
+    }
   };
 
   const handleFileUpload = async (e) => {
@@ -197,112 +190,47 @@ export default function InventoryList() {
       return;
     }
 
-    // Client-side validation for CSV files
-    if (fileExt === 'csv') {
-      const reader = new FileReader();
-      reader.onload = async (event) => {
-        const text = event.target.result;
-        // Basic CSV parsing handling quotes
-        const rows = text.split('\n').filter(r => r.trim());
-        if (rows.length < 2) {
-          toast.info('File is empty or has no product data.');
-          return;
-        }
-
-        const parseRow = (rowStr) => {
-          const result = [];
-          let insideQuote = false;
-          let currentVal = '';
-          for (let i = 0; i < rowStr.length; i++) {
-            const char = rowStr[i];
-            if (char === '"') {
-              insideQuote = !insideQuote;
-            } else if (char === ',' && !insideQuote) {
-              result.push(currentVal.trim());
-              currentVal = '';
-            } else {
-              currentVal += char;
-            }
-          }
-          result.push(currentVal.trim());
-          return result.map(v => v.replace(/^"|"$/g, '').trim());
-        };
-
-        const headers = parseRow(rows[0]);
-        const requiredFields = ['Name', 'Category', 'Selling Price'];
-        const missingHeaders = requiredFields.filter(f => !headers.includes(f));
-        
-        if (missingHeaders.length > 0) {
-          toast.info(`Invalid format! Missing mandatory columns: ${missingHeaders.join(', ')}`, { duration: 5000 });
-          e.target.value = '';
-          return;
-        }
-
-        let errorMsgs = [];
-        for (let i = 1; i < rows.length; i++) {
-          const rowData = parseRow(rows[i]);
-          if (rowData.length < 2) continue; // skip completely empty rows
-
-          requiredFields.forEach(req => {
-            const index = headers.indexOf(req);
-            if (index === -1 || !rowData[index] || rowData[index].trim() === '') {
-              errorMsgs.push(`Row ${i} (Data): Missing '${req}'`);
-            }
-          });
-        }
-
-        if (errorMsgs.length > 0) {
-          toast.error(`Upload Failed! Please fix these errors:\n${errorMsgs.slice(0,3).join('\n')}${errorMsgs.length > 3 ? '\n...and more' : ''}`, { duration: 6000 });
-          e.target.value = '';
-          return;
-        }
-
-        // If validation passes, proceed to upload
-        await processUpload(file);
-      };
-      reader.readAsText(file);
-    } else {
-      // If it's xlsx/xls, we skip client validation for now and rely on backend
-      await processUpload(file);
-    }
-
-    async function processUpload(validFile) {
-      toast.loading('Uploading products...', { id: 'upload-excel' });
+    toast.loading('Uploading products...', { id: 'upload-excel' });
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
       
-      try {
-        const formData = new FormData();
-        formData.append('file', validFile);
-        
-        const token = localStorage.getItem('adminToken');
-        const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-        
-        const res = await fetch(`${apiBase}/admin/catalog/products/bulk-upload`, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: formData
-        });
-        
-        const data = await res.json();
-        toast.dismiss('upload-excel');
-        
-        if (res.ok && data.success) {
-          toast.success(data.message || 'Products uploaded successfully');
-          fetchProducts();
+      const token = localStorage.getItem('adminToken');
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      
+      const res = await fetch(`${apiBase}/admin/catalog/products/bulk-upload?autoCreate=${autoCreate}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      
+      const data = await res.json();
+      toast.dismiss('upload-excel');
+      
+      if (res.ok && data.success) {
+        if (data.report) {
+          setUploadReport(data.report);
+          if (data.report.failed > 0) {
+            toast.warning(`Uploaded ${data.report.success} products. ${data.report.failed} rows failed validation. See report.`);
+          } else {
+            toast.success(`Successfully uploaded all ${data.report.success} products.`);
+          }
         } else {
-          toast.error(data.message || 'Failed to upload products');
+          toast.success(data.message || 'Products uploaded successfully');
         }
-      } catch (err) {
-        console.error(err);
-        toast.dismiss('upload-excel');
-        toast.error('Failed to connect to server for upload. Falling back to mock UI message.');
-        setTimeout(() => {
-          toast.success('Mock Excel uploaded successfully!');
-        }, 1000);
-      } finally {
-        e.target.value = ''; // Reset file input
+        fetchProducts();
+      } else {
+        toast.error(data.message || 'Failed to upload products');
       }
+    } catch (err) {
+      console.error(err);
+      toast.dismiss('upload-excel');
+      toast.error('Failed to connect to server for upload.');
+    } finally {
+      e.target.value = ''; // Reset file input
     }
   };
 
@@ -592,20 +520,6 @@ export default function InventoryList() {
     }
   };
 
-  const getImageUrl = (imagePath) => {
-    if (!imagePath) return '';
-    if (
-      imagePath.startsWith('http://') || 
-      imagePath.startsWith('https://') || 
-      imagePath.startsWith('data:') ||
-      imagePath.startsWith('/src/') ||
-      imagePath.startsWith('/assets/')
-    ) {
-      return imagePath;
-    }
-    const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    return `${apiBase}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
-  };
 
   const SortIcon = ({ col }) => (
     <ArrowUpDown size={13} className={`ml-1 inline ${sortBy === col ? 'text-[#ee4923]' : 'text-slate-300'}`} />
@@ -620,17 +534,26 @@ export default function InventoryList() {
           <p className="text-slate-500 font-medium mt-1 font-raleway">Manage all inventory, stock levels and product status.</p>
         </div>
         <div className="flex flex-wrap gap-3 shrink-0">
-          <button 
+           <button 
             onClick={handleDownloadSample}
             className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-blue-600 hover:bg-blue-50 transition-all shadow-sm"
           >
             <FileSpreadsheet size={15} />
-            Sample Format
+            Download Template
           </button>
           <label className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-green-600 hover:bg-green-50 transition-all shadow-sm cursor-pointer">
             <Upload size={15} />
             Upload Excel
             <input type="file" accept=".xlsx, .xls, .csv" className="hidden" onChange={handleFileUpload} />
+          </label>
+          <label className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-50 transition-all shadow-sm cursor-pointer select-none">
+            <input 
+              type="checkbox" 
+              checked={autoCreate} 
+              onChange={(e) => setAutoCreate(e.target.checked)} 
+              className="rounded text-[#ee4923] focus:ring-[#ee4923] w-4 h-4 cursor-pointer accent-[#ee4923]"
+            />
+            <span>Auto-Create Missing</span>
           </label>
           <button 
             onClick={handleExport}
@@ -1081,6 +1004,91 @@ export default function InventoryList() {
         title={confirmTitle}
         message={confirmMessage}
       />
+      <AnimatePresence>
+        {uploadReport && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white rounded-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden shadow-2xl flex flex-col font-sans"
+            >
+              {/* Header */}
+              <div className="px-6 py-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                <div>
+                  <h2 className="text-xl font-black text-slate-900">Bulk Upload Report</h2>
+                  <p className="text-xs text-slate-500 mt-1 font-medium">Summary of the imported products and any validation failures.</p>
+                </div>
+                <button 
+                  onClick={() => setUploadReport(null)}
+                  className="p-1.5 hover:bg-slate-100 rounded-lg text-slate-400 hover:text-slate-600 transition-all"
+                >
+                  <XCircle size={20} />
+                </button>
+              </div>
+
+              {/* Stats Bar */}
+              <div className="grid grid-cols-2 border-b border-slate-100 bg-white">
+                <div className="p-5 text-center border-r border-slate-100 flex flex-col items-center justify-center">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Successfully Uploaded</span>
+                  <span className="text-3xl font-black text-green-500 mt-1">{uploadReport.success}</span>
+                </div>
+                <div className="p-5 text-center flex flex-col items-center justify-center">
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Failed / Skipped</span>
+                  <span className="text-3xl font-black text-red-500 mt-1">{uploadReport.failed}</span>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="p-6 overflow-y-auto flex-1 bg-white space-y-4">
+                {uploadReport.errors && uploadReport.errors.length > 0 ? (
+                  <div className="space-y-3">
+                    <p className="text-xs font-black text-red-500 uppercase tracking-widest">Validation Errors ({uploadReport.errors.length})</p>
+                    <div className="border border-slate-100 rounded-xl overflow-hidden shadow-sm">
+                      <div className="bg-slate-50 border-b border-slate-100 px-4 py-2.5 flex text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                        <div className="w-16">Row</div>
+                        <div className="flex-1">Error Message</div>
+                      </div>
+                      <div className="max-h-[35vh] overflow-y-auto divide-y divide-slate-100">
+                        {uploadReport.errors.map((err, idx) => (
+                          <div key={idx} className="px-4 py-3 flex text-sm text-slate-600 bg-white hover:bg-slate-50/50 transition-all">
+                            <div className="w-16 font-bold text-slate-400">#{err.row}</div>
+                            <div className="flex-1 font-medium text-slate-700">{err.message}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-xs text-slate-400 italic font-medium">Please fix these errors in your spreadsheet and try uploading those rows again.</p>
+                  </div>
+                ) : (
+                  <div className="py-12 flex flex-col items-center justify-center text-center">
+                    <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mb-4">
+                      <CheckCircle2 size={32} className="text-green-500" />
+                    </div>
+                    <h3 className="text-lg font-black text-slate-900">All Rows Processed Successfully!</h3>
+                    <p className="text-slate-500 text-sm font-medium mt-1">There were no validation errors. All products were imported.</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex justify-end">
+                <button
+                  onClick={() => setUploadReport(null)}
+                  className="px-5 py-2.5 bg-slate-900 text-white rounded-xl text-sm font-bold shadow-md hover:bg-slate-800 transition-all hover:scale-105 active:scale-95"
+                >
+                  Done
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

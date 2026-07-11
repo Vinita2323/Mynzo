@@ -126,9 +126,10 @@ export default function OrdersPage() {
 
   // Apply Search
   if (searchQuery.trim() !== '') {
+    const trimmedQuery = searchQuery.trim().toLowerCase();
     rawOrders = rawOrders.filter(o => 
-      o.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-      o.id.toLowerCase().includes(searchQuery.toLowerCase())
+      o.name.toLowerCase().includes(trimmedQuery) || 
+      o.id.toLowerCase().includes(trimmedQuery)
     );
   }
 

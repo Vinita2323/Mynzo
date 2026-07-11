@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Heart, MessageCircle, Share2, ShoppingBag, Gift, ArrowLeft, CheckCircle2, Play, Edit2, Trash2, X, Copy, Volume2, VolumeX } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import OptimizedImage from '../components/ui/OptimizedImage';
+import { getImageUrl } from '../utils/imageHelper';
 import analytics from '../utils/analytics';
 
 // Optimized Video component with preloading and unmuting control
@@ -179,10 +180,10 @@ export default function StudioPage() {
             name: r.productId.name,
             price: r.productId.sellingPrice,
             originalPrice: r.productId.mrp || r.productId.sellingPrice,
-            image: r.productId.images?.[0] ? (r.productId.images[0].startsWith('http') ? r.productId.images[0] : `${apiBase}${r.productId.images[0]}`) : "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=80&w=800",
+            image: r.productId.images?.[0] ? getImageUrl(r.productId.images[0]) : "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&q=80&w=800",
             discount: r.productId.discountLabel || "10% OFF"
           } : null,
-          videoUrl: r.video.startsWith('http') ? r.video : `${apiBase}${r.video}`
+          videoUrl: getImageUrl(r.video)
         }));
 
         if (sharedReelId) {
@@ -455,12 +456,32 @@ export default function StudioPage() {
   const handleCopyLink = async (postId) => {
     analytics.trackStudioAction('greeting_shared', { reelId: postId });
     try {
-      const shareUrl = `${window.location.origin}/studio?reelId=${postId}`;
+      const shareUrl = `${window.location.origin}/#/studio?reelId=${postId}`;
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleShare = async (post) => {
+    analytics.trackStudioAction('greeting_shared', { reelId: post.id });
+    const shareUrl = `${window.location.origin}/#/studio?reelId=${post.id}`;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: `Mynzo Studio Reel by @${post.username}`,
+          text: post.desc || 'Check out this awesome review reel on Mynzo!',
+          url: shareUrl
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          triggerShareLink(post);
+        }
+      }
+    } else {
+      triggerShareLink(post);
     }
   };
 
@@ -547,7 +568,7 @@ export default function StudioPage() {
                   <span className="text-[11px] font-semibold drop-shadow-md">{formatNumber(post.comments)}</span>
                 </button>
 
-                <button onClick={(e) => { e.stopPropagation(); triggerShareLink(post); }} className="flex flex-col items-center gap-1 cursor-pointer hover:scale-110 transition-transform">
+                <button onClick={(e) => { e.stopPropagation(); handleShare(post); }} className="flex flex-col items-center gap-1 cursor-pointer hover:scale-110 transition-transform">
                   <div className="w-10 h-10 bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10">
                     <Share2 className="w-6 h-6 text-white" />
                   </div>
@@ -736,7 +757,7 @@ export default function StudioPage() {
             
             <div className="flex bg-slate-50 border border-slate-100 rounded-xl p-3 items-center justify-between gap-3">
               <span className="text-[10px] text-slate-400 font-bold truncate max-w-[200px]">
-                {window.location.origin}/studio?reelId={shareOverlayPost.id}
+                {window.location.origin}/#/studio?reelId={shareOverlayPost.id}
               </span>
               <button 
                 onClick={() => handleCopyLink(shareOverlayPost.id)}

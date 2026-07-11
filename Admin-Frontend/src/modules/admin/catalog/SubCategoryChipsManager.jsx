@@ -7,22 +7,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from '../../../utils/toast';
 import ConfirmModal from '../../../components/ConfirmModal';
 import OptimizedImage from '../../../components/common/OptimizedImage';
+import { getImageUrl } from '../../../utils/imageHelper';
 
 const EMPTY_SUB = { categoryId: '', subCategoryName: '', image: '', active: true };
 
-const getImageUrl = (imagePath) => {
-  if (!imagePath) return '';
-  if (
-    imagePath.startsWith('http://') || 
-    imagePath.startsWith('https://') || 
-    imagePath.startsWith('data:') ||
-    imagePath.startsWith('blob:')
-  ) {
-    return imagePath;
-  }
-  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  return `${apiBase}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
-};
 
 // Form component defined outside to avoid input focus loss
 const SubCategoryForm = ({ onSave, onCancel, label, formData, setFormData, imagePreview, setImageFile, setImagePreview, categories }) => (

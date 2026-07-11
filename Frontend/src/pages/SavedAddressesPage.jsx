@@ -54,8 +54,14 @@ export default function SavedAddressesPage() {
       toast.info('Pincode must be exactly 6 digits!');
       return;
     }
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(formData.phone.trim())) {
+    let cleanedPhone = formData.phone.trim().replace(/\D/g, '');
+    if (cleanedPhone.length === 12 && cleanedPhone.startsWith('91')) {
+      cleanedPhone = cleanedPhone.slice(2);
+    } else if (cleanedPhone.length === 11 && cleanedPhone.startsWith('0')) {
+      cleanedPhone = cleanedPhone.slice(1);
+    }
+
+    if (cleanedPhone.length !== 10) {
       toast.info('Phone number must be exactly 10 digits!');
       return;
     }
@@ -65,7 +71,7 @@ export default function SavedAddressesPage() {
       if (editingAddress) {
         const result = await updateAddress(editingAddress._id, {
           name: formData.name.trim(),
-          phone: formData.phone.trim(),
+          phone: cleanedPhone,
           address: formData.address.trim(),
           pincode: formData.pincode.trim(),
           type: formData.type,
@@ -81,7 +87,7 @@ export default function SavedAddressesPage() {
       } else {
         const result = await addAddress({
           name: formData.name.trim(),
-          phone: formData.phone.trim(),
+          phone: cleanedPhone,
           address: formData.address.trim(),
           pincode: formData.pincode.trim(),
           type: formData.type,

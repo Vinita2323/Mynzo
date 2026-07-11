@@ -311,7 +311,7 @@ export default function Navbar() {
                 placeholder="Search products..."
                 className="w-full bg-transparent text-sm text-[#02006c] outline-none placeholder-slate-400 font-semibold"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => setSearchQuery(e.target.value.trimStart())}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     if (searchQuery.trim() !== '') {
@@ -388,7 +388,7 @@ export default function Navbar() {
               placeholder="Search for teddy bears, rc cars, customized gifts..."
               className="w-full bg-transparent text-sm text-[#02006c] outline-none placeholder-slate-400 font-semibold"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value.trimStart())}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   if (searchQuery.trim() !== '') {

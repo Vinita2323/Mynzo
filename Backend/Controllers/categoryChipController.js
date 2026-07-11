@@ -1,4 +1,5 @@
 const CategoryChip = require('../Models/CategoryChip');
+const { getImageUrl } = require('../utils/imageHelper');
 
 // @desc    Get all Category Chips
 // @route   GET /api/admin/catalog/chips
@@ -31,8 +32,7 @@ const createCategoryChip = async (req, res) => {
 
     let image = null;
     if (req.file) {
-      const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-      image = `${backendUrl}${req.file.url}`;
+      image = getImageUrl(req.file.url);
     }
 
     const newChip = new CategoryChip({
@@ -68,8 +68,7 @@ const updateCategoryChip = async (req, res) => {
     if (order !== undefined) chip.order = Number(order);
 
     if (req.file) {
-      const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-      chip.image = `${backendUrl}${req.file.url}`;
+      chip.image = getImageUrl(req.file.url);
     }
 
     await chip.save();

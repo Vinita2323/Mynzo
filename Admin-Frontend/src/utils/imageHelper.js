@@ -56,4 +56,3 @@ export const getImageUrl = (imagePath) => {
 
   return path;
 };
-

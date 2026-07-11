@@ -1,5 +1,6 @@
 const Admin = require('../Models/Admin');
 const jwt = require('jsonwebtoken');
+const { getImageUrl } = require('../utils/imageHelper');
 
 // Generate JWT Token
 const generateToken = (id, email, role) => {
@@ -430,8 +431,7 @@ const updateAdminProfile = async (req, res) => {
     if (phone !== undefined) admin.phone = phone;
 
     if (req.file) {
-      const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-      admin.avatar = `${backendUrl}${req.file.url}`;
+      admin.avatar = getImageUrl(req.file.url);
     } else if (avatar !== undefined) {
       admin.avatar = avatar;
     }

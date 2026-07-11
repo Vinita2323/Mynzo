@@ -78,6 +78,15 @@ exports.createCoupon = async (req, res) => {
     if (type === 'Percentage' && Number(value) > 100) {
       return res.status(400).json({ success: false, message: 'Percentage discount cannot exceed 100%.' });
     }
+    if (minOrder !== undefined && Number(minOrder) < 0) {
+      return res.status(400).json({ success: false, message: 'Minimum order amount cannot be negative.' });
+    }
+    if (usageLimit !== undefined && Number(usageLimit) < 0) {
+      return res.status(400).json({ success: false, message: 'Usage limit cannot be negative.' });
+    }
+    if (perUserLimit !== undefined && Number(perUserLimit) < 0) {
+      return res.status(400).json({ success: false, message: 'Usage limit per user cannot be negative.' });
+    }
 
     const uppercaseCode = code.toUpperCase().trim();
 
@@ -97,7 +106,7 @@ exports.createCoupon = async (req, res) => {
       minOrder: minOrder ? Number(minOrder) : 0,
       usageLimit: usageLimit ? Number(usageLimit) : 1000,
       perUserLimit: perUserLimit ? Number(perUserLimit) : 1,
-      expiry: new Date(expiry),
+      expiry: (() => { const d = new Date(expiry); d.setHours(23, 59, 59, 999); return d; })(),
       status: 'Active'
     });
 
@@ -195,6 +204,15 @@ exports.updateCoupon = async (req, res) => {
     if (finalType === 'Percentage' && value !== undefined && Number(value) > 100) {
       return res.status(400).json({ success: false, message: 'Percentage discount cannot exceed 100%.' });
     }
+    if (minOrder !== undefined && Number(minOrder) < 0) {
+      return res.status(400).json({ success: false, message: 'Minimum order amount cannot be negative.' });
+    }
+    if (usageLimit !== undefined && Number(usageLimit) < 0) {
+      return res.status(400).json({ success: false, message: 'Usage limit cannot be negative.' });
+    }
+    if (perUserLimit !== undefined && Number(perUserLimit) < 0) {
+      return res.status(400).json({ success: false, message: 'Usage limit per user cannot be negative.' });
+    }
 
     const uppercaseCode = code ? code.toUpperCase().trim() : undefined;
 
@@ -216,7 +234,7 @@ exports.updateCoupon = async (req, res) => {
       ...(minOrder !== undefined && { minOrder: Number(minOrder) }),
       ...(usageLimit !== undefined && { usageLimit: Number(usageLimit) }),
       ...(perUserLimit !== undefined && { perUserLimit: Number(perUserLimit) }),
-      ...(expiry && { expiry: new Date(expiry) })
+      ...(expiry && { expiry: (() => { const d = new Date(expiry); d.setHours(23, 59, 59, 999); return d; })() })
     };
 
     const coupon = await Coupon.findByIdAndUpdate(

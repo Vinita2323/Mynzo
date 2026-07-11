@@ -128,8 +128,14 @@ export default function CartPage() {
       alert("Receiver name cannot contain numerical digits");
       return;
     }
-    const phoneRegex = /^[0-9]{10}$/;
-    if (!phoneRegex.test(newAddrPhone)) {
+    let cleanedPhone = newAddrPhone.trim().replace(/\D/g, '');
+    if (cleanedPhone.length === 12 && cleanedPhone.startsWith('91')) {
+      cleanedPhone = cleanedPhone.slice(2);
+    } else if (cleanedPhone.length === 11 && cleanedPhone.startsWith('0')) {
+      cleanedPhone = cleanedPhone.slice(1);
+    }
+
+    if (cleanedPhone.length !== 10) {
       alert("Phone number must be exactly 10 digits");
       return;
     }
@@ -147,7 +153,7 @@ export default function CartPage() {
         },
         body: JSON.stringify({
           name: newAddrName,
-          phone: newAddrPhone,
+          phone: cleanedPhone,
           type: newAddrType,
           address: newAddrText,
           pincode: newAddrPincode
@@ -393,7 +399,7 @@ export default function CartPage() {
                   </div>
                 )}
                 <div className="flex justify-between">
-                  <span>GST (18% inclusive)</span>
+                  <span>GST ({gstPercentage}% inclusive)</span>
                   <span className="text-slate-900">₹{Number(gstAmount).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">

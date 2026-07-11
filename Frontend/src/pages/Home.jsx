@@ -82,25 +82,7 @@ export default function Home() {
     return () => controller.abort(); // cleanup on unmount
   }, []);
 
-  // When returning from a brand page, scroll to Trending Brands section
-  useEffect(() => {
-    if (sessionStorage.getItem('scrollToBrands') === '1') {
-      sessionStorage.removeItem('scrollToBrands');
-      // Wait for content to render before scrolling
-      const tryScroll = (attempts = 0) => {
-        const el = document.getElementById('trending-brands-section');
-        const container = document.getElementById('main-scroll-container');
-        if (el && container) {
-          const containerTop = container.getBoundingClientRect().top;
-          const elTop = el.getBoundingClientRect().top;
-          container.scrollTo({ top: container.scrollTop + (elTop - containerTop) - 12, behavior: 'smooth' });
-        } else if (attempts < 10) {
-          setTimeout(() => tryScroll(attempts + 1), 150);
-        }
-      };
-      setTimeout(() => tryScroll(), 200);
-    }
-  }, []);
+
 
 
 
@@ -114,16 +96,38 @@ export default function Home() {
     if (selectedCategory === 'for-you') {
       return [];
     }
-    let filtered = rawAllProducts.filter(
-      p => (p.category || '').toLowerCase() === selectedCategory.toLowerCase()
-    );
+    const selectedCatObj = categories.find(c => c._id === selectedCategory || c.id === selectedCategory);
+    const catName = selectedCatObj ? (selectedCatObj.categoryName || selectedCatObj.name || '').toLowerCase() : '';
+    const catSlug = selectedCatObj ? (selectedCatObj.id || '').toLowerCase() : '';
+    const catId = selectedCategory.toLowerCase();
+
+    let filtered = rawAllProducts.filter(p => {
+      const prodCat = (p.category || '').toLowerCase();
+      if (prodCat === catId || prodCat === catSlug) return true;
+      const pCatObj = categories.find(c => (c._id || '').toLowerCase() === prodCat || (c.id || '').toLowerCase() === prodCat);
+      const pCatName = pCatObj ? (pCatObj.categoryName || pCatObj.name || '').toLowerCase() : '';
+      return pCatName === catName && catName !== '';
+    });
+
     if (selectedSubCategory !== 'all') {
+      const targetSub = selectedSubCategory.toLowerCase();
+      const activeSubObj = subCategoryChips.find(sc => (sc._id || sc.id || '').toLowerCase() === targetSub);
+      const subName = activeSubObj ? (activeSubObj.subCategoryName || '').toLowerCase() : '';
+      const subSlug = activeSubObj ? (activeSubObj.id || '').toLowerCase() : '';
+
       filtered = filtered.filter(p => {
         const prodSub = (p.subCategory || '').toLowerCase();
-        const targetSub = selectedSubCategory.toLowerCase();
-        const activeSubObj = subCategoryChips.find(sc => (sc._id || sc.id || '').toLowerCase() === targetSub);
-        const subName = activeSubObj ? activeSubObj.subCategoryName.toLowerCase() : '';
-        return prodSub === targetSub || prodSub === subName;
+        if (prodSub === targetSub || prodSub === subSlug) return true;
+        if (subName && prodSub === subName) return true;
+
+        const pSubObj = subCategoryChips.find(sc => (sc._id || '').toLowerCase() === prodSub || (sc.id || '').toLowerCase() === prodSub);
+        if (pSubObj) {
+          const pSubName = (pSubObj.subCategoryName || '').toLowerCase();
+          const pSubSlug = (pSubObj.id || '').toLowerCase();
+          if (subName && pSubName === subName) return true;
+          if (subSlug && pSubSlug === subSlug) return true;
+        }
+        return false;
       });
     }
     return filtered.map(normaliseProduct);
@@ -360,57 +364,44 @@ export default function Home() {
     if (selectedCategory === 'for-you') {
       return [];
     }
-    let filtered = rawAllProducts.filter(
-      p => (p.category || '').toLowerCase() === selectedCategory.toLowerCase()
-    );
+    const selectedCatObj = categories.find(c => c._id === selectedCategory || c.id === selectedCategory);
+    const catName = selectedCatObj ? (selectedCatObj.categoryName || selectedCatObj.name || '').toLowerCase() : '';
+    const catSlug = selectedCatObj ? (selectedCatObj.id || '').toLowerCase() : '';
+    const catId = selectedCategory.toLowerCase();
+
+    let filtered = rawAllProducts.filter(p => {
+      const prodCat = (p.category || '').toLowerCase();
+      if (prodCat === catId || prodCat === catSlug) return true;
+      const pCatObj = categories.find(c => (c._id || '').toLowerCase() === prodCat || (c.id || '').toLowerCase() === prodCat);
+      const pCatName = pCatObj ? (pCatObj.categoryName || pCatObj.name || '').toLowerCase() : '';
+      return pCatName === catName && catName !== '';
+    });
+
     if (selectedSubCategory !== 'all') {
       const targetSub = selectedSubCategory.toLowerCase();
       const activeSubObj = subCategoryChips.find(sc => (sc._id || sc.id || '').toLowerCase() === targetSub);
-      const subName = activeSubObj ? activeSubObj.subCategoryName.toLowerCase() : '';
+      const subName = activeSubObj ? (activeSubObj.subCategoryName || '').toLowerCase() : '';
+      const subSlug = activeSubObj ? (activeSubObj.id || '').toLowerCase() : '';
+
       filtered = filtered.filter(p => {
         const prodSub = (p.subCategory || '').toLowerCase();
-        return prodSub === targetSub || prodSub === subName;
+        if (prodSub === targetSub || prodSub === subSlug) return true;
+        if (subName && prodSub === subName) return true;
+
+        const pSubObj = subCategoryChips.find(sc => (sc._id || '').toLowerCase() === prodSub || (sc.id || '').toLowerCase() === prodSub);
+        if (pSubObj) {
+          const pSubName = (pSubObj.subCategoryName || '').toLowerCase();
+          const pSubSlug = (pSubObj.id || '').toLowerCase();
+          if (subName && pSubName === subName) return true;
+          if (subSlug && pSubSlug === subSlug) return true;
+        }
+        return false;
       });
     }
     return filtered.map(normaliseProduct);
-  }, [rawAllProducts, selectedCategory, selectedSubCategory, subCategoryChips]);
+  }, [rawAllProducts, selectedCategory, selectedSubCategory, subCategoryChips, categories]);
 
-  const trendingBrandsList = useMemo(() => {
-    if (trendingBrands && trendingBrands.length > 0) {
-      return trendingBrands.map((b) => ({
-        id: b._id,
-        brand: b.brand || b.name,
-        discount: "Trending Choice",
-        badgeColor: "text-indigo-600",
-        image: getImageUrl(b.logo || b.image) || "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=200"
-      }));
-    }
-    const brandSales = {};
-    rawAllProducts.forEach(p => {
-      const brand = p.brandName || 'Generic';
-      const sales = p.sales || 0;
-      const image = p.images?.[0] || '';
-      if (!brandSales[brand]) {
-        brandSales[brand] = { brand, sales: 0, image, maxProductSales: 0 };
-      }
-      brandSales[brand].sales += sales;
-      if (sales >= brandSales[brand].maxProductSales) {
-        brandSales[brand].maxProductSales = sales;
-        brandSales[brand].image = image;
-      }
-    });
 
-    return Object.values(brandSales)
-      .sort((a, b) => b.sales - a.sales)
-      .slice(0, 6)
-      .map((b, idx) => ({
-        id: b.brand,
-        brand: b.brand,
-        discount: "Trending Choice",
-        badgeColor: "text-indigo-600",
-        image: getImageUrl(b.image) || "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=200"
-      }));
-  }, [trendingBrands, rawAllProducts]);
 
   const normalisedCrazyDeals = useMemo(() => {
     return crazyDealsProducts.map(normaliseProduct);
@@ -418,7 +409,7 @@ export default function Home() {
 
   const filteredDeals = useMemo(() => {
     if (!searchQuery) return normalisedCrazyDeals;
-    const query = searchQuery.toLowerCase();
+    const query = searchQuery.trim().toLowerCase();
     return normalisedCrazyDeals.filter(
       (deal) =>
         deal.name.toLowerCase().includes(query) ||
@@ -499,17 +490,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* 5. Trending Brands Skeleton */}
-        <div className="px-4 space-y-3 animate-pulse">
-          <div className="flex justify-between items-center">
-            <div className="w-32 h-5 bg-slate-200 rounded" />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="w-full aspect-[4/3] bg-slate-200 rounded-2xl" />
-            ))}
-          </div>
-        </div>
+
       </div>
     );
   }
@@ -890,7 +871,7 @@ export default function Home() {
 
                 {/* Responsive Container - Horizontal scroll on mobile, 5 columns or inline grid on Desktop */}
                 <div className="flex gap-4 overflow-x-auto scrollbar-none pb-2 md:grid md:grid-cols-5 lg:grid-cols-10 md:gap-4 md:overflow-visible">
-                  {(topBuys.length > 0 ? topBuys : rawAllProducts
+                  {(topBuys.length > 0 ? topBuys.map(normaliseProduct) : rawAllProducts
                     .map(normaliseProduct)
                     .filter((p, index, self) => self.findIndex(t => t.id === p.id) === index)
                     .sort((a, b) => (b.sales || 0) - (a.sales || 0))
@@ -949,47 +930,37 @@ export default function Home() {
               </div>
             </LazySection>
 
-            {/* 6.7 Trending Brands Section (Responsive grids) */}
-            <LazySection placeholderHeight="200px">
-              <div id="trending-brands-section" className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl md:text-2xl font-bold text-[#02006c] font-sans">
-                    TRENDING BRANDS
-                  </h3>
-                  <span className="text-[10px] md:text-xs bg-blue-50 border border-blue-100 text-blue-600 font-bold px-3 py-1 rounded-full uppercase tracking-wider">
-                    Featured
-                  </span>
-                </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                  {trendingBrandsList.map(brand => (
-                    <div key={`home-brand-${brand.id}`} className="flex flex-col cursor-pointer group" onClick={() => { sessionStorage.setItem('scrollToBrands', '1'); navigate(`/brand/${brand.id}`); }}>
-                      <div className="w-full aspect-[4/3] rounded-2xl bg-slate-100 relative shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-center overflow-hidden border border-slate-100">
-                        {/* Brand Badge */}
-                        <div className="absolute top-0 left-2.5 bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-b-lg shadow-sm z-10">
-                          <span className={`text-[9.5px] md:text-[10.5px] font-black ${brand.badgeColor}`}>{brand.brand.toUpperCase()}</span>
-                        </div>
-
-                        {/* Real Product Image Covering the Card */}
-                        <OptimizedImage src={brand.image} alt={brand.brand} type="product" className="absolute inset-0 group-hover:scale-115 transition-transform duration-500" />
-                      </div>
-                      <div className="mt-2 text-center">
-                        <p className="text-xs font-black text-slate-800">{brand.discount}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </LazySection>
           </>
         ) : (
           <div className="space-y-6">
             {/* Sub-categories row */}
             {(() => {
-              const subs = subCategoryChips.filter(
-                sc => sc.categoryId === selectedCategory
-              );
-              if (subs.length === 0) return null;
+              if (selectedCategory === 'for-you') return null;
+              const selectedCatObj = categories.find(c => c._id === selectedCategory || c.id === selectedCategory);
+              if (!selectedCatObj) return null;
+
+              const catId = (selectedCatObj._id || '').toLowerCase();
+              const catSlug = (selectedCatObj.id || '').toLowerCase();
+
+              // Filter subcategories belonging to this category (by id or slug)
+              const matchedSubs = subCategoryChips.filter(sc => {
+                const scCatId = (sc.categoryId || '').toLowerCase();
+                return scCatId === catId || scCatId === catSlug;
+              });
+
+              // Deduplicate subcategories by name
+              const uniqueMatchedSubs = [];
+              const seenSubNames = new Set();
+              matchedSubs.forEach(sub => {
+                const name = (sub.subCategoryName || '').toLowerCase().trim();
+                if (name && !seenSubNames.has(name)) {
+                  seenSubNames.add(name);
+                  uniqueMatchedSubs.push(sub);
+                }
+              });
+
+              if (uniqueMatchedSubs.length === 0) return null;
 
               return (
                 <div className="flex gap-4 overflow-x-auto scrollbar-none pb-2 mt-2 md:grid md:grid-cols-8 md:gap-4 md:overflow-visible">
@@ -1004,7 +975,7 @@ export default function Home() {
                     <span className={`text-[10px] md:text-xs font-bold ${selectedSubCategory === 'all' ? 'text-[#ee4923]' : 'text-slate-700'}`}>All</span>
                   </div>
 
-                  {subs.map(sub => {
+                  {uniqueMatchedSubs.map(sub => {
                     const subKey = sub._id || sub.id;
                     const isSubActive = selectedSubCategory.toLowerCase() === subKey.toLowerCase();
                     return (
@@ -1077,7 +1048,7 @@ export default function Home() {
                 </div>
 
                 <div className="flex gap-4 overflow-x-auto scrollbar-none pb-2 md:grid md:grid-cols-5 lg:grid-cols-10 md:gap-4 md:overflow-visible">
-                  {(topBuys.length > 0 ? topBuys : [...crazyDealsProducts, ...flashSaleProducts, ...topSelectionProducts]
+                  {(topBuys.length > 0 ? topBuys.map(normaliseProduct) : [...crazyDealsProducts, ...flashSaleProducts, ...topSelectionProducts]
                     .map(normaliseProduct)
                     .filter((p, index, self) => self.findIndex(t => t.id === p.id) === index)
                     .sort((a, b) => (b.sales || 0) - (a.sales || 0))
@@ -1113,35 +1084,7 @@ export default function Home() {
               </div>
             </LazySection>
 
-            {/* Trending Brands Section */}
-            <LazySection placeholderHeight="180px">
-              <div className="space-y-4 pt-6 border-t border-slate-200/80">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl md:text-2xl font-bold text-[#02006c] font-sans">
-                    TRENDING BRANDS
-                  </h3>
-                  <span className="text-[9px] md:text-xs bg-blue-50 border border-blue-100 text-blue-600 font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
-                    Featured
-                  </span>
-                </div>
 
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-                  {trendingBrandsList.map(brand => (
-                    <div key={`cat-brand-${brand.id}`} className="flex flex-col cursor-pointer group" onClick={() => navigate('/brand/' + brand.id)}>
-                      <div className="w-full aspect-[4/3] rounded-2xl bg-slate-100 relative overflow-hidden shadow-sm hover:shadow-md transition-shadow border border-slate-100">
-                        <div className="absolute top-0 left-2.5 bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-b-lg shadow-sm z-10">
-                          <span className={`text-[9px] md:text-[10px] font-black ${brand.badgeColor}`}>{brand.brand.toUpperCase()}</span>
-                        </div>
-                        <OptimizedImage src={brand.image} alt={brand.brand} type="product" className="absolute inset-0 group-hover:scale-110 transition-transform duration-500" />
-                      </div>
-                      <div className="mt-2 text-center">
-                        <p className="text-[10px] md:text-xs font-black text-slate-800">{brand.discount}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </LazySection>
           </div>
         )}
       </div>

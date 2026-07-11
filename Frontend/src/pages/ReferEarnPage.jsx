@@ -61,7 +61,7 @@ export default function ReferEarnPage() {
 
   const referralCode = referralData?.referralCode || '...';
   const shareText = `Hey! Join Mynzo using my referral code ${referralCode} and we both get ${referralData?.stats?.coinsPerReferral || 100} Mynzo Coins! 🎉`;
-  const shareUrl = `${window.location.origin}/register?ref=${referralCode}`;
+  const shareUrl = `${window.location.origin}/#/login?ref=${referralCode}`;
   const fullShareText = `${shareText}\n\n${shareUrl}`;
 
   const handleCopy = () => {

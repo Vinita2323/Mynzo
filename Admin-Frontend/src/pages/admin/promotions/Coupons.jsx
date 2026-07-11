@@ -211,7 +211,7 @@ const Coupons = () => {
     const rows = coupons.map(c => [
       c.code,
       c.type,
-      c.type === 'Percentage' ? `${c.value}%` : `₹${c.value}`,
+      c.type === 'Percentage' ? `${c.value}%` : `INR ${c.value}`,
       c.minOrder || 0,
       new Date(c.expiry).toLocaleDateString(),
       c.usageLimit || 1,
@@ -509,7 +509,10 @@ const Coupons = () => {
                         placeholder={type === 'Percentage' ? 'e.g. 15' : 'e.g. 250'} 
                         className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 text-sm font-black outline-none" 
                         value={value}
-                        onChange={e => setValue(e.target.value)}
+                        onChange={e => {
+                          const val = e.target.value;
+                          if (val === '' || Number(val) >= 0) setValue(val);
+                        }}
                         required
                         min="1"
                       />
@@ -523,7 +526,10 @@ const Coupons = () => {
                       placeholder="e.g. 500" 
                       className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 text-sm font-bold outline-none" 
                       value={minOrder}
-                      onChange={e => setMinOrder(e.target.value)}
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === '' || Number(val) >= 0) setMinOrder(val);
+                      }}
                       min="0"
                     />
                   </div>
@@ -536,7 +542,10 @@ const Coupons = () => {
                         placeholder="1000" 
                         className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 text-sm font-bold outline-none" 
                         value={usageLimit}
-                        onChange={e => setUsageLimit(e.target.value)}
+                        onChange={e => {
+                          const val = e.target.value;
+                          if (val === '' || Number(val) >= 0) setUsageLimit(val);
+                        }}
                         min="1"
                       />
                     </div>
@@ -547,7 +556,10 @@ const Coupons = () => {
                         placeholder="1" 
                         className="w-full bg-slate-50 border border-slate-100 rounded-xl py-4 px-6 text-sm font-bold outline-none" 
                         value={perUserLimit}
-                        onChange={e => setPerUserLimit(e.target.value)}
+                        onChange={e => {
+                          const val = e.target.value;
+                          if (val === '' || Number(val) >= 0) setPerUserLimit(val);
+                        }}
                         min="1"
                       />
                     </div>

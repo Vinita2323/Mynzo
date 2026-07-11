@@ -1,4 +1,5 @@
 const SubCategoryChip = require('../Models/SubCategoryChip');
+const { getImageUrl } = require('../utils/imageHelper');
 
 // @desc    Get all Sub Category Chips
 // @route   GET /api/admin/catalog/subchips
@@ -31,8 +32,7 @@ const createSubCategoryChip = async (req, res) => {
 
     let image = null;
     if (req.file) {
-      const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-      image = `${backendUrl}${req.file.url}`;
+      image = getImageUrl(req.file.url);
     }
 
     const newSubChip = new SubCategoryChip({
@@ -73,8 +73,7 @@ const updateSubCategoryChip = async (req, res) => {
     if (order !== undefined) chip.order = Number(order);
 
     if (req.file) {
-      const backendUrl = process.env.BACKEND_URL || 'http://localhost:5000';
-      chip.image = `${backendUrl}${req.file.url}`;
+      chip.image = getImageUrl(req.file.url);
     }
 
     await chip.save();

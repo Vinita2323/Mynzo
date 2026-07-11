@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { getImageUrl } from '../../utils/imageHelper';
 
 /**
  * OptimizedImage – A reusable image component for the Admin panel with:
@@ -17,31 +18,6 @@ const FALLBACK_GRADIENTS = {
   default:    'linear-gradient(135deg, #64748b 0%, #94a3b8 100%)',
 };
 
-const getImageUrl = (imagePath) => {
-  if (!imagePath) return '';
-  if (
-    imagePath.startsWith('http://') ||
-    imagePath.startsWith('https://') ||
-    imagePath.startsWith('data:') ||
-    imagePath.startsWith('blob:') ||
-    imagePath.startsWith('/src/') ||
-    imagePath.startsWith('/assets/') ||
-    imagePath.includes('categoryForU') ||
-    imagePath.includes('Category')
-  ) {
-    return imagePath;
-  }
-  // If it's a full URL without http/https (e.g. starting with www.)
-  if (imagePath.startsWith('www.')) {
-    return `https://${imagePath}`;
-  }
-  // If it doesn't look like a local uploads path (doesn't start with /uploads or uploads), it's likely a full external URL
-  if (!imagePath.startsWith('/uploads') && !imagePath.startsWith('uploads')) {
-    return imagePath; // Return as is
-  }
-  const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-  return `${apiBase}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
-};
 
 export default function OptimizedImage({
   src,

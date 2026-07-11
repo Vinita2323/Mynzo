@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from '../../../utils/toast';
+import { getImageUrl } from '../../../utils/imageHelper';
 
 const MOCK_REVIEWS = [];
 
@@ -369,7 +370,7 @@ const ReviewModeration = () => {
               </div>
             ) : filteredReels.length > 0 ? (
               filteredReels.map((reel) => {
-                const videoUrl = reel.video.startsWith('http') ? reel.video : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}${reel.video}`;
+                const videoUrl = getImageUrl(reel.video);
                 return (
                   <motion.div 
                     key={reel._id}
