@@ -10,7 +10,6 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [agreed, setAgreed] = useState(false);
   const [modalType, setModalType] = useState(null); // 'privacy' | 'terms' | null
   const [modalContent, setModalContent] = useState('');
   const [modalLoading, setModalLoading] = useState(false);
@@ -41,10 +40,6 @@ const Auth = () => {
     e.preventDefault();
     if (!email || !password) {
       setError('Please fill in all fields');
-      return;
-    }
-    if (!agreed) {
-      setError('You must agree to the Terms & Conditions and Privacy Policy');
       return;
     }
     setError('');
@@ -147,34 +142,7 @@ const Auth = () => {
               </div>
             </div>
 
-            {/* Terms and Privacy Checkbox */}
-            <div className="flex items-start gap-2.5 mt-2 px-1">
-              <input 
-                type="checkbox" 
-                id="agree-checkbox" 
-                checked={agreed}
-                onChange={(e) => setAgreed(e.target.checked)}
-                className="w-5 h-5 text-blue-600 border-slate-200 rounded focus:ring-blue-500 mt-0.5 cursor-pointer"
-              />
-              <label htmlFor="agree-checkbox" className="text-xs font-bold text-slate-700 select-none leading-normal cursor-pointer">
-                I agree to the{' '}
-                <button 
-                  type="button" 
-                  onClick={() => openModal('privacy')} 
-                  className="text-blue-600 hover:underline font-extrabold focus:outline-none bg-transparent border-0 p-0 cursor-pointer inline"
-                >
-                  Privacy Policy
-                </button>
-                {' '}and{' '}
-                <button 
-                  type="button" 
-                  onClick={() => openModal('terms')} 
-                  className="text-blue-600 hover:underline font-extrabold focus:outline-none bg-transparent border-0 p-0 cursor-pointer inline"
-                >
-                  Terms & Conditions
-                </button>
-              </label>
-            </div>
+
 
             <button 
               type="submit"
@@ -238,12 +206,11 @@ const Auth = () => {
               <button 
                 type="button"
                 onClick={() => {
-                  setAgreed(true);
                   setModalType(null);
                 }}
                 className="bg-blue-600 hover:bg-blue-700 text-white font-semibold text-[10px] uppercase tracking-[1.5px] px-6 py-3 rounded-xl shadow-md transition-all active:scale-[0.98]"
               >
-                Accept and Close
+                Close
               </button>
             </div>
           </div>
