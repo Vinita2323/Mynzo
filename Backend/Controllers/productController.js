@@ -3,6 +3,10 @@ const Brand = require('../Models/Brand');
 const { getImageUrl } = require('../utils/imageHelper');
 const ExcelJS = require('exceljs');
 const XLSX = require('xlsx');
+const axios = require('axios');
+const sharp = require('sharp');
+const fs = require('fs');
+const path = require('path');
 
 const parseJsonField = (field, defaultVal = {}) => {
   if (!field) return defaultVal;
@@ -696,6 +700,51 @@ const getCombinedCatalog = async (req, res) => {
   }
 };
 
+const processImageUrl = async (imageUrl) => {
+  if (!imageUrl) return '';
+  const url = String(imageUrl).trim();
+
+  // If it's not an http/https URL, return as is
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return url;
+  }
+
+  try {
+    const uploadDir = path.join(__dirname, '../uploads');
+    
+    // Ensure directory exists
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    const response = await axios({
+      method: 'get',
+      url: url,
+      responseType: 'arraybuffer',
+      timeout: 15000
+    });
+
+    const buffer = Buffer.from(response.data);
+    const filename = `img-${Date.now()}-${Math.round(Math.random() * 1e9)}.webp`;
+    const outputPath = path.join(uploadDir, filename);
+
+    // Standardize to 1000x1000 WebP centered on a white square canvas
+    await sharp(buffer)
+      .resize(1000, 1000, {
+        fit: 'contain',
+        background: { r: 255, g: 255, b: 255, alpha: 1 }
+      })
+      .sharpen({ sigma: 0.5 })
+      .webp({ quality: 85, effort: 4 })
+      .toFile(outputPath);
+
+    return `/uploads/${filename}`;
+  } catch (err) {
+    console.error(`Failed to process remote image URL (${url}):`, err.message);
+    return url;
+  }
+};
+
 const bulkUploadProducts = async (req, res) => {
   try {
     if (!req.file) {
@@ -954,7 +1003,13 @@ const bulkUploadProducts = async (req, res) => {
 
       const imageURLsStr = getValue('Image URLs');
       if (imageURLsStr) {
-        productData.images = imageURLsStr.toString().split(',').map(url => url.trim()).filter(Boolean);
+        const urls = imageURLsStr.toString().split(',').map(url => url.trim()).filter(Boolean);
+        const processedUrls = [];
+        for (const url of urls) {
+          const processed = await processImageUrl(url);
+          processedUrls.push(processed);
+        }
+        productData.images = processedUrls;
       }
 
       try {
