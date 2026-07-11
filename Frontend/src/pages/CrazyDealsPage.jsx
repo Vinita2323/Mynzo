@@ -28,7 +28,7 @@ export default function CrazyDealsPage() {
             discount: p.discountLabel || (p.mrp ? `-${Math.round((1 - p.sellingPrice / p.mrp) * 100)}%` : '0%'),
             rating: p.rating || 0,
             image: (p.images && p.images[0]) ? p.images[0] : '',
-            brandName: p.brandName || 'Mynzo Originals',
+            brandName: 'Mynzo World',
             stock: p.stock || 0,
             sales: p.sales || 0
           })));

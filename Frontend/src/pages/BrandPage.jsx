@@ -25,7 +25,7 @@ export default function BrandPage() {
     rating: p.rating || 4.5,
     type: (p.category || '').toLowerCase(),
     image: (p.images && p.images[0]) ? p.images[0] : '',
-    brandName: p.brandName || 'Mynzo Originals',
+    brandName: 'Mynzo World',
     flags: p.flags || {},
     stock: p.stock || 0,
     sales: p.sales || 0,

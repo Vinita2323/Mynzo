@@ -212,7 +212,7 @@ export default function CategoriesPage() {
     type: (p.category || '').toLowerCase(),
     subCategory: p.subCategory ? p.subCategory.toLowerCase() : '',
     image: p.images && p.images[0] ? p.images[0] : '',
-    brandName: p.brandName || 'Mynzo Originals',
+    brandName: 'Mynzo World',
     flags: p.flags || {},
     stock: p.stock || 0,
     sales: p.sales || 0,
@@ -263,27 +263,33 @@ export default function CategoriesPage() {
                 onClick={() => setSelectedCategory(catKey)}
                 className="flex flex-col md:flex-row items-center md:gap-3 w-full relative pb-1 md:pb-0 md:p-2.5 rounded-xl group cursor-pointer"
               >
-                <div className="relative w-[52px] h-[52px] md:w-9 md:h-9 flex items-center justify-center flex-shrink-0">
+                <div className={`relative w-[52px] h-[52px] md:w-9 md:h-9 flex items-center justify-center flex-shrink-0 rounded-xl overflow-hidden ${
+                  cat.image ? 'bg-white border border-slate-100 shadow-3xs' : ''
+                }`}>
                   {/* Background Cover */}
                   {isActive ? (
-                    <motion.div
-                      layoutId="activeCategoryCapsule"
-                      className="absolute inset-0 rounded-xl bg-[#ee4923] shadow-md shadow-[#ee4923]/30"
-                      transition={{ type: 'spring', stiffness: 380, damping: 30 }}
-                    />
+                    cat.image ? (
+                      <div className="absolute inset-0 border-2 border-[#ee4923] rounded-xl" />
+                    ) : (
+                      <motion.div
+                        layoutId="activeCategoryCapsule"
+                        className="absolute inset-0 rounded-xl bg-[#ee4923] shadow-md shadow-[#ee4923]/30"
+                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                      />
+                    )
                   ) : (
-                    <div className="absolute inset-0 rounded-xl bg-orange-50 group-hover:bg-orange-100 transition-colors duration-300" />
+                    !cat.image && <div className="absolute inset-0 rounded-xl bg-orange-50 group-hover:bg-orange-100 transition-colors duration-300" />
                   )}
 
                   {/* Image Icon */}
-                  <div className="relative z-10 flex items-center justify-center">
+                  <div className="relative z-10 flex items-center justify-center w-full h-full">
                     {cat.image ? (
                       <OptimizedImage
                         src={cat.image}
                         alt={labelText}
                         type="category"
                         objectFit="contain"
-                        className={`w-[36px] h-[36px] md:w-5 md:h-5 drop-shadow-sm transition-transform duration-300 ${isActive ? 'scale-110' : 'scale-100'}`}
+                        className={`w-full h-full object-contain p-1 transition-transform duration-300 ${isActive ? 'scale-110' : 'scale-100'}`}
                       />
                     ) : (
                       renderCatIcon(cat.id, isActive)
@@ -420,20 +426,26 @@ export default function CategoriesPage() {
                       onClick={() => setSelectedSubCategory(subKey)}
                       className="flex flex-col items-center w-[68px] group cursor-pointer flex-shrink-0 snap-start"
                     >
-                      <div className="relative w-[52px] h-[52px] md:w-11 md:h-11 flex items-center justify-center">
+                      <div className={`relative w-[52px] h-[52px] md:w-11 md:h-11 flex items-center justify-center rounded-lg overflow-hidden ${
+                        sub.image ? 'bg-white border border-slate-100 shadow-3xs' : ''
+                      }`}>
                         {isSubActive ? (
-                          <div className="absolute inset-0 rounded-lg bg-[#ee4923] shadow-md shadow-[#ee4923]/25 animate-scale-up" />
+                          sub.image ? (
+                            <div className="absolute inset-0 border-2 border-[#ee4923] rounded-lg" />
+                          ) : (
+                            <div className="absolute inset-0 rounded-lg bg-[#ee4923] shadow-md shadow-[#ee4923]/25 animate-scale-up" />
+                          )
                         ) : (
-                          <div className="absolute inset-0 rounded-lg bg-orange-50 group-hover:bg-orange-100 transition-colors duration-300" />
+                          !sub.image && <div className="absolute inset-0 rounded-lg bg-orange-50 group-hover:bg-orange-100 transition-colors duration-300" />
                         )}
-                        <div className="relative z-10 flex items-center justify-center">
+                        <div className="relative z-10 flex items-center justify-center w-full h-full">
                           {sub.image ? (
                             <OptimizedImage
                               src={sub.image}
                               alt=""
                               type="subcategory"
                               objectFit="contain"
-                              className={`w-[34px] h-[34px] md:w-7 md:h-7 drop-shadow-xs transition-transform duration-300 ${isSubActive ? 'scale-110' : 'scale-100'}`}
+                              className={`w-full h-full object-contain p-1 transition-transform duration-300 ${isSubActive ? 'scale-110' : 'scale-100'}`}
                             />
                           ) : (
                             <div className="w-[34px] h-[34px] bg-slate-200 rounded" />

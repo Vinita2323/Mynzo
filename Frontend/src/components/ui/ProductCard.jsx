@@ -37,6 +37,40 @@ function ProductCard({ product }) {
     }
   };
 
+  const brandName = "Mynzo World";
+
+  // Handle swapped prices dynamically (if MRP < SellingPrice in DB, swap them)
+  const displaySellingPrice = (product.originalPrice && product.originalPrice < product.price) 
+    ? product.originalPrice 
+    : product.price;
+
+  const displayMrp = (product.originalPrice && product.originalPrice < product.price) 
+    ? product.price 
+    : product.originalPrice;
+
+  // Format discount nicely (especially if it is a decimal like 0.38)
+  const displayDiscount = (() => {
+    const rawDiscount = product.discount;
+    if (!rawDiscount) return '-10% OFF';
+    
+    const parsed = parseFloat(rawDiscount);
+    if (!isNaN(parsed) && parsed > 0 && parsed < 1) {
+      return `-${Math.round(parsed * 100)}% OFF`;
+    }
+    
+    const cleanStr = String(rawDiscount).replace('-', '').replace('%', '').trim();
+    if (cleanStr && !isNaN(cleanStr)) {
+      return `-${cleanStr}% OFF`;
+    }
+    
+    // Ensure it starts with a minus sign if it doesn't already
+    let res = String(rawDiscount);
+    if (!res.startsWith('-')) {
+      res = '-' + res;
+    }
+    return res;
+  })();
+
   return (
     <div 
       onClick={() => navigate(`/product/${product.id}`)}
@@ -63,7 +97,7 @@ function ProductCard({ product }) {
         
         {/* Top Left Badge */}
         <div className="absolute top-0 left-0 bg-[#6b52a3] text-white text-[8px] font-bold px-2 py-1 rounded-br-lg shadow-sm z-10 uppercase tracking-wide">
-          {product.brandName || getProductBrand(product.type)}
+          {brandName}
         </div>
 
         {/* Top Right Wishlist Button */}
@@ -97,26 +131,28 @@ function ProductCard({ product }) {
         {/* Title */}
         <div className="flex items-start justify-between gap-1 h-4.5 overflow-hidden">
           <h3 className="text-xs md:text-sm font-bold text-slate-800 truncate leading-tight w-full">
-            {product.brandName || getProductBrand(product.type)}
+            {product.name}
           </h3>
         </div>
         
         {/* Description / Product Name */}
         <div className="h-3.5 overflow-hidden mt-0.5">
-          <p className="text-[9.5px] md:text-[10px] text-slate-500 truncate w-full">
-            {product.name} - {product.desc}
+          <p className="text-[9.5px] md:text-[10px] text-slate-400 truncate w-full font-semibold">
+            Mynzo World
           </p>
         </div>
 
         {/* Prices */}
         <div className="mt-1 flex items-baseline gap-1.5 flex-wrap leading-none h-4.5 overflow-hidden">
-          <span className="text-[10px] md:text-[11px] text-slate-400 line-through">₹{product.originalPrice}</span>
-          <span className="text-xs md:text-[14px] font-black text-slate-800">₹{product.price}</span>
+          <span className="text-xs md:text-[14px] font-black text-slate-800">₹{displaySellingPrice}</span>
+          {displayMrp && displayMrp > displaySellingPrice && (
+            <span className="text-[10px] md:text-[11px] text-slate-400 line-through">₹{displayMrp}</span>
+          )}
         </div>
 
         {/* Discount Line */}
         <div className="mt-0.5 text-[9px] md:text-[9.5px] font-bold text-[#FF7A45] leading-tight h-3.5 overflow-hidden">
-          {product.discount ? product.discount.replace('-', '').replace('%', '% OFF') : '10% OFF'}
+          {displayDiscount}
         </div>
         
       </div>

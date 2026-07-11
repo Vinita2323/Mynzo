@@ -66,7 +66,7 @@ export default function TopSelectionPage() {
               </div>
               <div className="px-2.5 pb-1 w-full text-left">
                 <p className="text-[10px] text-slate-400 font-medium truncate mb-0.5">
-                  {product.brandName || 'Mynzo Originals'}
+                  {product.brandName || 'Mynzo World'}
                 </p>
                 <h3 className="text-xs font-bold text-[#02006c] tracking-tight truncate w-full">
                   {product.name}

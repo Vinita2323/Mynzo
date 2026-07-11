@@ -290,7 +290,7 @@ export default function ProductDetailsPage() {
             type: (p.category || '').toLowerCase(),
             image: getImageUrl(productImages[0]),
             images: productImages.map(getImageUrl),
-            brandName: p.brandName || 'Mynzo Originals',
+            brandName: 'Mynzo World',
             flags: p.flags || {},
             stock: p.stock || 0,
             highlights: p.highlights || {},
@@ -328,7 +328,7 @@ export default function ProductDetailsPage() {
               discount: '50% OFF',
               image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800',
               images: ['https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?auto=format&fit=crop&q=80&w=800'],
-              brandName: 'Mynzo Originals',
+              brandName: 'Mynzo World',
               highlights: {},
               technicalSpecs: {}
             });
@@ -608,7 +608,7 @@ export default function ProductDetailsPage() {
           {/* Brand & Desc */}
           <div className="border-b border-slate-100 pb-4">
             <span className="text-xs uppercase tracking-widest text-slate-400 font-extrabold block mb-1">
-              {product.brandName || 'Mynzo Originals'}
+              {product.brandName}
             </span>
             <h1 className="text-base md:text-xl font-bold text-[#02006c] leading-tight">
               {product.name}
@@ -776,25 +776,32 @@ export default function ProductDetailsPage() {
               
               {isHighlightsOpen && (
                 <div className="mt-4 grid grid-cols-2 gap-y-4 gap-x-6 animate-fade-in border-t border-slate-100 pt-4">
-                  {product.highlights && Object.keys(product.highlights).length > 0 ? (
-                    Object.entries(product.highlights).map(([key, val]) => (
-                      <div key={key} className="flex flex-col border-b border-slate-50 pb-2">
-                        <span className="text-[11px] text-slate-400 mb-0.5 capitalize font-extrabold">{key}</span>
-                        <span className="text-xs font-bold text-slate-800">{val}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <>
-                      <div className="flex flex-col border-b border-slate-50 pb-2">
-                        <span className="text-[11px] text-slate-400 mb-0.5 font-extrabold">Quality</span>
-                        <span className="text-xs font-bold text-slate-800">Premium Grade</span>
-                      </div>
-                      <div className="flex flex-col border-b border-slate-50 pb-2">
-                        <span className="text-[11px] text-slate-400 mb-0.5 font-extrabold">Warranty</span>
-                        <span className="text-xs font-bold text-slate-800">1 Year Warranty</span>
-                      </div>
-                    </>
-                  )}
+                  {(() => {
+                    const validHighlights = product.highlights 
+                      ? Object.entries(product.highlights).filter(([key, val]) => val !== undefined && val !== null && val !== '' && val !== '-' && val !== '0' && val !== 0)
+                      : [];
+                    if (validHighlights.length > 0) {
+                      return validHighlights.map(([key, val]) => (
+                        <div key={key} className="flex flex-col border-b border-slate-50 pb-2">
+                          <span className="text-[11px] text-slate-400 mb-0.5 capitalize font-extrabold">{key}</span>
+                          <span className="text-xs font-bold text-slate-800">{val}</span>
+                        </div>
+                      ));
+                    } else {
+                      return (
+                        <>
+                          <div className="flex flex-col border-b border-slate-50 pb-2">
+                            <span className="text-[11px] text-slate-400 mb-0.5 font-extrabold">Quality</span>
+                            <span className="text-xs font-bold text-slate-800">Premium Grade</span>
+                          </div>
+                          <div className="flex flex-col border-b border-slate-50 pb-2">
+                            <span className="text-[11px] text-slate-400 mb-0.5 font-extrabold">Warranty</span>
+                            <span className="text-xs font-bold text-slate-800">1 Year Warranty</span>
+                          </div>
+                        </>
+                      );
+                    }
+                  })()}
                 </div>
               )}
             </div>
@@ -831,25 +838,32 @@ export default function ProductDetailsPage() {
                   {activeDetailTab === 'specifications' && (
                     <div className="animate-fade-in">
                       <div className="grid grid-cols-2 gap-y-4 gap-x-6">
-                        {product.technicalSpecs && Object.keys(product.technicalSpecs).length > 0 ? (
-                          Object.entries(product.technicalSpecs).map(([key, val]) => (
-                            <div key={key} className="flex flex-col border-b border-slate-100 pb-2">
-                              <span className="text-[11px] text-slate-400 mb-0.5 capitalize font-extrabold">{key}</span>
-                              <span className="text-xs font-bold text-slate-800">{val}</span>
-                            </div>
-                          ))
-                        ) : (
-                          <>
-                            <div className="flex flex-col border-b border-slate-100 pb-2">
-                              <span className="text-[11px] text-slate-400 mb-0.5 font-extrabold">Brand</span>
-                              <span className="text-xs font-bold text-slate-800">{product.brandName || 'Generic'}</span>
-                            </div>
-                            <div className="flex flex-col border-b border-slate-100 pb-2">
-                              <span className="text-[11px] text-slate-400 mb-0.5 font-extrabold">Type</span>
-                              <span className="text-xs font-bold text-slate-800">Premium quality product</span>
-                            </div>
-                          </>
-                        )}
+                        {(() => {
+                          const validSpecs = product.technicalSpecs 
+                            ? Object.entries(product.technicalSpecs).filter(([key, val]) => val !== undefined && val !== null && val !== '' && val !== '-' && val !== '0' && val !== 0)
+                            : [];
+                          if (validSpecs.length > 0) {
+                            return validSpecs.map(([key, val]) => (
+                              <div key={key} className="flex flex-col border-b border-slate-100 pb-2">
+                                <span className="text-[11px] text-slate-400 mb-0.5 capitalize font-extrabold">{key}</span>
+                                <span className="text-xs font-bold text-slate-800">{val}</span>
+                              </div>
+                            ));
+                          } else {
+                            return (
+                              <>
+                                <div className="flex flex-col border-b border-slate-100 pb-2">
+                                  <span className="text-[11px] text-slate-400 mb-0.5 font-extrabold">Brand</span>
+                                  <span className="text-xs font-bold text-slate-800">{product.brandName || 'Generic'}</span>
+                                </div>
+                                <div className="flex flex-col border-b border-slate-100 pb-2">
+                                  <span className="text-[11px] text-slate-400 mb-0.5 font-extrabold">Type</span>
+                                  <span className="text-xs font-bold text-slate-800">Premium quality product</span>
+                                </div>
+                              </>
+                            );
+                          }
+                        })()}
                       </div>
                     </div>
                   )}

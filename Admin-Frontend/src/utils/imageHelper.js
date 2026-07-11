@@ -35,12 +35,12 @@ export const getImageUrl = (imagePath) => {
   if (path.includes('uploads')) {
     // In local development/testing, if the hostname is localhost/127.0.0.1/private network,
     // we should use the local API URL to fetch images so developers can see local uploads.
-    const isLocal = typeof window !== 'undefined' && 
-      (window.location.hostname === 'localhost' || 
-       window.location.hostname === '127.0.0.1' || 
-       window.location.hostname.includes('gitpod') || 
-       window.location.hostname.includes('devtunnels.ms') ||
-       /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(window.location.hostname));
+    const isLocal = typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.includes('gitpod') ||
+        window.location.hostname.includes('devtunnels.ms') ||
+        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(window.location.hostname));
 
     let baseUrl = '';
     if (isLocal) {

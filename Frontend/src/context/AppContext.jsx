@@ -103,7 +103,7 @@ export const AppProvider = ({ children }) => {
         rating: p.rating || 0,
         type: (p.category || '').toLowerCase(),
         image: p.images && p.images[0] ? p.images[0] : '',
-        brandName: p.brandName || 'Mynzo Originals',
+        brandName: 'Mynzo World',
         sales: p.sales || 0,
         quantity: item.quantity,
         weight: p.shippingSpecs?.weight || 0.5,
@@ -323,7 +323,7 @@ export const AppProvider = ({ children }) => {
           rating: p.rating || 0,
           type: (p.category || '').toLowerCase(),
           image: p.images && p.images[0] ? p.images[0] : '',
-          brandName: p.brandName || 'Mynzo Originals',
+          brandName: 'Mynzo World',
           sales: p.sales || 0
         }));
         setWishlist(normalised);
@@ -345,7 +345,7 @@ export const AppProvider = ({ children }) => {
               rating: product.rating || 0,
               type: (product.category || '').toLowerCase(),
               image: product.images && product.images[0] ? product.images[0] : '',
-              brandName: product.brandName || 'Mynzo Originals',
+              brandName: 'Mynzo World',
               sales: product.sales || 0
             };
             return [...prev, normalised];

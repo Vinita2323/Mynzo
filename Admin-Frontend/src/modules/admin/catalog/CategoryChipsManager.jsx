@@ -36,7 +36,7 @@ const CategoryForm = ({ onSave, onCancel, label, formData, setFormData, imagePre
       <div>
         <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Image Upload *</label>
         <div className="flex items-center gap-2">
-          <OptimizedImage src={imagePreview} className="w-9 h-9 rounded-lg object-cover border border-slate-200" alt="Preview" type="category" />
+          <OptimizedImage src={imagePreview} className="w-9 h-9 rounded-lg object-contain bg-white border border-slate-200 p-0.5" alt="Preview" type="category" objectFit="contain" />
           <label className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[9px] font-black uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition-all select-none">
             Upload
             <input
@@ -405,7 +405,7 @@ const CategoryChipsManager = () => {
                     <span className="text-[11px] font-black text-slate-300 w-6 text-center font-roboto">#{index + 1}</span>
                     {/* Image */}
                     <div className="w-10 h-10 bg-slate-50 rounded-xl overflow-hidden flex items-center justify-center border border-slate-100 flex-shrink-0 shadow-sm">
-                      <OptimizedImage src={cat.image} className="w-full h-full" alt="icon" type="category" />
+                      <OptimizedImage src={cat.image} className="w-full h-full object-contain p-0.5" alt="icon" type="category" objectFit="contain" />
                     </div>
                     {/* Info */}
                     <div className="flex-1 min-w-0">

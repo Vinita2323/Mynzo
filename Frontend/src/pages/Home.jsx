@@ -354,7 +354,7 @@ export default function Home() {
     rating: p.rating || 4.5,
     type: (p.category || '').toLowerCase(),
     image: (p.images && p.images[0]) ? p.images[0] : '',
-    brandName: p.brandName || 'Mynzo Originals',
+    brandName: 'Mynzo World',
     flags: p.flags || {},
     stock: p.stock || 0,
     sales: p.sales || 0,
@@ -519,11 +519,15 @@ export default function Home() {
                 {/* Image Box */}
                 <div className={`w-13 h-13 md:w-16 md:h-16 flex items-center justify-center rounded-2xl border transition-all duration-300 overflow-hidden ${
                   isActive
-                    ? 'bg-[#ee4923] border-[#ee4923] text-white shadow-md'
-                    : 'bg-[#FFF0ED] border-[#FFF0ED] text-[#02006c] hover:border-[#ee4923]/40'
+                    ? cat.image
+                      ? 'bg-white border-[#ee4923] ring-2 ring-orange-100 shadow-md'
+                      : 'bg-[#ee4923] border-[#ee4923] text-white shadow-md'
+                    : cat.image
+                      ? 'bg-white border-slate-100 hover:border-[#ee4923]/40'
+                      : 'bg-[#FFF0ED] border-[#FFF0ED] text-[#02006c] hover:border-[#ee4923]/40'
                 }`}>
                   {cat.image ? (
-                    <OptimizedImage src={getImageUrl(cat.image)} alt={labelText} type="category" objectFit="contain" className="w-full h-full p-1" />
+                    <OptimizedImage src={getImageUrl(cat.image)} alt={labelText} type="category" objectFit="contain" className="w-full h-full object-contain p-1" />
                   ) : (
                     renderCategoryIcon(cat.id, isActive)
                   )}
