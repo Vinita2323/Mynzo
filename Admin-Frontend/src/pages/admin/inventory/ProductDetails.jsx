@@ -17,12 +17,23 @@ const SectionTitle = ({ icon: Icon, color, children }) => (
   </div>
 );
 
-const DetailItem = ({ label, value }) => (
-  <div className="mb-4">
-    <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">{label}</p>
-    <p className="text-sm font-medium text-slate-800">{value || '-'}</p>
-  </div>
-);
+const DetailItem = ({ label, value }) => {
+  const isZeroAllowed = label.toLowerCase().includes('stock');
+  const isEmpty = value === undefined || 
+                  value === null || 
+                  value === '' || 
+                  value === '-' || 
+                  (!isZeroAllowed && (value === 0 || value === '0'));
+                  
+  if (isEmpty) return null;
+
+  return (
+    <div className="mb-4 animate-fade-in">
+      <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">{label}</p>
+      <p className="text-sm font-medium text-slate-800">{value}</p>
+    </div>
+  );
+};
 
 const ProductDetails = () => {
   const { id } = useParams();
