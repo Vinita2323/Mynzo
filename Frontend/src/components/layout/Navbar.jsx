@@ -74,9 +74,7 @@ export default function Navbar() {
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
-  const [savedAddresses, setSavedAddresses] = useState([
-    { id: 2, name: 'Vini Jinodiya', type: 'Home', address: '36, narmada kirana store abhinandan nagar mr10 ind...', pincode: '452010' }
-  ]);
+  const [savedAddresses, setSavedAddresses] = useState([]);
 
   const [addressSearchQuery, setAddressSearchQuery] = useState('');
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
@@ -133,9 +131,7 @@ export default function Navbar() {
   useEffect(() => {
     const fetchAddresses = async () => {
       if (!user) {
-        setSavedAddresses([
-          { id: 2, name: 'Vini Jinodiya', type: 'Home', address: '36, narmada kirana store abhinandan nagar mr10 ind...', pincode: '452010' }
-        ]);
+        setSavedAddresses([]);
         return;
       }
       try {
