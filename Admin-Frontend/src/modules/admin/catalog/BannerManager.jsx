@@ -50,8 +50,11 @@ const BannerForm = ({
         />
       </div>
       <div className="col-span-2">
-        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">
-          Banner Image * <span className="text-blue-500 font-bold">(Recommended: 1920 × 640 px / 3:1 ratio)</span>
+        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-2 mb-1.5 flex-wrap">
+          <span>Banner Image *</span>
+          <span className="text-[11px] font-extrabold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md inline-flex items-center gap-1 animate-pulse normal-case tracking-normal">
+            ⚠️ Recommended: 1920 × 768 px (2.5:1 ratio)
+          </span>
         </label>
         <div className="flex items-center gap-2">
           <OptimizedImage src={imagePreview} className="w-20 h-10 rounded-lg object-cover border border-slate-200" alt="Preview" type="banner" />
@@ -74,8 +77,8 @@ const BannerForm = ({
                   img.src = URL.createObjectURL(file);
                   img.onload = () => {
                     const ratio = img.width / img.height;
-                    if (ratio < 1.5) {
-                      toast.info("Warning: For best display, please upload a landscape image (Recommended: 1920 × 640 px / 3:1 ratio).", {
+                    if (ratio < 2.0) {
+                      toast.info("Warning: For best display, please upload a landscape image (Recommended: 1920 × 768 px / 2.5:1 ratio).", {
                         duration: 6000
                       });
                     }

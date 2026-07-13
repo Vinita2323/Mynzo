@@ -3,8 +3,32 @@ import { Bell, Heart, ShoppingCart, MapPin, ChevronDown, Search, Camera, Mic, Sc
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import toast from '../../utils/toast';
-import { NOTIFICATIONS } from '../../data/mockData';
+import { NOTIFICATIONS, CATEGORIES as MOCK_CATEGORIES } from '../../data/mockData';
 import analytics from '../../utils/analytics';
+import { cachedFetch } from '../../utils/apiCache';
+
+const getCategoryIcon = (catId) => {
+  const id = String(catId).toLowerCase();
+  if (id.includes('beauty') || id.includes('care') || id.includes('cosmetics')) {
+    return <Sparkles className="w-3.5 h-3.5" />;
+  }
+  if (id.includes('gift')) {
+    return <Gift className="w-3.5 h-3.5" />;
+  }
+  if (id.includes('elect') || id.includes('gadget') || id.includes('phone') || id.includes('wearable')) {
+    return <Compass className="w-3.5 h-3.5" />;
+  }
+  if (id.includes('jewel') || id.includes('gold') || id.includes('silver') || id.includes('gem')) {
+    return <Sparkles className="w-3.5 h-3.5" />;
+  }
+  if (id.includes('toy') || id.includes('game') || id.includes('play')) {
+    return <Gamepad2 className="w-3.5 h-3.5" />;
+  }
+  if (id.includes('fash') || id.includes('cloth') || id.includes('wear') || id.includes('shoe') || id.includes('sneaker')) {
+    return <User className="w-3.5 h-3.5" />;
+  }
+  return <Compass className="w-3.5 h-3.5" />;
+};
 
 export default function Navbar() {
   const navigate = useNavigate();
@@ -58,6 +82,53 @@ export default function Navbar() {
   const [isAddingNewAddress, setIsAddingNewAddress] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState(null);
   const [newAddressForm, setNewAddressForm] = useState({ name: '', address: '', pincode: '' });
+
+  const [categories, setCategories] = useState(() => 
+    MOCK_CATEGORIES.filter(c => c.id !== 'for-you').slice(0, 5)
+  );
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const data = await cachedFetch('/homepage', { ttl: 5 });
+        if (data.success && data.chips && data.chips.length > 0) {
+          const activeChips = data.chips.filter(c => c.active && c.id !== 'for-you');
+          const products = data.products || [];
+          
+          // Calculate product count for each category chip
+          const chipsWithCounts = activeChips.map(c => {
+            const catId = (c._id || '').toLowerCase();
+            const catSlug = (c.id || '').toLowerCase();
+            const catName = (c.categoryName || c.name || '').toLowerCase();
+            
+            const productCount = products.filter(p => {
+              const prodCat = (p.category || '').toLowerCase();
+              if (prodCat === catId || prodCat === catSlug) return true;
+              
+              const pCatObj = activeChips.find(ch => (ch._id || '').toLowerCase() === prodCat || (ch.id || '').toLowerCase() === prodCat);
+              const pCatName = pCatObj ? (pCatObj.categoryName || pCatObj.name || '').toLowerCase() : '';
+              return pCatName === catName && catName !== '';
+            }).length;
+            
+            return {
+              ...c,
+              productCount
+            };
+          });
+          
+          // Sort by product count descending and take the top 5
+          const sortedTop5 = chipsWithCounts
+            .sort((a, b) => b.productCount - a.productCount)
+            .slice(0, 5);
+            
+          setCategories(sortedTop5);
+        }
+      } catch (err) {
+        console.error('Error fetching categories in Navbar:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -583,48 +654,20 @@ export default function Navbar() {
                 <Home className="w-3.5 h-3.5" />
                 Home
               </button>
-              <button 
-                onClick={() => navigate('/categories?cat=beauty')} 
-                className={`hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 ${routerLocation.pathname.startsWith('/categories') && routerLocation.search.includes('cat=beauty') ? 'text-[#EE4923]' : ''}`}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                Beauty
-              </button>
-              <button 
-                onClick={() => navigate('/categories?cat=gifting')} 
-                className={`hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 ${routerLocation.pathname.startsWith('/categories') && routerLocation.search.includes('cat=gifting') ? 'text-[#EE4923]' : ''}`}
-              >
-                <Gift className="w-3.5 h-3.5" />
-                Gifting
-              </button>
-              <button 
-                onClick={() => navigate('/categories?cat=electronics')} 
-                className={`hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 ${routerLocation.pathname.startsWith('/categories') && routerLocation.search.includes('cat=electronics') ? 'text-[#EE4923]' : ''}`}
-              >
-                <Compass className="w-3.5 h-3.5" />
-                Electronics
-              </button>
-              <button 
-                onClick={() => navigate('/categories?cat=jewellery')} 
-                className={`hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 ${routerLocation.pathname.startsWith('/categories') && routerLocation.search.includes('cat=jewellery') ? 'text-[#EE4923]' : ''}`}
-              >
-                <Sparkles className="w-3.5 h-3.5" />
-                Jewellery
-              </button>
-              <button 
-                onClick={() => navigate('/categories?cat=toys')} 
-                className={`hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 ${routerLocation.pathname.startsWith('/categories') && routerLocation.search.includes('cat=toys') ? 'text-[#EE4923]' : ''}`}
-              >
-                <Gamepad2 className="w-3.5 h-3.5" />
-                Toys
-              </button>
-              <button 
-                onClick={() => navigate('/categories?cat=fashion')} 
-                className={`hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 ${routerLocation.pathname.startsWith('/categories') && routerLocation.search.includes('cat=fashion') ? 'text-[#EE4923]' : ''}`}
-              >
-                <User className="w-3.5 h-3.5" />
-                Fashion
-              </button>
+              {categories.map((cat) => {
+                const isActive = routerLocation.pathname.startsWith('/categories') && 
+                                 (routerLocation.search.includes(`cat=${cat.id}`) || routerLocation.search.includes(`cat=${cat._id}`));
+                return (
+                  <button 
+                    key={cat.id || cat._id}
+                    onClick={() => navigate(`/categories?cat=${cat.id || cat._id}`)} 
+                    className={`hover:text-[#EE4923] transition-colors cursor-pointer flex items-center gap-1 whitespace-nowrap capitalize ${isActive ? 'text-[#EE4923]' : ''}`}
+                  >
+                    {getCategoryIcon(cat.id)}
+                    {cat.categoryName || cat.name}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Right-aligned links */}

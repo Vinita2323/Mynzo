@@ -41,19 +41,21 @@ const processImage = async (req, res, next) => {
     const outputPath = path.join(uploadDir, filename);
     const isBanner = req.originalUrl && req.originalUrl.toLowerCase().includes('banner');
 
-    let sharpInstance = sharp(req.file.buffer);
+    let sharpInstance;
     if (isBanner) {
-      // Banners: Keep aspect ratio, resize to max dimensions 1920x640 inside box (no white borders)
-      sharpInstance = sharpInstance.resize(1920, 640, {
-        fit: 'inside',
-        withoutEnlargement: true
-      });
+      // Standardize banners to 1920x768, covering the entire box (fit cover)
+      sharpInstance = sharp(req.file.buffer)
+        .resize(1920, 768, {
+          fit: 'cover',
+          position: 'center'
+        });
     } else {
       // Products/Categories: Standardize to 1000x1000 WebP centered on a white square canvas
-      sharpInstance = sharpInstance.resize(1000, 1000, {
-        fit: 'contain',
-        background: { r: 255, g: 255, b: 255, alpha: 1 }
-      });
+      sharpInstance = sharp(req.file.buffer)
+        .resize(1000, 1000, {
+          fit: 'contain',
+          background: { r: 255, g: 255, b: 255, alpha: 1 }
+        });
     }
 
     await sharpInstance

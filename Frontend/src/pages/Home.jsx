@@ -556,7 +556,7 @@ export default function Home() {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            className="overflow-hidden rounded-2xl shadow-sm relative aspect-[21/9] md:aspect-[3/1] md:max-h-[350px] w-full select-none"
+            className="overflow-hidden rounded-2xl shadow-sm relative aspect-[2.5/1] w-full select-none"
           >
             <div 
               className={`flex w-full h-full ${isTransitioning ? 'transition-transform duration-700 ease-in-out' : ''}`}
