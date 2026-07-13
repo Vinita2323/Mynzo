@@ -15,18 +15,30 @@ export default function Layout({ children }) {
   // Detect when mobile virtual keyboard is open (viewport height shrinks)
   const [isKeyboardOpen, setIsKeyboardOpen] = useState(false);
   useEffect(() => {
+    let initialHeight = window.innerHeight;
+    let initialWidth = window.innerWidth;
+
     const checkKeyboard = () => {
-      if (window.visualViewport) {
-        const viewportHeight = window.visualViewport.height;
-        const windowHeight = window.innerHeight;
-        // If viewport is more than 150px shorter than window, keyboard is open
-        setIsKeyboardOpen(windowHeight - viewportHeight > 150);
+      // If width changed, it's likely an orientation change, so reset initial height
+      if (window.innerWidth !== initialWidth) {
+        initialWidth = window.innerWidth;
+        initialHeight = window.innerHeight;
       }
+      const currentHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      setIsKeyboardOpen(initialHeight - currentHeight > 150);
     };
+
+    window.addEventListener('resize', checkKeyboard);
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', checkKeyboard);
-      return () => window.visualViewport.removeEventListener('resize', checkKeyboard);
     }
+
+    return () => {
+      window.removeEventListener('resize', checkKeyboard);
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', checkKeyboard);
+      }
+    };
   }, []);
 
   // Disable browser native scroll restoration so back/forward never restores old position
