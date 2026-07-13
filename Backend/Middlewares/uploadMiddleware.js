@@ -39,13 +39,24 @@ const processImage = async (req, res, next) => {
   try {
     const filename = `img-${Date.now()}-${Math.round(Math.random() * 1e9)}.webp`;
     const outputPath = path.join(uploadDir, filename);
+    const isBanner = req.originalUrl && req.originalUrl.toLowerCase().includes('banner');
 
-    // Standardize new uploads to 1000x1000 WebP centered on a white square canvas
-    await sharp(req.file.buffer)
-      .resize(1000, 1000, {
+    let sharpInstance = sharp(req.file.buffer);
+    if (isBanner) {
+      // Banners: Keep aspect ratio, resize to max dimensions 1920x640 inside box (no white borders)
+      sharpInstance = sharpInstance.resize(1920, 640, {
+        fit: 'inside',
+        withoutEnlargement: true
+      });
+    } else {
+      // Products/Categories: Standardize to 1000x1000 WebP centered on a white square canvas
+      sharpInstance = sharpInstance.resize(1000, 1000, {
         fit: 'contain',
         background: { r: 255, g: 255, b: 255, alpha: 1 }
-      })
+      });
+    }
+
+    await sharpInstance
       .sharpen({ sigma: 0.5 })
       .webp({ quality: 85, effort: 4 })
       .toFile(outputPath);

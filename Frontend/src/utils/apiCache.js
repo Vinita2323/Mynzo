@@ -107,7 +107,7 @@ export async function cachedFetch(path, { ttl = 300, persist = true, signal } = 
  */
 export async function prefetchCritical() {
   const PATHS = [
-    ['/homepage', 300], // 5 min
+    ['/homepage', 30], // 30 seconds to avoid long-lived stale home data
   ];
   await Promise.allSettled(
     PATHS.map(([path, ttl]) => cachedFetch(path, { ttl }))

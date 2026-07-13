@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { getImageUrl } from '../../utils/imageHelper';
 import { Image } from 'lucide-react';
 
@@ -28,12 +28,21 @@ export default function OptimizedImage({
   objectFit,
   onLoad,
   onError,
+  fetchPriority, // 'high' | 'low' | 'auto'
   ...props
 }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState(false);
 
-  const resolvedSrc = getImageUrl(src);
+  const resolvedSrc = useMemo(() => {
+    let url = getImageUrl(src);
+    if (url && type === 'banner' && !url.startsWith('data:') && !url.startsWith('blob:')) {
+      const hasQuery = url.includes('?');
+      return `${url}${hasQuery ? '&' : '?'}v=${Date.now()}`;
+    }
+    return url;
+  }, [src, type]);
+
   const fallback = FALLBACK_GRADIENTS[type] || FALLBACK_GRADIENTS.default;
   const finalObjectFit = objectFit || (type === 'product' ? 'contain' : 'cover');
 
@@ -89,7 +98,8 @@ export default function OptimizedImage({
       <img
         src={resolvedSrc}
         alt={alt}
-        loading="lazy"
+        loading={fetchPriority === 'high' ? 'eager' : 'lazy'}
+        fetchPriority={fetchPriority}
         decoding="async"
         onLoad={(e) => {
           setLoaded(true);

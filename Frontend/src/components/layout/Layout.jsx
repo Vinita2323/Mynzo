@@ -5,6 +5,8 @@ import MobileNav from './MobileNav';
 import { useApp } from '../../context/AppContext';
 import { useDeviceType } from '../../utils/useDeviceType';
 
+import { clearAllCache } from '../../utils/apiCache';
+
 export default function Layout({ children }) {
   const location = useLocation();
   const { globalToast } = useApp();
@@ -122,6 +124,15 @@ export default function Layout({ children }) {
   const handleTouchStart = (e) => {
     if (isRefreshing || isStudioPage) return;
     
+    // Disable web-side pull-to-refresh if running inside a WebView or standalone PWA app.
+    // This allows the native Flutter RefreshIndicator to handle refreshing without double-trigger conflicts.
+    const isAppShell = typeof window !== 'undefined' && (
+      window.matchMedia('(display-mode: standalone)').matches || 
+      window.navigator.standalone ||
+      /wv|WebView|InAppWebView|Flutter/i.test(window.navigator.userAgent)
+    );
+    if (isAppShell) return;
+
     const scrollTop = getActiveScrollTop(e.target);
     if (scrollTop === 0) {
       setStartY(e.touches[0].clientY);
@@ -156,9 +167,25 @@ export default function Layout({ children }) {
       setIsRefreshing(true);
       setPullDistance(50);
       
+      // Clear all cached responses so page reload fetches fresh data
+      clearAllCache();
+      
       setTimeout(() => {
-        window.location.reload();
+        // Use a cache-busting search parameter to force a full reload and bypass service worker cache
+        try {
+          const url = new URL(window.location.href);
+          url.searchParams.set('refresh', Date.now().toString());
+          window.location.href = url.toString();
+        } catch (err) {
+          window.location.reload();
+        }
       }, 700);
+
+      // Safety fallback to clear the loading spinner if reload hangs
+      setTimeout(() => {
+        setIsRefreshing(false);
+        setPullDistance(0);
+      }, 2500);
     } else {
       setPullDistance(0);
     }

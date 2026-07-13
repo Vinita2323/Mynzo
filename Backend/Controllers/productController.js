@@ -564,12 +564,17 @@ const getCombinedCatalog = async (req, res) => {
 
     // 1. Category filter
     if (category && category !== 'for-you') {
+      const cleanCategory = String(category).trim();
+      const catOrConditions = [
+        { id: cleanCategory },
+        { categoryName: { $regex: new RegExp(`^${cleanCategory}$`, 'i') } }
+      ];
+      if (mongoose.Types.ObjectId.isValid(cleanCategory)) {
+        catOrConditions.push({ _id: cleanCategory });
+      }
+
       const foundChip = await CategoryChip.findOne({
-        $or: [
-          { id: category },
-          { _id: mongoose.Types.ObjectId.isValid(category) ? category : null },
-          { categoryName: { $regex: new RegExp(`^${category.trim()}$`, 'i') } }
-        ]
+        $or: catOrConditions
       }).lean();
 
       if (foundChip) {
@@ -578,24 +583,29 @@ const getCombinedCatalog = async (req, res) => {
             { category: foundChip._id.toString() },
             { category: foundChip.id },
             { category: { $regex: new RegExp(`^${foundChip.categoryName.trim()}$`, 'i') } },
-            { category: category }
+            { category: cleanCategory }
           ]
         });
       } else {
         andConditions.push({
-          category: { $regex: new RegExp(`^${category.trim()}$`, 'i') }
+          category: { $regex: new RegExp(`^${cleanCategory}$`, 'i') }
         });
       }
     }
 
     // 2. Subcategory filter
     if (subCategory && subCategory !== 'all') {
+      const cleanSubCategory = String(subCategory).trim();
+      const subCatOrConditions = [
+        { id: cleanSubCategory },
+        { subCategoryName: { $regex: new RegExp(`^${cleanSubCategory}$`, 'i') } }
+      ];
+      if (mongoose.Types.ObjectId.isValid(cleanSubCategory)) {
+        subCatOrConditions.push({ _id: cleanSubCategory });
+      }
+
       const matchedChips = await SubCategoryChip.find({
-        $or: [
-          { id: subCategory },
-          { _id: mongoose.Types.ObjectId.isValid(subCategory) ? subCategory : null },
-          { subCategoryName: { $regex: new RegExp(`^${subCategory.trim()}$`, 'i') } }
-        ]
+        $or: subCatOrConditions
       }).lean();
 
       if (matchedChips && matchedChips.length > 0) {
@@ -615,7 +625,7 @@ const getCombinedCatalog = async (req, res) => {
         });
 
         // Add the query string itself just in case
-        subCategoryIds.add(subCategory);
+        subCategoryIds.add(cleanSubCategory);
 
         const orList = [];
         subCategoryIds.forEach(id => {
@@ -631,7 +641,7 @@ const getCombinedCatalog = async (req, res) => {
         andConditions.push({ $or: orList });
       } else {
         andConditions.push({
-          subCategory: { $regex: new RegExp(`^${subCategory.trim()}$`, 'i') }
+          subCategory: { $regex: new RegExp(`^${cleanSubCategory}$`, 'i') }
         });
       }
     }

@@ -155,7 +155,7 @@ export default function Home() {
     if (slideInterval.current) clearInterval(slideInterval.current);
     slideInterval.current = setInterval(() => {
       setIsTransitioning(true);
-      setActiveBanner((prev) => prev + 1);
+      setActiveBanner((prev) => (prev >= activeBannersList.length ? prev : prev + 1));
     }, 4500);
   }, [activeBannersList.length]);
 
@@ -172,12 +172,14 @@ export default function Home() {
   };
 
   const handleNextBanner = () => {
+    if (activeBannersList.length === 0) return;
     setIsTransitioning(true);
-    setActiveBanner((prev) => prev + 1);
+    setActiveBanner((prev) => (prev >= activeBannersList.length ? prev : prev + 1));
     resetAutoPlay();
   };
 
   const handlePrevBanner = () => {
+    if (activeBannersList.length === 0) return;
     setIsTransitioning(true);
     setActiveBanner(prev => prev === 0 ? activeBannersList.length - 1 : prev - 1);
     resetAutoPlay();
@@ -566,7 +568,7 @@ export default function Home() {
                   className="w-full h-full flex-shrink-0 cursor-pointer"
                   onClick={() => navigate(banner.link || '/categories')}
                 >
-                  <OptimizedImage src={getImageUrl(banner.image)} alt="Banner" type="banner" className="w-full h-full object-cover" />
+                  <OptimizedImage src={getImageUrl(banner.image)} alt="Banner" type="banner" fetchPriority="high" className="w-full h-full object-cover" />
                 </div>
               ))}
             </div>

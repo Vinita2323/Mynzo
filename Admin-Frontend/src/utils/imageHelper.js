@@ -1,7 +1,40 @@
 export const getImageUrl = (imagePath) => {
   if (!imagePath) return '';
 
-  const path = String(imagePath).trim();
+  let path = String(imagePath).trim();
+
+  // If the path contains 'uploads', normalize it to the current environment's API base URL
+  if (path.includes('uploads')) {
+    const isLocal = typeof window !== 'undefined' &&
+      (window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        window.location.hostname.includes('gitpod') ||
+        window.location.hostname.includes('devtunnels.ms') ||
+        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(window.location.hostname));
+
+    let baseUrl = '';
+    if (isLocal) {
+      baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
+    } else {
+      baseUrl = import.meta.env.VITE_IMAGE_BASE_URL || import.meta.env.VITE_API_URL || 'https://mynzoworld.com';
+    }
+
+    // Extract the relative uploads path from any absolute URL
+    let relativePath = path;
+    const uploadsIdx = path.indexOf('/uploads/');
+    if (uploadsIdx !== -1) {
+      relativePath = path.substring(uploadsIdx);
+    } else {
+      const uploadsIdxAlt = path.indexOf('uploads/');
+      if (uploadsIdxAlt !== -1) {
+        relativePath = '/' + path.substring(uploadsIdxAlt);
+      }
+    }
+
+    const cleanPath = relativePath.startsWith('/') ? relativePath : `/${relativePath}`;
+    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+    return `${cleanBaseUrl}${cleanPath}`;
+  }
 
   // If it is already a complete URL, return as is
   if (
@@ -29,29 +62,6 @@ export const getImageUrl = (imagePath) => {
     path.includes('Category')
   ) {
     return path;
-  }
-
-  // Prepend base URL for upload paths
-  if (path.includes('uploads')) {
-    // In local development/testing, if the hostname is localhost/127.0.0.1/private network,
-    // we should use the local API URL to fetch images so developers can see local uploads.
-    const isLocal = typeof window !== 'undefined' &&
-      (window.location.hostname === 'localhost' ||
-        window.location.hostname === '127.0.0.1' ||
-        window.location.hostname.includes('gitpod') ||
-        window.location.hostname.includes('devtunnels.ms') ||
-        /^(192\.168\.|10\.|172\.(1[6-9]|2[0-9]|3[0-1])\.)/.test(window.location.hostname));
-
-    let baseUrl = '';
-    if (isLocal) {
-      baseUrl = import.meta.env.VITE_API_URL || window.location.origin;
-    } else {
-      baseUrl = import.meta.env.VITE_IMAGE_BASE_URL || import.meta.env.VITE_API_URL || 'https://mynzoworld.com';
-    }
-
-    const cleanPath = path.startsWith('/') ? path : `/${path}`;
-    const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    return `${cleanBaseUrl}${cleanPath}`;
   }
 
   return path;

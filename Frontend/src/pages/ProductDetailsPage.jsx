@@ -548,29 +548,35 @@ export default function ProductDetailsPage() {
                 <h2 className="text-white font-black tracking-tight text-xl mb-4 drop-shadow-md">Key Highlights</h2>
                 
                 <div className="space-y-3">
-                  {product.highlights && Object.keys(product.highlights).length > 0 ? (
-                    Object.entries(product.highlights).slice(0, 5).map(([key, val]) => (
-                      <div key={key} className="flex flex-col border-b border-white/20 pb-0.5 w-28">
-                        <span className="text-[10px] text-white/70 capitalize">{key}</span>
-                        <span className="text-xs font-bold text-white drop-shadow truncate">{val}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <>
-                      <div className="flex flex-col border-b border-white/20 pb-1 w-24">
-                        <span className="text-[10px] text-white/70">Fit</span>
-                        <span className="text-sm font-bold text-white drop-shadow">Regular</span>
-                      </div>
-                      <div className="flex flex-col border-b border-white/20 pb-1 w-24">
-                        <span className="text-[10px] text-white/70">Fabric</span>
-                        <span className="text-sm font-bold text-white drop-shadow">Premium Quality</span>
-                      </div>
-                      <div className="flex flex-col border-b border-white/20 pb-1 w-24">
-                        <span className="text-[10px] text-white/70">Origin</span>
-                        <span className="text-sm font-bold text-white drop-shadow">Made in India</span>
-                      </div>
-                    </>
-                  )}
+                  {(() => {
+                    const validHighlights = product.highlights
+                      ? Object.entries(product.highlights).filter(([key, val]) => val !== undefined && val !== null && val !== '' && val !== '-' && val !== '0' && val !== 0)
+                      : [];
+                    if (validHighlights.length > 0) {
+                      return validHighlights.slice(0, 5).map(([key, val]) => (
+                        <div key={key} className="flex flex-col border-b border-white/20 pb-0.5 w-28">
+                          <span className="text-[10px] text-white/70 capitalize">{key}</span>
+                          <span className="text-xs font-bold text-white drop-shadow truncate">{val}</span>
+                        </div>
+                      ));
+                    }
+                    return (
+                      <>
+                        <div className="flex flex-col border-b border-white/20 pb-1 w-24">
+                          <span className="text-[10px] text-white/70">Fit</span>
+                          <span className="text-sm font-bold text-white drop-shadow">Regular</span>
+                        </div>
+                        <div className="flex flex-col border-b border-white/20 pb-1 w-24">
+                          <span className="text-[10px] text-white/70">Fabric</span>
+                          <span className="text-sm font-bold text-white drop-shadow">Premium Quality</span>
+                        </div>
+                        <div className="flex flex-col border-b border-white/20 pb-1 w-24">
+                          <span className="text-[10px] text-white/70">Origin</span>
+                          <span className="text-sm font-bold text-white drop-shadow">Made in India</span>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
             </div>
@@ -842,6 +848,26 @@ export default function ProductDetailsPage() {
                           const validSpecs = product.technicalSpecs 
                             ? Object.entries(product.technicalSpecs).filter(([key, val]) => val !== undefined && val !== null && val !== '' && val !== '-' && val !== '0' && val !== 0)
                             : [];
+
+                          if (product.shippingSpecs) {
+                            const weightVal = product.shippingSpecs.weight;
+                            if (weightVal !== undefined && weightVal !== null && weightVal !== '' && Number(weightVal) > 0) {
+                              validSpecs.push(['weight', `${weightVal} kg`]);
+                            }
+                            const heightVal = product.shippingSpecs.height;
+                            if (heightVal !== undefined && heightVal !== null && heightVal !== '' && Number(heightVal) > 0) {
+                              validSpecs.push(['height', `${heightVal} cm`]);
+                            }
+                            const lengthVal = product.shippingSpecs.length;
+                            if (lengthVal !== undefined && lengthVal !== null && lengthVal !== '' && Number(lengthVal) > 0) {
+                              validSpecs.push(['length', `${lengthVal} cm`]);
+                            }
+                            const widthVal = product.shippingSpecs.width;
+                            if (widthVal !== undefined && widthVal !== null && widthVal !== '' && Number(widthVal) > 0) {
+                              validSpecs.push(['width', `${widthVal} cm`]);
+                            }
+                          }
+
                           if (validSpecs.length > 0) {
                             return validSpecs.map(([key, val]) => (
                               <div key={key} className="flex flex-col border-b border-slate-100 pb-2">

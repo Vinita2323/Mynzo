@@ -50,7 +50,9 @@ const BannerForm = ({
         />
       </div>
       <div className="col-span-2">
-        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">Banner Image *</label>
+        <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-1">
+          Banner Image * <span className="text-blue-500 font-bold">(Recommended: 1920 × 640 px / 3:1 ratio)</span>
+        </label>
         <div className="flex items-center gap-2">
           <OptimizedImage src={imagePreview} className="w-20 h-10 rounded-lg object-cover border border-slate-200" alt="Preview" type="banner" />
           <label className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-[9px] font-black uppercase tracking-widest cursor-pointer hover:bg-slate-50 transition-all select-none">
@@ -66,6 +68,19 @@ const BannerForm = ({
                     toast.error('Image size cannot exceed 10MB!');
                     return;
                   }
+                  
+                  // Validation warning for aspect ratio
+                  const img = new window.Image();
+                  img.src = URL.createObjectURL(file);
+                  img.onload = () => {
+                    const ratio = img.width / img.height;
+                    if (ratio < 1.5) {
+                      toast.info("Warning: For best display, please upload a landscape image (Recommended: 1920 × 640 px / 3:1 ratio).", {
+                        duration: 6000
+                      });
+                    }
+                  };
+
                   setImageFile(file);
                   setImagePreview(URL.createObjectURL(file));
                 }
@@ -176,18 +191,69 @@ const BannerManager = () => {
     return data.url;
   };
 
-  const handleToggle = (id) => {
-    setBanners(prev => prev.map(b => b.id === id ? { ...b, active: !b.active } : b));
-    toast.success('Visibility changed in draft!');
+  const handleToggle = async (id) => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      toast.error('Unauthorized');
+      return;
+    }
+
+    const banner = banners.find(b => b.id === id);
+    if (!banner) return;
+
+    try {
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/admin/catalog/banners/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ active: !banner.active })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setBanners(prev => prev.map(b => b.id === id ? { ...b, active: !b.active } : b));
+        toast.success('Banner visibility updated successfully!');
+      } else {
+        toast.error(data.message || 'Failed to update visibility');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Could not connect to backend server');
+    }
   };
 
   const handleDelete = (id) => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      toast.error('Unauthorized');
+      return;
+    }
+
     triggerConfirm(
       'Delete Banner',
-      'Are you sure you want to permanently delete this banner from draft?',
-      () => {
-        setBanners(prev => prev.filter(b => b.id !== id));
-        toast.success('Banner deleted from draft!');
+      'Are you sure you want to permanently delete this banner?',
+      async () => {
+        try {
+          const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+          const res = await fetch(`${apiBase}/admin/catalog/banners/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          const data = await res.json();
+          if (res.ok && data.success) {
+            setBanners(prev => prev.filter(b => b.id !== id));
+            toast.success('Banner deleted successfully!');
+          } else {
+            toast.error(data.message || 'Failed to delete banner');
+          }
+        } catch (err) {
+          console.error(err);
+          toast.error('Could not connect to backend server');
+        }
       }
     );
   };
@@ -207,6 +273,12 @@ const BannerManager = () => {
 
   const handleSaveEdit = async () => {
     if (!formData.title) return;
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      toast.error('Unauthorized');
+      return;
+    }
+
     try {
       let imageUrl = formData.image;
       if (imageFile) {
@@ -215,19 +287,31 @@ const BannerManager = () => {
         toast.dismiss('upload');
       }
 
-      setBanners(prev => prev.map(b => b.id === editingId ? {
-        ...b,
-        title: formData.title,
-        subtitle: formData.subtitle || '',
-        image: imageUrl,
-        active: formData.active
-      } : b));
-
-      setEditingId(null);
-      setFormData(EMPTY_BANNER);
-      setImageFile(null);
-      setImagePreview('');
-      toast.success('Banner updated in draft! Click Publish to save changes.');
+      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+      const res = await fetch(`${apiBase}/admin/catalog/banners/${editingId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          title: formData.title,
+          subtitle: formData.subtitle || '',
+          image: imageUrl,
+          active: formData.active
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setEditingId(null);
+        setFormData(EMPTY_BANNER);
+        setImageFile(null);
+        setImagePreview('');
+        toast.success('Banner updated successfully!');
+        fetchBanners();
+      } else {
+        toast.error(data.message || 'Failed to update banner');
+      }
     } catch (err) {
       console.error(err);
       toast.dismiss('upload');
@@ -237,6 +321,12 @@ const BannerManager = () => {
 
   const handleAddNew = async () => {
     if (!formData.title) return;
+    const token = localStorage.getItem('adminToken');
+    if (!token) {
+      toast.error('Unauthorized');
+      return;
+    }
+
     try {
       let imageUrl = formData.image;
       if (imageFile) {
@@ -250,57 +340,35 @@ const BannerManager = () => {
         return;
       }
 
-      const newBanner = {
-        id: 'temp-' + Date.now(),
-        title: formData.title,
-        subtitle: formData.subtitle || '',
-        image: imageUrl,
-        active: formData.active
-      };
-
-      setBanners(prev => [...prev, newBanner]);
-      setIsAdding(false);
-      setFormData(EMPTY_BANNER);
-      setImageFile(null);
-      setImagePreview('');
-      toast.success('Banner added in draft! Click Publish to save changes.');
-    } catch (err) {
-      console.error(err);
-      toast.dismiss('upload');
-      toast.error(err.message || 'Failed to add banner');
-    }
-  };
-
-  const handleSaveAll = async () => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) {
-      toast.error('Unauthorized');
-      return;
-    }
-
-    try {
       const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/admin/catalog/banners/publish`, {
+      const res = await fetch(`${apiBase}/admin/catalog/banners`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ banners })
+        body: JSON.stringify({
+          title: formData.title,
+          subtitle: formData.subtitle || '',
+          image: imageUrl,
+          active: formData.active
+        })
       });
-
       const data = await res.json();
       if (res.ok && data.success) {
-        toast.success('All banner changes published live!');
-        setSaved(true);
-        setTimeout(() => setSaved(false), 2500);
+        setIsAdding(false);
+        setFormData(EMPTY_BANNER);
+        setImageFile(null);
+        setImagePreview('');
+        toast.success('Banner created successfully!');
         fetchBanners();
       } else {
-        toast.error(data.message || 'Failed to publish changes');
+        toast.error(data.message || 'Failed to create banner');
       }
     } catch (err) {
       console.error(err);
-      toast.error('Could not connect to backend server');
+      toast.dismiss('upload');
+      toast.error(err.message || 'Failed to add banner');
     }
   };
 
@@ -318,13 +386,6 @@ const BannerManager = () => {
             className="flex items-center gap-1.5 px-4 py-2 bg-blue-500 text-white rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg shadow-blue-100 hover:scale-105 active:scale-95 transition-all"
           >
             <Plus size={13} /> Add Banner
-          </button>
-          <button
-            onClick={handleSaveAll}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl font-black uppercase tracking-widest text-[10px] transition-all ${saved ? 'bg-green-500 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
-          >
-            {saved ? <CheckCircle2 size={13} /> : <Save size={13} />}
-            {saved ? 'Saved!' : 'Publish'}
           </button>
         </div>
       </div>
@@ -432,7 +493,7 @@ const BannerManager = () => {
         <div>
           <p className="text-[11px] font-black text-blue-600 uppercase tracking-widest">How it works</p>
           <p className="text-[11px] text-blue-400 font-medium mt-1 leading-relaxed">
-            Banners are shown in the carousel on the <strong>user home page</strong>. Make changes in draft and click <strong>Publish</strong> to save changes live to the database.
+            Banners are shown in the carousel on the <strong>user home page</strong>. All actions (adding, editing, toggling visibility, or deleting) are saved live immediately to the database.
           </p>
         </div>
       </div>
