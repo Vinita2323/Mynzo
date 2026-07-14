@@ -7,6 +7,7 @@ import { useApp } from '../context/AppContext';
 import ProductCard from '../components/ui/ProductCard';
 import OptimizedImage from '../components/ui/OptimizedImage';
 import { getImageUrl } from '../utils/imageHelper';
+import { formatDiscount } from '../utils/discountHelper';
 import { cachedFetch } from '../utils/apiCache';
 
 // Category Images
@@ -207,7 +208,7 @@ export default function CategoriesPage() {
     desc: p.description || '',
     price: p.sellingPrice,
     originalPrice: p.mrp || p.sellingPrice,
-    discount: p.discountLabel || (p.mrp ? `-${Math.round((1 - p.sellingPrice / p.mrp) * 100)}%` : '0%'),
+    discount: formatDiscount(p.discountLabel, p.mrp, p.sellingPrice, 'minus'),
     rating: p.rating || 0,
     type: (p.category || '').toLowerCase(),
     subCategory: p.subCategory ? p.subCategory.toLowerCase() : '',

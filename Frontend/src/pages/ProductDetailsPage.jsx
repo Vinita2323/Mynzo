@@ -7,6 +7,7 @@ import analytics from '../utils/analytics';
 import { CRAZY_DEALS } from '../data/mockData';
 import OptimizedImage from '../components/ui/OptimizedImage';
 import { getImageUrl } from '../utils/imageHelper';
+import { formatDiscount } from '../utils/discountHelper';
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
@@ -285,7 +286,7 @@ export default function ProductDetailsPage() {
             desc: p.description || '',
             price: p.sellingPrice,
             originalPrice: p.mrp || p.sellingPrice,
-            discount: p.discountLabel || (p.mrp ? `${Math.round((1 - p.sellingPrice / p.mrp) * 100)}% OFF` : '0% OFF'),
+            discount: formatDiscount(p.discountLabel, p.mrp, p.sellingPrice, 'off'),
             rating: p.rating || 0,
             type: (p.category || '').toLowerCase(),
             image: getImageUrl(productImages[0]),

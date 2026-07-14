@@ -4,6 +4,7 @@ import { ArrowLeft, Sparkles, Star, Tag, ShoppingBag } from 'lucide-react';
 import ProductCard from '../components/ui/ProductCard';
 import OptimizedImage from '../components/ui/OptimizedImage';
 import { getImageUrl } from '../utils/imageHelper';
+import { formatDiscount } from '../utils/discountHelper';
 
 export default function BrandPage() {
   const { brandId } = useParams();
@@ -21,7 +22,7 @@ export default function BrandPage() {
     desc: p.description || '',
     price: p.sellingPrice,
     originalPrice: p.mrp || p.sellingPrice,
-    discount: p.discountLabel || (p.mrp ? `-${Math.round((1 - p.sellingPrice / p.mrp) * 100)}%` : '0%'),
+    discount: formatDiscount(p.discountLabel, p.mrp, p.sellingPrice, 'minus'),
     rating: p.rating || 4.5,
     type: (p.category || '').toLowerCase(),
     image: (p.images && p.images[0]) ? p.images[0] : '',

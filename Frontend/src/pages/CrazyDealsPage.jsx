@@ -5,6 +5,7 @@ import { useApp } from '../context/AppContext';
 import OptimizedImage from '../components/ui/OptimizedImage';
 import { cachedFetch } from '../utils/apiCache';
 import { getImageUrl } from '../utils/imageHelper';
+import { formatDiscount } from '../utils/discountHelper';
 
 export default function CrazyDealsPage() {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ export default function CrazyDealsPage() {
             desc: p.description || '',
             price: p.sellingPrice,
             originalPrice: p.mrp || p.sellingPrice,
-            discount: p.discountLabel || (p.mrp ? `-${Math.round((1 - p.sellingPrice / p.mrp) * 100)}%` : '0%'),
+            discount: formatDiscount(p.discountLabel, p.mrp, p.sellingPrice, 'minus'),
             rating: p.rating || 0,
             image: (p.images && p.images[0]) ? p.images[0] : '',
             brandName: 'Mynzo World',

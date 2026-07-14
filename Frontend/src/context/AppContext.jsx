@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { requestFcmToken, messaging } from '../firebase';
 import { onMessage } from 'firebase/messaging';
 import analytics from '../utils/analytics';
+import { formatDiscount } from '../utils/discountHelper';
 
 const AppContext = createContext();
 
@@ -99,7 +100,7 @@ export const AppProvider = ({ children }) => {
         desc: p.description || '',
         price: itemPrice,
         originalPrice: p.mrp || p.sellingPrice,
-        discount: p.discountLabel || (p.mrp ? `-${Math.round((1 - itemPrice / p.mrp) * 100)}%` : '0%'),
+        discount: formatDiscount(p.discountLabel, p.mrp, itemPrice, 'minus'),
         rating: p.rating || 0,
         type: (p.category || '').toLowerCase(),
         image: p.images && p.images[0] ? p.images[0] : '',
@@ -319,7 +320,7 @@ export const AppProvider = ({ children }) => {
           desc: p.description || '',
           price: p.sellingPrice,
           originalPrice: p.mrp || p.sellingPrice,
-          discount: p.discountLabel || (p.mrp ? `-${Math.round((1 - p.sellingPrice / p.mrp) * 100)}%` : '0%'),
+          discount: formatDiscount(p.discountLabel, p.mrp, p.sellingPrice, 'minus'),
           rating: p.rating || 0,
           type: (p.category || '').toLowerCase(),
           image: p.images && p.images[0] ? p.images[0] : '',
@@ -341,7 +342,7 @@ export const AppProvider = ({ children }) => {
               desc: product.description || '',
               price: product.sellingPrice,
               originalPrice: product.mrp || product.sellingPrice,
-              discount: product.discountLabel || (product.mrp ? `-${Math.round((1 - product.sellingPrice / product.mrp) * 100)}%` : '0%'),
+              discount: formatDiscount(product.discountLabel, product.mrp, product.sellingPrice, 'minus'),
               rating: product.rating || 0,
               type: (product.category || '').toLowerCase(),
               image: product.images && product.images[0] ? product.images[0] : '',
