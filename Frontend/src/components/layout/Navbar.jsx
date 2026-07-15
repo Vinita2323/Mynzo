@@ -213,13 +213,6 @@ export default function Navbar() {
       recognition.onerror = (event) => {
         toast.dismiss(toastId);
         console.error('Speech recognition error', event.error);
-        if (event.error === 'not-allowed') {
-          toast.error('Microphone access denied. Please enable mic permissions in your browser.');
-        } else if (event.error === 'no-speech') {
-          toast.error('No speech detected. Try speaking closer to the microphone.');
-        } else {
-          toast.error(`Could not start voice search: ${event.error}`);
-        }
       };
 
       recognition.start();

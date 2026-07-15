@@ -123,6 +123,7 @@ const ProductDetails = () => {
                 <h4 className="text-sm font-bold text-slate-700 border-b border-slate-50 pb-2 mb-4">Key Highlights</h4>
                 <DetailItem label="Pack Of" value={product.highlights?.packOf} />
                 <DetailItem label="Fabric" value={product.highlights?.fabric} />
+                <DetailItem label="Material" value={product.highlights?.material} />
                 <DetailItem label="Sleeve" value={product.highlights?.sleeve} />
                 <DetailItem label="Pattern" value={product.highlights?.pattern} />
                 <DetailItem label="Collar" value={product.highlights?.collar} />

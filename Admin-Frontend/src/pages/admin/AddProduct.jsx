@@ -92,6 +92,7 @@ const AddProduct = () => {
   const [highlights, setHighlights] = useState({
     packOf: '',
     fabric: '',
+    material: '',
     sleeve: '',
     pattern: '',
     collar: '',
@@ -746,6 +747,7 @@ const AddProduct = () => {
                   {[
                     { key: 'packOf', label: 'Pack Of' },
                     { key: 'fabric', label: 'Fabric' },
+                    { key: 'material', label: 'Material' },
                     { key: 'sleeve', label: 'Sleeve' },
                     { key: 'pattern', label: 'Pattern' },
                     { key: 'collar', label: 'Collar' },

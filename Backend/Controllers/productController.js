@@ -989,6 +989,7 @@ const bulkUploadProducts = async (req, res) => {
         highlights: {
           packOf: getValue('Pack Of') || '',
           fabric: getValue('Fabric') || '',
+          material: getValue('Material') || '',
           sleeve: getValue('Sleeve') || '',
           pattern: getValue('Pattern') || '',
           collar: getValue('Collar') || '',
@@ -1085,7 +1086,7 @@ const downloadTemplate = async (req, res) => {
     
     const headers = [
       'Name', 'Category', 'Sub Category', 'Description', 'Selling Price', 'MRP', 'Stock', 'Discount Label', 'SKU',
-      'Pack Of', 'Fabric', 'Sleeve', 'Pattern', 'Collar', 'Color',
+      'Pack Of', 'Fabric', 'Material', 'Sleeve', 'Pattern', 'Collar', 'Color',
       'Fit', 'Fabric Care', 'Suitable For', 'Hem',
       'Weight (kg)', 'Length (cm)', 'Width (cm)', 'Height (cm)',
       'Top Section', 'Crazy Deals', 'Flash Sale',
@@ -1111,7 +1112,7 @@ const downloadTemplate = async (req, res) => {
 
     const sampleRow = [
       'Premium Leather Satchel', 'Fashion', 'Accessories', 'A high-quality leather satchel for everyday use.', 2999, 4999, 100, '-40% OFF', 'FSH-SAT-001',
-      '1', 'Leather', '', 'Solid', '', 'Brown',
+      '1', 'Leather', 'Pure Leather', '', 'Solid', '', 'Brown',
       'Regular', 'Wipe with damp cloth', 'Casual', '',
       0.8, 30, 20, 10,
       'false', 'true', 'false',
