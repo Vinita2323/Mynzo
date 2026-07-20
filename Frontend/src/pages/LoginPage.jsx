@@ -20,6 +20,7 @@ export default function LoginPage() {
   });
   const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   // 6-digit OTP state
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -327,21 +328,29 @@ export default function LoginPage() {
                 <p className="text-[9px] text-rose-500 font-extrabold px-1 pt-1">{signInError}</p>
               )}
 
+              <label className="flex items-start gap-2 text-left pt-2 text-[10px] text-slate-500 font-bold leading-relaxed max-w-xs mx-auto cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  className="mt-0.5 accent-[#FF8E4D] cursor-pointer"
+                />
+                <span>
+                  By continuing, you agree to our{' '}
+                  <Link to="/privacy" className="text-[#FF8E4D] hover:underline" onClick={(e) => e.stopPropagation()}>Privacy Policy</Link>
+                  {' '}and{' '}
+                  <Link to="/terms" className="text-[#FF8E4D] hover:underline" onClick={(e) => e.stopPropagation()}>Terms & Conditions</Link>.
+                </span>
+              </label>
+
               <div className="pt-4">
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loading || !acceptedTerms}
                   className="w-full bg-gradient-to-r from-orange-400 to-[#FF8E4D] hover:scale-[1.01] active:scale-95 disabled:opacity-60 text-white text-[10px] font-black py-3.5 rounded-full tracking-wider shadow-md shadow-orange-500/10 transition-all cursor-pointer text-center uppercase flex items-center justify-center gap-2"
                 >
                   {loading ? <><Loader2 size={14} className="animate-spin" /> Sending...</> : 'Send OTP'}
                 </button>
-              </div>
-
-              <div className="text-center pt-2 text-[10px] text-slate-500 font-bold leading-relaxed max-w-xs mx-auto">
-                By continuing, you agree to our{' '}
-                <Link to="/privacy" className="text-[#FF8E4D] hover:underline">Privacy Policy</Link>
-                {' '}and{' '}
-                <Link to="/terms" className="text-[#FF8E4D] hover:underline">Terms & Conditions</Link>.
               </div>
             </form>
           </div>
@@ -403,6 +412,13 @@ export default function LoginPage() {
                 <p className="text-[9px] text-emerald-600 font-extrabold text-center px-1 pt-2">{signInSuccess}</p>
               )}
 
+              <div className="text-center pt-2 text-[10px] text-slate-400 font-bold leading-relaxed max-w-xs mx-auto">
+                By continuing, you agree to our{' '}
+                <Link to="/privacy" className="text-[#FF8E4D] hover:underline">Privacy Policy</Link>
+                {' '}and{' '}
+                <Link to="/terms" className="text-[#FF8E4D] hover:underline">Terms & Conditions</Link>.
+              </div>
+
               <div className="mt-1">
                 <button
                   type="submit"
@@ -422,13 +438,6 @@ export default function LoginPage() {
                 >
                   Resend Verification Code?
                 </button>
-              </div>
-
-              <div className="text-center pt-2 text-[10px] text-slate-400 font-bold leading-relaxed max-w-xs mx-auto">
-                By continuing, you agree to our{' '}
-                <Link to="/privacy" className="text-[#FF8E4D] hover:underline">Privacy Policy</Link>
-                {' '}and{' '}
-                <Link to="/terms" className="text-[#FF8E4D] hover:underline">Terms & Conditions</Link>.
               </div>
             </form>
           </div>

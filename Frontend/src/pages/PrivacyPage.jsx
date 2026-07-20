@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ChevronLeft, ChevronDown, ShieldCheck, Eye, Lock, Database, Share2, UserX } from 'lucide-react';
+import { ChevronLeft, ChevronDown, ShieldCheck, Eye, Lock, Database, Share2, UserX, Gamepad2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const sections = [
@@ -18,6 +18,14 @@ const sections = [
     title: 'How We Use Your Data',
     content:
       'Your data is used to process and fulfil your orders, personalise your shopping experience, send order confirmations and delivery updates, improve our platform, and provide customer support. We may also use anonymised data for analytics and to develop new features.',
+  },
+  {
+    icon: Gamepad2,
+    iconBg: 'bg-indigo-50',
+    iconColor: 'text-indigo-500',
+    title: 'In-App Gaming & Rewards',
+    content:
+      'We offer interactive games, spin wheels, and other reward-based features within the app. If you choose to participate, we collect and process gameplay information, including your game progress, score history, challenges completed, and rewards earned. This data is used solely to host the games, display leaderboard rankings, verify authenticity, and distribute associated rewards and cashback to your account.',
   },
   {
     icon: Share2,
