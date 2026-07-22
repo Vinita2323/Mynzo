@@ -1,5 +1,6 @@
 const Reel = require('../Models/Reel');
 const Product = require('../Models/Product');
+const { getBlockedUserIds, applyBlockFilterToQuery } = require('../services/moderationService');
 
 // @desc    Create user review reel
 // @route   POST /api/reels
@@ -114,14 +115,20 @@ exports.createAdminReel = async (req, res) => {
 };
 
 // @desc    Get approved reels for feed
-// @route   GET /api/reels
-// @access  Public
+// @route   GET /reels
+// @access  Public (optional auth — excludes blocked creators when logged in)
 exports.getReels = async (req, res) => {
   try {
     const { section } = req.query; // 'forYou' or 'following'
     const query = { status: 'approved' };
     if (section) {
       query.section = section;
+    }
+
+    // Server-side block enforcement: never return content from users the viewer has blocked
+    if (req.user?._id) {
+      const blockedUserIds = await getBlockedUserIds(req.user._id);
+      applyBlockFilterToQuery(query, blockedUserIds);
     }
 
     const reels = await Reel.find(query)

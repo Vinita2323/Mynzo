@@ -125,6 +125,8 @@ app.use('/reels', require('./Router/reelRoutes'));
 app.use('/analytics', require('./Router/analyticsRoutes'));
 app.use('/admin/analytics', require('./Router/analyticsRoutes'));
 app.use('/support-tickets', require('./Router/supportTicketRoutes'));
+// Report / Block / Safety moderation (mounted at root — defines /reports, /users/..., /admin/moderation/...)
+app.use('/', require('./Router/moderationRoutes'));
 
 app.use('/admin/catalog/chips', require('./Router/categoryChipRoutes'));
 app.use('/admin/catalog/subchips', require('./Router/subCategoryChipRoutes'));

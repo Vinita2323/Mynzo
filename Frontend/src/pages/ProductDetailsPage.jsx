@@ -8,6 +8,10 @@ import { CRAZY_DEALS } from '../data/mockData';
 import OptimizedImage from '../components/ui/OptimizedImage';
 import { getImageUrl } from '../utils/imageHelper';
 import { formatDiscount } from '../utils/discountHelper';
+import { fetchReelsFeed } from '../utils/moderationApi';
+import VideoSafetyMenu from '../components/studio/VideoSafetyMenu';
+import ReportVideoModal from '../components/studio/ReportVideoModal';
+import BlockUserDialog from '../components/studio/BlockUserDialog';
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
@@ -33,14 +37,14 @@ export default function ProductDetailsPage() {
   const [reelVideoFile, setReelVideoFile] = useState(null);
   const [isUploadingReel, setIsUploadingReel] = useState(false);
   const [isEligibleToReview, setIsEligibleToReview] = useState(false);
+  const [reportTargetReel, setReportTargetReel] = useState(null);
+  const [blockTargetReel, setBlockTargetReel] = useState(null);
 
   const fetchProductReels = async () => {
     try {
-      const apiBase = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const res = await fetch(`${apiBase}/reels`);
-      const data = await res.json();
-      if (res.ok && data.success) {
-        // Filter approved reels for this product
+      const { ok, data } = await fetchReelsFeed();
+      if (ok && data.success) {
+        // Filter approved reels for this product (server already excludes blocked creators when authenticated)
         const filtered = (data.reels || []).filter(r => {
           const prodId = r.productId?._id || r.productId;
           return prodId === id;
@@ -1232,23 +1236,51 @@ export default function ProductDetailsPage() {
       {/* Media Viewer Modal */}
       {selectedReviewMedia && (
         <div className="fixed inset-0 z-[200] bg-black/95 flex flex-col animate-fade-in font-sans">
-          <div className="flex justify-end p-4">
-            <button 
-              onClick={() => setSelectedReviewMedia(null)} 
-              className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
-            >
-              <X className="w-6 h-6 text-white" />
-            </button>
+          <div className="flex justify-between items-center p-4">
+            <div className="w-10" />
+            <div className="flex items-center gap-2">
+              {selectedReviewMedia.type === 'video' && selectedReviewMedia.reel && (() => {
+                const reel = selectedReviewMedia.reel;
+                const creatorId = reel.uploadedBy?.toString?.() || reel.uploadedBy;
+                const currentId = user?._id || user?.id;
+                const isOwn = currentId && creatorId && creatorId === currentId.toString() && reel.userModel !== 'Admin';
+                const canModerate = creatorId && !isOwn;
+                if (!canModerate) return null;
+                return (
+                  <VideoSafetyMenu
+                    username={reel.username}
+                    variant="dark"
+                    menuPlacement="down"
+                    showBlock={reel.userModel !== 'Admin' && reel.userType !== 'admin'}
+                    onReport={() => {
+                      if (!user) { navigate('/login'); return; }
+                      setReportTargetReel(reel);
+                    }}
+                    onBlock={() => {
+                      if (!user) { navigate('/login'); return; }
+                      if (reel.userModel === 'Admin' || reel.userType === 'admin') return;
+                      setBlockTargetReel(reel);
+                    }}
+                  />
+                );
+              })()}
+              <button
+                onClick={() => setSelectedReviewMedia(null)}
+                className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
+              >
+                <X className="w-6 h-6 text-white" />
+              </button>
+            </div>
           </div>
           <div className="flex-1 flex items-center justify-center p-4">
             {selectedReviewMedia.type === 'video' ? (
               <div className="relative w-full max-w-sm aspect-[9/16] bg-black rounded-xl overflow-hidden shadow-2xl">
-                <video 
+                <video
                   ref={videoRef}
-                  src={selectedReviewMedia.url} 
-                  autoPlay 
-                  loop 
-                  muted 
+                  src={selectedReviewMedia.url}
+                  autoPlay
+                  loop
+                  muted
                   playsInline
                   controls
                   onTimeUpdate={(e) => {
@@ -1257,7 +1289,7 @@ export default function ProductDetailsPage() {
                       e.target.play();
                     }
                   }}
-                  className="w-full h-full object-cover" 
+                  className="w-full h-full object-cover"
                 />
                 <div className="absolute bottom-4 left-4 right-4 bg-black/50 backdrop-blur-md p-3 rounded-xl border border-white/10 text-white z-10">
                   <div className="flex items-center gap-2 mb-1">
@@ -1274,6 +1306,32 @@ export default function ProductDetailsPage() {
             )}
           </div>
         </div>
+      )}
+
+      {reportTargetReel && (
+        <ReportVideoModal
+          videoId={reportTargetReel._id}
+          onClose={() => setReportTargetReel(null)}
+        />
+      )}
+
+      {blockTargetReel && (
+        <BlockUserDialog
+          userId={blockTargetReel.uploadedBy}
+          username={blockTargetReel.username}
+          relatedVideoId={blockTargetReel._id}
+          onClose={() => setBlockTargetReel(null)}
+          onBlocked={({ blockedUserId }) => {
+            const idStr = blockedUserId.toString();
+            setProductReels((prev) => prev.filter((r) => {
+              const creatorId = r.uploadedBy?.toString?.() || r.uploadedBy;
+              return creatorId !== idStr;
+            }));
+            setSelectedReviewMedia(null);
+            setReportTargetReel(null);
+            fetchProductReels();
+          }}
+        />
       )}
 
       {/* Upload Video Reel Modal */}

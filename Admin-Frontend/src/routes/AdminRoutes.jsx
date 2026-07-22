@@ -39,6 +39,7 @@ import Notifications from '../pages/admin/comms/Notifications';
 
 // Content
 import ReviewModeration from '../pages/admin/content/ReviewModeration';
+import SafetyModeration from '../pages/admin/content/SafetyModeration';
 import QnAModeration from '../pages/admin/content/QnAModeration';
 import LegalPolicies from '../pages/admin/content/LegalPolicies';
 
@@ -96,6 +97,7 @@ const AdminRoutes = () => {
 
         {/* Content */}
         <Route path="content/reviews" element={<ReviewModeration />} />
+        <Route path="content/safety" element={<SafetyModeration />} />
         <Route path="content/qna" element={<QnAModeration />} />
         <Route path="content/legal" element={<LegalPolicies />} />
         

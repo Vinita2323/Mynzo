@@ -6,7 +6,7 @@ import {
   Truck, Store, Key, Settings, ChevronDown, ChevronRight,
   UserPlus, DollarSign, BarChart3, HelpCircle, FileText, Image, LayoutGrid, Layout, Bookmark,
   Tag, Zap, MessageSquare, RotateCcw, Inbox, Gamepad2,
-  Banknote, Percent, AlertCircle, CheckCircle2, GitBranch
+  Banknote, Percent, AlertCircle, CheckCircle2, GitBranch, ShieldAlert
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import OptimizedImage from '../components/common/OptimizedImage';
@@ -128,6 +128,7 @@ const AdminLayout = () => {
       title: 'CONTENT',
       items: [
         { name: 'Review Moderation', path: '/admin/content/reviews', icon: <MessageSquare size={18} /> },
+        { name: 'Safety Moderation', path: '/admin/content/safety', icon: <ShieldAlert size={18} /> },
         { name: 'FAQs', path: '/admin/content/qna', icon: <HelpCircle size={18} /> },
         { name: 'Legal & Policies', path: '/admin/content/legal', icon: <FileText size={18} /> },
       ]

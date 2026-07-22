@@ -21,6 +21,7 @@ const {
 
 const { protectUser } = require('../Middlewares/userAuthMiddleware');
 const { protectAdmin } = require('../Middlewares/authMiddleware');
+const { optionalProtectUser } = require('../Middlewares/optionalUserAuth');
 
 // Setup video file disk storage
 const uploadDir = path.join(__dirname, '../uploads/videos');
@@ -54,8 +55,8 @@ const uploadVideo = multer({
   fileFilter: fileFilter
 });
 
-// Public routes
-router.get('/', getReels);
+// Public routes (optional auth enables block filtering on feed)
+router.get('/', optionalProtectUser, getReels);
 router.post('/:id/view', incrementViews);
 
 // User protected routes
