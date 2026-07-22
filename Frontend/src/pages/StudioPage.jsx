@@ -5,11 +5,9 @@ import { useApp } from '../context/AppContext';
 import OptimizedImage from '../components/ui/OptimizedImage';
 import { getImageUrl } from '../utils/imageHelper';
 import analytics from '../utils/analytics';
-import toast from '../utils/toast';
 import { fetchReelsFeed } from '../utils/moderationApi';
 import VideoSafetyMenu from '../components/studio/VideoSafetyMenu';
 import ReportVideoModal from '../components/studio/ReportVideoModal';
-import BlockUserDialog from '../components/studio/BlockUserDialog';
 
 // Optimized Video component with preloading and unmuting control
 const ReelVideo = ({ src, onVisible, isMuted, toggleMute, active, onDoubleTap }) => {
@@ -158,10 +156,8 @@ export default function StudioPage() {
   // Floating heart animation states (Double Tap to Like)
   const [hearts, setHearts] = useState([]);
 
-  // Report / Block safety actions
+  // Report safety actions
   const [reportTarget, setReportTarget] = useState(null);
-  const [blockTarget, setBlockTarget] = useState(null);
-  const blockedCreatorIdsRef = useRef(new Set());
 
   // Parse share bridge
   const queryParams = new URLSearchParams(routerLocation.search);
@@ -193,53 +189,13 @@ export default function StudioPage() {
     videoUrl: getImageUrl(r.video)
   });
 
-  const removeCreatorFromFeed = (blockedUserId) => {
-    if (!blockedUserId) return;
-    const idStr = blockedUserId.toString();
-    blockedCreatorIdsRef.current.add(idStr);
-
-    setPosts((prev) => {
-      const idx = activeIndex;
-      const current = prev[idx];
-      const filtered = prev.filter((p) => {
-        const creatorId = p.uploadedBy?.toString?.() || p.uploadedBy;
-        return creatorId !== idStr;
-      });
-
-      let nextIndex = 0;
-      if (filtered.length === 0) {
-        nextIndex = 0;
-      } else if (current) {
-        const currentCreator = current.uploadedBy?.toString?.() || current.uploadedBy;
-        if (currentCreator === idStr) {
-          // Current video removed — keep index so the next reel slides into place
-          nextIndex = Math.min(idx, filtered.length - 1);
-        } else {
-          const found = filtered.findIndex((p) => p.id === current.id);
-          nextIndex = found >= 0 ? found : Math.min(idx, filtered.length - 1);
-        }
-      }
-      setActiveIndex(nextIndex);
-      return filtered;
-    });
-    setReportTarget(null);
-    setBlockTarget(null);
-  };
-
   const fetchReels = async () => {
     try {
       setLoading(true);
       const { ok, data } = await fetchReelsFeed();
       if (ok && data.success) {
         const userId = currentUserId;
-        const blocked = blockedCreatorIdsRef.current;
-        let formatted = (data.reels || [])
-          .map((r) => formatReel(r, userId))
-          // Client-side safety net for in-flight responses after a local block
-          .filter((p) => {
-            const creatorId = p.uploadedBy?.toString?.() || p.uploadedBy;
-            return !creatorId || !blocked.has(creatorId);
-          });
+        let formatted = (data.reels || []).map((r) => formatReel(r, userId));
 
         if (sharedReelId) {
           const sharedIndex = formatted.findIndex(p => p.id === sharedReelId);
@@ -267,18 +223,6 @@ export default function StudioPage() {
       return;
     }
     setReportTarget(post);
-  };
-
-  const openBlock = (post) => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    if (!post.uploadedBy || post.userModel === 'Admin' || post.userType === 'admin') {
-      toast.error('This account cannot be blocked');
-      return;
-    }
-    setBlockTarget(post);
   };
 
   const isOwnPost = (post) => {
@@ -667,10 +611,7 @@ export default function StudioPage() {
 
                 {canShowSafetyActions(post) && (
                   <VideoSafetyMenu
-                    username={post.username}
-                    showBlock={post.userModel !== 'Admin' && post.userType !== 'admin'}
                     onReport={() => openReport(post)}
-                    onBlock={() => openBlock(post)}
                     variant="dark"
                   />
                 )}
@@ -879,29 +820,6 @@ export default function StudioPage() {
         <ReportVideoModal
           videoId={reportTarget.id}
           onClose={() => setReportTarget(null)}
-        />
-      )}
-
-      {blockTarget && (
-        <BlockUserDialog
-          userId={blockTarget.uploadedBy}
-          username={blockTarget.username}
-          relatedVideoId={blockTarget.id}
-          onClose={() => setBlockTarget(null)}
-          onBlocked={({ blockedUserId }) => {
-            removeCreatorFromFeed(blockedUserId);
-            // Close comments sheet if it belonged to blocked content
-            setActiveCommentPost((openId) => {
-              if (!openId) return null;
-              const openPost = posts.find((p) => p.id === openId);
-              if (openPost && openPost.uploadedBy?.toString() === blockedUserId.toString()) {
-                return null;
-              }
-              return openId;
-            });
-            // Refetch so server-filtered feed stays in sync (no stale pages)
-            fetchReels();
-          }}
         />
       )}
     </div>
