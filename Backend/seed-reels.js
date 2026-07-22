@@ -1,3 +1,8 @@
+/**
+ * Delete all Studio reels and seed 10 genuine, product-linked review reels.
+ *
+ * Run: node seed-reels.js
+ */
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 dotenv.config();
@@ -8,134 +13,178 @@ const Product = require('./Models/Product');
 const Admin = require('./Models/Admin');
 const User = require('./Models/User');
 
-const videoUrls = [
+/**
+ * 10 genuine UGC-style reviews mapped to real catalog products.
+ * Mix of local uploads + browser-playable sample clips for visual variety.
+ */
+const REEL_SEEDS = [
   {
-    username: 'fashion_forward',
-    caption: 'Neon dreams and street style. 🌟 Rate this outfit in the comments!',
-    video: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    username: 'priya_skincare',
+    caption: 'Elite Retinol serum — skin feels smoother after 1 week. No irritation, light texture. Worth it!',
     rating: 5,
-    section: 'forYou'
+    section: 'following',
+    productMatch: /retinol/i,
+    video: '/uploads/videos/fashion_reel.mp4'
   },
   {
-    username: 'coffee_aesthetic',
-    caption: 'Nothing beats a fresh warm brew in the morning. ☕️✨',
-    video: 'https://www.w3schools.com/html/movie.mp4',
+    username: 'neha_glowup',
+    caption: 'Brio Aloe Vera serum for summer — cooling, non-sticky, perfect under sunscreen.',
+    rating: 5,
+    section: 'following',
+    productMatch: /aloe/i,
+    video: '/uploads/videos/sample_reel.mp4'
+  },
+  {
+    username: 'aisha_selfcare',
+    caption: 'EcoCraft Collagen clay mask — pores look cleaner, skin feels firmer. Sunday reset essential.',
     rating: 4,
-    section: 'forYou'
+    section: 'following',
+    productMatch: /clay|collagen/i,
+    video: '/uploads/videos/video-1781085834105-37064542.mp4'
   },
   {
-    username: 'shoe_collector',
-    caption: 'Step out in style. Premium leather boots for everyday hustle. 👞💼',
-    video: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+    username: 'meera_beauty',
+    caption: 'Apex Rose eye cream — puffiness down, soft finish. Using AM + PM.',
     rating: 5,
-    section: 'forYou'
+    section: 'following',
+    productMatch: /eye cream/i,
+    video: 'https://www.w3schools.com/html/mov_bbb.mp4'
   },
   {
-    username: 'fitness_motivation',
-    caption: 'Start your week strong. No excuses, let’s run! 🏃‍♀️💪',
-    video: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    username: 'arjun_techlife',
+    caption: 'Apex Pro Smart Ring unboxing — sleek build, tracks sleep & steps. Daily driver now.',
     rating: 5,
-    section: 'forYou'
+    section: 'forYou',
+    productMatch: /smart ring/i,
+    video: 'https://www.w3schools.com/html/movie.mp4'
   },
   {
-    username: 'yellow_summer',
-    caption: 'Spinning into summer like... ☀️💛 Grab the summer collection now!',
-    video: 'https://www.w3schools.com/html/movie.mp4',
+    username: 'kavya_style',
+    caption: 'Elite Sleek Travel Handbag — fits laptop + makeup pouch. Office to airport ready.',
+    rating: 5,
+    section: 'forYou',
+    productMatch: /handbag/i,
+    video: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4'
+  },
+  {
+    username: 'rohan_commute',
+    caption: 'Nova Modern Canvas Backpack review — padded straps, plenty of pockets. College + gym.',
     rating: 4,
-    section: 'forYou'
+    section: 'following',
+    productMatch: /backpack/i,
+    video: '/uploads/videos/fashion_reel.mp4'
   },
   {
-    username: 'desk_setup',
-    caption: 'Workspace productivity tips. How do you keep focused? 💻🧠',
-    video: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+    username: 'isha_evenings',
+    caption: 'Ultra Compact Suede Clutch — perfect for dinners. Soft feel, looks expensive.',
     rating: 5,
-    section: 'forYou'
+    section: 'forYou',
+    productMatch: /clutch/i,
+    video: '/uploads/videos/sample_reel.mp4'
   },
   {
-    username: 'wanderlust_travel',
-    caption: 'Get lost in nature to find yourself. Next stop: mountains! 🏔️🎒',
-    video: 'https://www.w3schools.com/html/mov_bbb.mp4',
+    username: 'vivaan_urban',
+    caption: 'Zenith Urban Commute Sling — hands-free, anti-theft vibe, fits phone + wallet + keys.',
     rating: 5,
-    section: 'forYou'
+    section: 'following',
+    productMatch: /zenith|urban commute/i,
+    video: '/uploads/videos/video-1781085834105-37064542.mp4'
   },
   {
-    username: 'chocoholic',
-    caption: 'Chocolate therapy is the best therapy. Who wants a bite? 🍫😋',
-    video: 'https://www.w3schools.com/html/movie.mp4',
-    rating: 4,
-    section: 'forYou'
-  },
-  {
-    username: 'glow_skincare',
-    caption: 'My 3-step morning skincare routine for a natural glowing finish. ✨🧴',
-    video: 'https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4',
+    username: 'ananya_jewels',
+    caption: 'Solace Emerald earrings — lightweight, sparkle catches light beautifully. Festive favourite!',
     rating: 5,
-    section: 'forYou'
-  },
-  {
-    username: 'shopaholic_diary',
-    caption: 'Retail therapy done right. Shopping haul coming up next! 🛍️💖',
-    video: 'https://www.w3schools.com/html/mov_bbb.mp4',
-    rating: 5,
-    section: 'forYou'
+    section: 'forYou',
+    productMatch: /solace|emerald/i,
+    video: 'https://www.w3schools.com/html/mov_bbb.mp4'
   }
 ];
+
+function pickProduct(products, seed, usedIds) {
+  const matched = products.find(
+    (p) => seed.productMatch.test(`${p.name} ${p.brandName || ''}`) && !usedIds.has(String(p._id))
+  );
+  if (matched) return matched;
+  const unused = products.find((p) => !usedIds.has(String(p._id)));
+  return unused || products[0];
+}
 
 const seedReels = async () => {
   try {
     await connectDB();
-    console.log('🗑️ Deleting old reels...');
-    await Reel.deleteMany({});
 
-    console.log('🔍 Fetching products to link...');
-    const products = await Product.find({ status: 'Approved' }).limit(10);
+    console.log('\n🗑️  Deleting ALL existing reels...');
+    const deleted = await Reel.deleteMany({});
+    console.log(`   Removed ${deleted.deletedCount} reels.`);
+
+    console.log('\n🔍 Loading approved products...');
+    const products = await Product.find({ status: 'Approved' }).limit(40);
     if (products.length === 0) {
-      console.log('❌ No approved products found to link with reels. Please add products first.');
+      console.log('❌ No approved products found. Add products first.');
       process.exit(1);
     }
-    console.log(`Found ${products.length} products to link with reels.`);
-
-    console.log('🔍 Fetching uploader user/admin...');
-    let uploaderId;
-    let userModel = 'Admin';
-    let userType = 'admin';
+    console.log(`   Found ${products.length} approved products.`);
 
     const admin = await Admin.findOne({});
-    if (admin) {
-      uploaderId = admin._id;
-    } else {
-      const user = await User.findOne({});
-      if (user) {
-        uploaderId = user._id;
+    const namedUsers = await User.find({ name: { $nin: [null, ''] } }).limit(10);
+    const anyUsers = await User.find({}).limit(10);
+    const uploaders = namedUsers.length > 0 ? namedUsers : anyUsers;
+
+    const usedProductIds = new Set();
+    const reelsToCreate = REEL_SEEDS.map((seed, idx) => {
+      const product = pickProduct(products, seed, usedProductIds);
+      usedProductIds.add(String(product._id));
+
+      let uploadedBy;
+      let userModel;
+      let userType;
+      let profileImage = '';
+
+      if (uploaders.length > 0) {
+        const user = uploaders[idx % uploaders.length];
+        uploadedBy = user._id;
         userModel = 'User';
         userType = 'user';
+        profileImage = user.avatar || '';
+      } else if (admin) {
+        uploadedBy = admin._id;
+        userModel = 'Admin';
+        userType = 'admin';
+        profileImage = '/uploads/admin-avatar.png';
       } else {
-        uploaderId = new mongoose.Types.ObjectId();
+        uploadedBy = new mongoose.Types.ObjectId();
+        userModel = 'User';
+        userType = 'user';
       }
-    }
-    console.log(`Using uploader: ${uploaderId} (${userModel})`);
 
-    const reelsToCreate = videoUrls.map((item, idx) => {
-      const product = products[idx % products.length];
       return {
-        ...item,
         productId: product._id,
-        uploadedBy: uploaderId,
+        uploadedBy,
         userModel,
         userType,
-        profileImage: '/uploads/admin-avatar.png',
+        username: seed.username,
+        profileImage,
+        video: seed.video,
+        rating: seed.rating,
+        caption: seed.caption,
+        status: 'approved',
+        section: seed.section,
         likes: [],
         comments: [],
-        views: Math.floor(Math.random() * 2000) + 150,
-        status: 'approved'
+        views: 180 + Math.floor(Math.random() * 4200)
       };
     });
 
-    console.log('🌱 Seeding 10 new Reels...');
+    console.log('\n🌱 Seeding 10 genuine Studio reels...');
     const seeded = await Reel.insertMany(reelsToCreate);
-    console.log(`✅ Successfully seeded ${seeded.length} reels.`);
 
-    mongoose.connection.close();
+    seeded.forEach((r, i) => {
+      const product = products.find((p) => String(p._id) === String(reelsToCreate[i].productId));
+      console.log(`   ${i + 1}. @${r.username} → ${product?.name || r.productId} [${r.section}]`);
+    });
+
+    console.log(`\n✅ Done. Seeded ${seeded.length} reels. Old reels deleted.`);
+    await mongoose.connection.close();
     process.exit(0);
   } catch (err) {
     console.error('❌ Seeding error:', err);
