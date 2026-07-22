@@ -1,17 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { MoreVertical, Flag, Ban } from 'lucide-react';
+import { MoreVertical, Flag } from 'lucide-react';
 
 /**
- * Discoverable ⋯ menu with Report / Block for another user's Studio video.
- * Does not render for the current user's own content (caller should gate that).
+ * Discoverable ⋯ menu with Report for another user's Studio video.
  */
 export default function VideoSafetyMenu({
-  username,
   onReport,
-  onBlock,
-  showBlock = true,
-  variant = 'dark', // 'dark' for Studio overlay, 'light' for product page
-  menuPlacement = 'up' // 'up' above trigger (Studio rail), 'down' below (headers)
+  variant = 'dark',
+  menuPlacement = 'up'
 }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef(null);
@@ -39,10 +35,15 @@ export default function VideoSafetyMenu({
     };
   }, [open]);
 
-  const displayName = username ? `@${String(username).replace(/^@/, '')}` : 'User';
+  const menuPositionClass = isDark
+    ? // Studio rail: sit to the left of More, vertically centered on the icon
+      'right-full top-0 mr-3'
+    : menuPlacement === 'down'
+      ? 'left-0 top-full mt-2'
+      : 'left-0 bottom-full mb-2';
 
   return (
-    <div className="relative" ref={menuRef}>
+    <div className="relative z-30" ref={menuRef}>
       <button
         type="button"
         aria-haspopup="menu"
@@ -75,16 +76,14 @@ export default function VideoSafetyMenu({
       {open && (
         <div
           role="menu"
-          className={`absolute right-0 w-52 rounded-2xl shadow-2xl overflow-hidden z-50 border ${
-            menuPlacement === 'down' ? 'top-full mt-2' : 'bottom-full mb-2'
-          } ${
-            isDark ? 'bg-slate-900 border-white/10 text-white' : 'bg-white border-slate-100 text-slate-800'
+          className={`absolute ${menuPositionClass} w-max min-w-[7.5rem] rounded-2xl shadow-2xl overflow-hidden z-[60] border ${
+            isDark ? 'bg-slate-900/95 backdrop-blur-md border-white/15 text-white' : 'bg-white border-slate-100 text-slate-800'
           }`}
         >
           <button
             type="button"
             role="menuitem"
-            className={`w-full flex items-center gap-3 px-4 py-3.5 text-left text-[13px] font-semibold min-h-[44px] ${
+            className={`w-full flex items-center gap-2.5 px-3.5 py-3 text-left text-[13px] font-semibold whitespace-nowrap min-h-[44px] ${
               isDark ? 'hover:bg-white/10' : 'hover:bg-slate-50'
             }`}
             onClick={(e) => {
@@ -96,23 +95,6 @@ export default function VideoSafetyMenu({
             <Flag className="w-4 h-4 shrink-0" />
             Report
           </button>
-          {showBlock && (
-            <button
-              type="button"
-              role="menuitem"
-              className={`w-full flex items-center gap-3 px-4 py-3.5 text-left text-[13px] font-semibold min-h-[44px] text-rose-500 ${
-                isDark ? 'hover:bg-white/10 border-t border-white/10' : 'hover:bg-rose-50 border-t border-slate-100'
-              }`}
-              onClick={(e) => {
-                e.stopPropagation();
-                setOpen(false);
-                onBlock?.();
-              }}
-            >
-              <Ban className="w-4 h-4 shrink-0" />
-              Block {displayName}
-            </button>
-          )}
         </div>
       )}
     </div>

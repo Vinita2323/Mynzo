@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, ShoppingCart, Heart, Send, Star, ChevronRight, Home, Truck, Store, RotateCcw, Banknote, ShieldCheck, ArrowRight, ChevronDown, ChevronUp, CheckCircle2, CheckCircle, X, Play, MapPin } from 'lucide-react';
+import { ArrowLeft, Search, ShoppingCart, Heart, Send, Star, ChevronRight, Home, Truck, Store, RotateCcw, Banknote, ShieldCheck, ArrowRight, ChevronDown, ChevronUp, CheckCircle2, CheckCircle, X, Play, MapPin, Flag } from 'lucide-react';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { useApp } from '../context/AppContext';
 import analytics from '../utils/analytics';
@@ -9,9 +9,7 @@ import OptimizedImage from '../components/ui/OptimizedImage';
 import { getImageUrl } from '../utils/imageHelper';
 import { formatDiscount } from '../utils/discountHelper';
 import { fetchReelsFeed } from '../utils/moderationApi';
-import VideoSafetyMenu from '../components/studio/VideoSafetyMenu';
 import ReportVideoModal from '../components/studio/ReportVideoModal';
-import BlockUserDialog from '../components/studio/BlockUserDialog';
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
@@ -38,7 +36,6 @@ export default function ProductDetailsPage() {
   const [isUploadingReel, setIsUploadingReel] = useState(false);
   const [isEligibleToReview, setIsEligibleToReview] = useState(false);
   const [reportTargetReel, setReportTargetReel] = useState(null);
-  const [blockTargetReel, setBlockTargetReel] = useState(null);
 
   const fetchProductReels = async () => {
     try {
@@ -1247,21 +1244,18 @@ export default function ProductDetailsPage() {
                 const canModerate = creatorId && !isOwn;
                 if (!canModerate) return null;
                 return (
-                  <VideoSafetyMenu
-                    username={reel.username}
-                    variant="dark"
-                    menuPlacement="down"
-                    showBlock={reel.userModel !== 'Admin' && reel.userType !== 'admin'}
-                    onReport={() => {
+                  <button
+                    type="button"
+                    aria-label="Report"
+                    onClick={() => {
                       if (!user) { navigate('/login'); return; }
                       setReportTargetReel(reel);
                     }}
-                    onBlock={() => {
-                      if (!user) { navigate('/login'); return; }
-                      if (reel.userModel === 'Admin' || reel.userType === 'admin') return;
-                      setBlockTargetReel(reel);
-                    }}
-                  />
+                    className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors flex items-center gap-1.5 text-white text-xs font-semibold"
+                  >
+                    <Flag className="w-4 h-4" />
+                    Report
+                  </button>
                 );
               })()}
               <button
@@ -1312,25 +1306,6 @@ export default function ProductDetailsPage() {
         <ReportVideoModal
           videoId={reportTargetReel._id}
           onClose={() => setReportTargetReel(null)}
-        />
-      )}
-
-      {blockTargetReel && (
-        <BlockUserDialog
-          userId={blockTargetReel.uploadedBy}
-          username={blockTargetReel.username}
-          relatedVideoId={blockTargetReel._id}
-          onClose={() => setBlockTargetReel(null)}
-          onBlocked={({ blockedUserId }) => {
-            const idStr = blockedUserId.toString();
-            setProductReels((prev) => prev.filter((r) => {
-              const creatorId = r.uploadedBy?.toString?.() || r.uploadedBy;
-              return creatorId !== idStr;
-            }));
-            setSelectedReviewMedia(null);
-            setReportTargetReel(null);
-            fetchProductReels();
-          }}
         />
       )}
 

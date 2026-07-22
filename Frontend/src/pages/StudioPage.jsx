@@ -1,15 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Heart, MessageCircle, Share2, ShoppingBag, Gift, ArrowLeft, CheckCircle2, Play, Edit2, Trash2, X, Copy, Volume2, VolumeX } from 'lucide-react';
+import { Heart, MessageCircle, Share2, ShoppingBag, Gift, ArrowLeft, CheckCircle2, Play, Edit2, Trash2, X, Copy, Volume2, VolumeX, Flag } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import OptimizedImage from '../components/ui/OptimizedImage';
 import { getImageUrl } from '../utils/imageHelper';
 import analytics from '../utils/analytics';
-import toast from '../utils/toast';
 import { fetchReelsFeed } from '../utils/moderationApi';
-import VideoSafetyMenu from '../components/studio/VideoSafetyMenu';
 import ReportVideoModal from '../components/studio/ReportVideoModal';
-import BlockUserDialog from '../components/studio/BlockUserDialog';
 
 // Optimized Video component with preloading and unmuting control
 const ReelVideo = ({ src, onVisible, isMuted, toggleMute, active, onDoubleTap }) => {
@@ -643,7 +640,7 @@ export default function StudioPage() {
               ))}
 
               {/* Right Action Panel */}
-              <div className="absolute right-4 bottom-6 flex flex-col items-center gap-6 z-20">
+              <div className="absolute right-4 bottom-6 flex flex-col items-center gap-6 z-30">
                 <button onClick={(e) => { e.stopPropagation(); handleLike(post.id); }} className="flex flex-col items-center gap-1 cursor-pointer hover:scale-110 transition-transform">
                   <div className="w-10 h-10 bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10">
                     <Heart className={`w-6 h-6 ${post.isLiked ? 'fill-rose-500 text-rose-500' : 'text-white'}`} />
@@ -666,13 +663,22 @@ export default function StudioPage() {
                 </button>
 
                 {canShowSafetyActions(post) && (
-                  <VideoSafetyMenu
-                    username={post.username}
-                    showBlock={post.userModel !== 'Admin' && post.userType !== 'admin'}
-                    onReport={() => openReport(post)}
-                    onBlock={() => openBlock(post)}
-                    variant="dark"
-                  />
+                  <button
+                    type="button"
+                    aria-label="Report"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openReport(post);
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    className="flex flex-col items-center gap-1 cursor-pointer hover:scale-110 transition-transform"
+                  >
+                    <div className="w-10 h-10 bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10">
+                      <Flag className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-[11px] font-semibold drop-shadow-md">Report</span>
+                  </button>
                 )}
 
                 {post.product && (
@@ -879,29 +885,6 @@ export default function StudioPage() {
         <ReportVideoModal
           videoId={reportTarget.id}
           onClose={() => setReportTarget(null)}
-        />
-      )}
-
-      {blockTarget && (
-        <BlockUserDialog
-          userId={blockTarget.uploadedBy}
-          username={blockTarget.username}
-          relatedVideoId={blockTarget.id}
-          onClose={() => setBlockTarget(null)}
-          onBlocked={({ blockedUserId }) => {
-            removeCreatorFromFeed(blockedUserId);
-            // Close comments sheet if it belonged to blocked content
-            setActiveCommentPost((openId) => {
-              if (!openId) return null;
-              const openPost = posts.find((p) => p.id === openId);
-              if (openPost && openPost.uploadedBy?.toString() === blockedUserId.toString()) {
-                return null;
-              }
-              return openId;
-            });
-            // Refetch so server-filtered feed stays in sync (no stale pages)
-            fetchReels();
-          }}
         />
       )}
     </div>
