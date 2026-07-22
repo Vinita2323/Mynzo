@@ -11,6 +11,7 @@ import { formatDiscount } from '../utils/discountHelper';
 import { fetchReelsFeed } from '../utils/moderationApi';
 import VideoSafetyMenu from '../components/studio/VideoSafetyMenu';
 import ReportVideoModal from '../components/studio/ReportVideoModal';
+import BlockUserDialog from '../components/studio/BlockUserDialog';
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
@@ -37,6 +38,7 @@ export default function ProductDetailsPage() {
   const [isUploadingReel, setIsUploadingReel] = useState(false);
   const [isEligibleToReview, setIsEligibleToReview] = useState(false);
   const [reportTargetReel, setReportTargetReel] = useState(null);
+  const [blockTargetReel, setBlockTargetReel] = useState(null);
 
   const fetchProductReels = async () => {
     try {
@@ -1246,11 +1248,18 @@ export default function ProductDetailsPage() {
                 if (!canModerate) return null;
                 return (
                   <VideoSafetyMenu
+                    username={reel.username}
                     variant="dark"
                     menuPlacement="down"
+                    showBlock={reel.userModel !== 'Admin' && reel.userType !== 'admin'}
                     onReport={() => {
                       if (!user) { navigate('/login'); return; }
                       setReportTargetReel(reel);
+                    }}
+                    onBlock={() => {
+                      if (!user) { navigate('/login'); return; }
+                      if (reel.userModel === 'Admin' || reel.userType === 'admin') return;
+                      setBlockTargetReel(reel);
                     }}
                   />
                 );
@@ -1303,6 +1312,25 @@ export default function ProductDetailsPage() {
         <ReportVideoModal
           videoId={reportTargetReel._id}
           onClose={() => setReportTargetReel(null)}
+        />
+      )}
+
+      {blockTargetReel && (
+        <BlockUserDialog
+          userId={blockTargetReel.uploadedBy}
+          username={blockTargetReel.username}
+          relatedVideoId={blockTargetReel._id}
+          onClose={() => setBlockTargetReel(null)}
+          onBlocked={({ blockedUserId }) => {
+            const idStr = blockedUserId.toString();
+            setProductReels((prev) => prev.filter((r) => {
+              const creatorId = r.uploadedBy?.toString?.() || r.uploadedBy;
+              return creatorId !== idStr;
+            }));
+            setSelectedReviewMedia(null);
+            setReportTargetReel(null);
+            fetchProductReels();
+          }}
         />
       )}
 
