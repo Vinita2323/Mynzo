@@ -155,10 +155,8 @@ export default function StudioPage() {
   // Floating heart animation states (Double Tap to Like)
   const [hearts, setHearts] = useState([]);
 
-  // Report / Block safety actions
+  // Report safety action
   const [reportTarget, setReportTarget] = useState(null);
-  const [blockTarget, setBlockTarget] = useState(null);
-  const blockedCreatorIdsRef = useRef(new Set());
 
   // Parse share bridge
   const queryParams = new URLSearchParams(routerLocation.search);
@@ -190,53 +188,13 @@ export default function StudioPage() {
     videoUrl: getImageUrl(r.video)
   });
 
-  const removeCreatorFromFeed = (blockedUserId) => {
-    if (!blockedUserId) return;
-    const idStr = blockedUserId.toString();
-    blockedCreatorIdsRef.current.add(idStr);
-
-    setPosts((prev) => {
-      const idx = activeIndex;
-      const current = prev[idx];
-      const filtered = prev.filter((p) => {
-        const creatorId = p.uploadedBy?.toString?.() || p.uploadedBy;
-        return creatorId !== idStr;
-      });
-
-      let nextIndex = 0;
-      if (filtered.length === 0) {
-        nextIndex = 0;
-      } else if (current) {
-        const currentCreator = current.uploadedBy?.toString?.() || current.uploadedBy;
-        if (currentCreator === idStr) {
-          // Current video removed — keep index so the next reel slides into place
-          nextIndex = Math.min(idx, filtered.length - 1);
-        } else {
-          const found = filtered.findIndex((p) => p.id === current.id);
-          nextIndex = found >= 0 ? found : Math.min(idx, filtered.length - 1);
-        }
-      }
-      setActiveIndex(nextIndex);
-      return filtered;
-    });
-    setReportTarget(null);
-    setBlockTarget(null);
-  };
-
   const fetchReels = async () => {
     try {
       setLoading(true);
       const { ok, data } = await fetchReelsFeed();
       if (ok && data.success) {
         const userId = currentUserId;
-        const blocked = blockedCreatorIdsRef.current;
-        let formatted = (data.reels || [])
-          .map((r) => formatReel(r, userId))
-          // Client-side safety net for in-flight responses after a local block
-          .filter((p) => {
-            const creatorId = p.uploadedBy?.toString?.() || p.uploadedBy;
-            return !creatorId || !blocked.has(creatorId);
-          });
+        let formatted = (data.reels || []).map((r) => formatReel(r, userId));
 
         if (sharedReelId) {
           const sharedIndex = formatted.findIndex(p => p.id === sharedReelId);
@@ -264,29 +222,6 @@ export default function StudioPage() {
       return;
     }
     setReportTarget(post);
-  };
-
-  const openBlock = (post) => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    if (!post.uploadedBy || post.userModel === 'Admin' || post.userType === 'admin') {
-      toast.error('This account cannot be blocked');
-      return;
-    }
-    setBlockTarget(post);
-  };
-
-  const isOwnPost = (post) => {
-    if (!currentUserId || !post.uploadedBy) return false;
-    return post.uploadedBy.toString() === currentUserId.toString() && post.userModel !== 'Admin';
-  };
-
-  const canShowSafetyActions = (post) => {
-    if (!post.uploadedBy) return false;
-    if (isOwnPost(post)) return false;
-    return true;
   };
 
   useEffect(() => {
@@ -662,24 +597,22 @@ export default function StudioPage() {
                   <span className="text-[11px] font-semibold drop-shadow-md">Share</span>
                 </button>
 
-                {canShowSafetyActions(post) && (
-                  <button
-                    type="button"
-                    aria-label="Report"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      openReport(post);
-                    }}
-                    onMouseDown={(e) => e.stopPropagation()}
-                    onTouchStart={(e) => e.stopPropagation()}
-                    className="flex flex-col items-center gap-1 cursor-pointer hover:scale-110 transition-transform"
-                  >
-                    <div className="w-10 h-10 bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10">
-                      <Flag className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="text-[11px] font-semibold drop-shadow-md">Report</span>
-                  </button>
-                )}
+                <button
+                  type="button"
+                  aria-label="Report"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openReport(post);
+                  }}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onTouchStart={(e) => e.stopPropagation()}
+                  className="flex flex-col items-center gap-1 cursor-pointer hover:scale-110 transition-transform"
+                >
+                  <div className="w-10 h-10 bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10">
+                    <Flag className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-[11px] font-semibold drop-shadow-md">Report</span>
+                </button>
 
                 {post.product && (
                   <button onClick={(e) => { e.stopPropagation(); handleAddToCart(post.product); }} className="flex flex-col items-center gap-1 cursor-pointer hover:scale-110 transition-transform">

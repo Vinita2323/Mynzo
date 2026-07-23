@@ -10,8 +10,6 @@ dotenv.config();
 const connectDB = require('./Config/db');
 const Reel = require('./Models/Reel');
 const Product = require('./Models/Product');
-const Admin = require('./Models/Admin');
-const User = require('./Models/User');
 
 /**
  * 10 genuine UGC-style reviews mapped to real catalog products.
@@ -125,45 +123,20 @@ const seedReels = async () => {
     }
     console.log(`   Found ${products.length} approved products.`);
 
-    const admin = await Admin.findOne({});
-    const namedUsers = await User.find({ name: { $nin: [null, ''] } }).limit(10);
-    const anyUsers = await User.find({}).limit(10);
-    const uploaders = namedUsers.length > 0 ? namedUsers : anyUsers;
-
     const usedProductIds = new Set();
-    const reelsToCreate = REEL_SEEDS.map((seed, idx) => {
+    const reelsToCreate = REEL_SEEDS.map((seed) => {
       const product = pickProduct(products, seed, usedProductIds);
       usedProductIds.add(String(product._id));
 
-      let uploadedBy;
-      let userModel;
-      let userType;
-      let profileImage = '';
-
-      if (uploaders.length > 0) {
-        const user = uploaders[idx % uploaders.length];
-        uploadedBy = user._id;
-        userModel = 'User';
-        userType = 'user';
-        profileImage = user.avatar || '';
-      } else if (admin) {
-        uploadedBy = admin._id;
-        userModel = 'Admin';
-        userType = 'admin';
-        profileImage = '/uploads/admin-avatar.png';
-      } else {
-        uploadedBy = new mongoose.Types.ObjectId();
-        userModel = 'User';
-        userType = 'user';
-      }
-
+      // Unique synthetic uploader per reel so Report shows for every logged-in user
+      // (do not attach real User accounts — that hid Report on "own" seeded reels)
       return {
         productId: product._id,
-        uploadedBy,
-        userModel,
-        userType,
+        uploadedBy: new mongoose.Types.ObjectId(),
+        userModel: 'User',
+        userType: 'user',
         username: seed.username,
-        profileImage,
+        profileImage: '',
         video: seed.video,
         rating: seed.rating,
         caption: seed.caption,

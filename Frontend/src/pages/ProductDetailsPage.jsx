@@ -1236,28 +1236,20 @@ export default function ProductDetailsPage() {
           <div className="flex justify-between items-center p-4">
             <div className="w-10" />
             <div className="flex items-center gap-2">
-              {selectedReviewMedia.type === 'video' && selectedReviewMedia.reel && (() => {
-                const reel = selectedReviewMedia.reel;
-                const creatorId = reel.uploadedBy?.toString?.() || reel.uploadedBy;
-                const currentId = user?._id || user?.id;
-                const isOwn = currentId && creatorId && creatorId === currentId.toString() && reel.userModel !== 'Admin';
-                const canModerate = creatorId && !isOwn;
-                if (!canModerate) return null;
-                return (
-                  <button
-                    type="button"
-                    aria-label="Report"
-                    onClick={() => {
-                      if (!user) { navigate('/login'); return; }
-                      setReportTargetReel(reel);
-                    }}
-                    className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors flex items-center gap-1.5 text-white text-xs font-semibold"
-                  >
-                    <Flag className="w-4 h-4" />
-                    Report
-                  </button>
-                );
-              })()}
+              {selectedReviewMedia.type === 'video' && selectedReviewMedia.reel && (
+                <button
+                  type="button"
+                  aria-label="Report"
+                  onClick={() => {
+                    if (!user) { navigate('/login'); return; }
+                    setReportTargetReel(selectedReviewMedia.reel);
+                  }}
+                  className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors flex items-center gap-1.5 text-white text-xs font-semibold"
+                >
+                  <Flag className="w-4 h-4" />
+                  Report
+                </button>
+              )}
               <button
                 onClick={() => setSelectedReviewMedia(null)}
                 className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
