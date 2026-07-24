@@ -3,6 +3,7 @@ const router = express.Router();
 const {
   createReport,
   getReportReasons,
+  getMyReports,
   blockUserHandler,
   unblockUserHandler,
   getMyBlockedUsers,
@@ -20,6 +21,7 @@ router.get('/reports/reasons', getReportReasons);
 
 // User — reports
 router.post('/reports', protectUser, createReport);
+router.get('/reports/my', protectUser, getMyReports);
 
 // User — blocks
 router.get('/users/me/blocked', protectUser, getMyBlockedUsers);

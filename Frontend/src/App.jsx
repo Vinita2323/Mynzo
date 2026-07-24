@@ -25,6 +25,7 @@ const TermsPage          = lazy(() => import('./pages/TermsPage'));
 const AccountInfoPage    = lazy(() => import('./pages/AccountInfoPage'));
 const SecurityPage       = lazy(() => import('./pages/SecurityPage'));
 const SettingsPage       = lazy(() => import('./pages/SettingsPage'));
+const ReportNotesPage    = lazy(() => import('./pages/ReportNotesPage'));
 const WalletPage         = lazy(() => import('./pages/WalletPage'));
 const CouponsPage        = lazy(() => import('./pages/CouponsPage'));
 const ReferEarnPage      = lazy(() => import('./pages/ReferEarnPage'));
@@ -66,7 +67,7 @@ function AppContent() {
   }, [location.pathname, location.search]);
 
   useEffect(() => {
-    const protectedRoutes = ['/cart', '/wishlist', '/orders', '/games', '/refer', '/saved-addresses', '/wallet'];
+    const protectedRoutes = ['/cart', '/wishlist', '/orders', '/games', '/refer', '/saved-addresses', '/wallet', '/report-notes'];
     const isProtectedRoute = protectedRoutes.some(route => location.pathname.startsWith(route));
 
     if (!user && isProtectedRoute) {
@@ -104,6 +105,7 @@ function AppContent() {
         <Route path="/account" element={<AccountInfoPage />} />
         <Route path="/security" element={<SecurityPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/report-notes" element={<ReportNotesPage />} />
         <Route path="/wallet" element={<WalletPage />} />
         <Route path="/coupons" element={<CouponsPage />} />
         <Route path="/refer" element={<ReferEarnPage />} />

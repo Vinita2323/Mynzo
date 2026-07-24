@@ -7,7 +7,7 @@ import {
   ChevronLeft, User, Lock, Settings, Phone, LogOut, Camera, 
   ChevronRight, Coins, Gift, ShoppingBag, Sparkles, X,
   CreditCard, Globe, Bell, Headphones, Store, FileText, HelpCircle,
-  Heart, Package, Edit2, MapPin, Truck, RotateCcw, ShieldCheck, Tag, Trash2
+  Heart, Package, Edit2, MapPin, Truck, RotateCcw, ShieldCheck, Tag, Trash2, Flag
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CRAZY_DEALS, VALUE_PROPS } from '../data/mockData';
@@ -441,6 +441,7 @@ export default function ProfilePage() {
 
   const menuOptions = [
     { id: 'wallet', label: "My Wallet", desc: "View your current Mynzo coin balance", icon: Coins, color: "bg-indigo-100/60 text-[#02006c]", path: "/wallet" },
+    { label: "Report Notes", desc: "Updates from admin on videos you reported", icon: Flag, color: "bg-rose-100/60 text-rose-600", path: "/report-notes" },
     { label: "Account Information", desc: "Manage your email, phone, and profile settings", icon: User, color: "bg-orange-100/60 text-[#ee4923]", path: "/account" },
     { label: "Saved Addresses", desc: "Manage your delivery addresses", icon: MapPin, color: "bg-rose-100/60 text-rose-500", path: "/saved-addresses" },
     { label: "Security & Password", desc: "Change password and secure credentials", icon: Lock, color: "bg-amber-100/60 text-amber-600", path: "/security" },

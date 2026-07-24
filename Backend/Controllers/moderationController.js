@@ -136,6 +136,43 @@ exports.getMyBlockedUsers = async (req, res) => {
   }
 };
 
+// @desc    Get current user's submitted reports (with admin notes)
+// @route   GET /reports/my
+// @access  Private (User)
+exports.getMyReports = async (req, res) => {
+  try {
+    const reports = await ContentReport.find({ reporterId: req.user._id })
+      .populate('targetId', 'username caption video status')
+      .sort({ updatedAt: -1 })
+      .limit(100)
+      .lean();
+
+    const formatted = reports.map((r) => ({
+      id: r._id,
+      reason: r.reason,
+      description: r.description || '',
+      status: r.status,
+      adminNote: r.adminNote || '',
+      adminNoteUpdatedAt: r.adminNoteUpdatedAt || null,
+      createdAt: r.createdAt,
+      updatedAt: r.updatedAt,
+      target: r.targetId
+        ? {
+            id: r.targetId._id,
+            username: r.targetId.username,
+            caption: r.targetId.caption || '',
+            status: r.targetId.status
+          }
+        : null
+    }));
+
+    return res.status(200).json({ success: true, count: formatted.length, reports: formatted });
+  } catch (error) {
+    console.error('Get My Reports Error:', error);
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // @desc    Admin: list content reports
 // @route   GET /admin/moderation/reports
 // @access  Private (Admin)
@@ -160,26 +197,96 @@ exports.adminGetReports = async (req, res) => {
   }
 };
 
-// @desc    Admin: update report status
+// @desc    Admin: update report status and/or admin note
 // @route   PUT /admin/moderation/reports/:id
 // @access  Private (Admin)
 exports.adminUpdateReportStatus = async (req, res) => {
   try {
-    const { status } = req.body;
+    const { status, adminNote } = req.body;
     const allowed = ['pending', 'reviewing', 'resolved', 'dismissed'];
-    if (!status || !allowed.includes(status)) {
-      return res.status(400).json({ success: false, message: 'Invalid status' });
-    }
 
     const report = await ContentReport.findById(req.params.id);
     if (!report) {
       return res.status(404).json({ success: false, message: 'Report not found' });
     }
 
-    report.status = status;
+    if (status !== undefined) {
+      if (!allowed.includes(status)) {
+        return res.status(400).json({ success: false, message: 'Invalid status' });
+      }
+      report.status = status;
+    }
+
+    let noteJustSaved = false;
+    let savedNoteText = '';
+
+    if (adminNote !== undefined) {
+      const note = String(adminNote).trim().slice(0, 2000);
+      const previousNote = (report.adminNote || '').trim();
+      report.adminNote = note;
+      report.adminNoteUpdatedAt = new Date();
+      if (req.admin?._id) {
+        report.adminNoteBy = req.admin._id;
+      }
+      // Notify when a non-empty note is saved (new or updated)
+      if (note && note !== previousNote) {
+        noteJustSaved = true;
+        savedNoteText = note;
+      }
+    }
+
+    if (status === undefined && adminNote === undefined) {
+      return res.status(400).json({ success: false, message: 'Nothing to update' });
+    }
+
     await report.save();
 
-    return res.status(200).json({ success: true, message: `Report marked as ${status}`, report });
+    // Firebase push + in-app notification to the reporter when admin sends a note
+    if (noteJustSaved && report.reporterId) {
+      try {
+        const Notification = require('../Models/Notification');
+        const { sendNotificationToUser } = require('../Router/firebaseAdmin');
+
+        const preview =
+          savedNoteText.length > 120
+            ? `${savedNoteText.slice(0, 117)}...`
+            : savedNoteText;
+
+        const title = 'Update on your report';
+        const body = preview || 'Our safety team left a note on your report. Open Report Notes to read it.';
+
+        const notification = new Notification({
+          title,
+          body,
+          target: 'Selected Users',
+          targetUserIds: [report.reporterId],
+          status: 'Delivered',
+          sentAt: new Date()
+        });
+        await notification.save();
+
+        sendNotificationToUser(report.reporterId, {
+          title,
+          body,
+          data: {
+            type: 'report_admin_note',
+            reportId: String(report._id),
+            path: '/report-notes'
+          }
+        }).catch((e) => console.error('Report note push failed:', e.message));
+      } catch (notifErr) {
+        console.error('Error sending report-note notification:', notifErr.message);
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: adminNote !== undefined
+        ? (noteJustSaved ? 'Admin note saved and user notified' : 'Admin note saved')
+        : `Report marked as ${status}`,
+      report,
+      notified: noteJustSaved
+    });
   } catch (error) {
     console.error('Admin Update Report Error:', error);
     return res.status(500).json({ success: false, message: error.message });

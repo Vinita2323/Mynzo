@@ -49,6 +49,21 @@ const contentReportSchema = new mongoose.Schema({
     enum: ['pending', 'reviewing', 'resolved', 'dismissed'],
     default: 'pending',
     index: true
+  },
+  // Admin response note — visible to the reporter in Profile → Report Notes
+  adminNote: {
+    type: String,
+    maxlength: 2000,
+    default: ''
+  },
+  adminNoteUpdatedAt: {
+    type: Date,
+    default: null
+  },
+  adminNoteBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Admin',
+    default: null
   }
 }, { timestamps: true });
 

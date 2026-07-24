@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  ShieldAlert, Search, Flag, Ban, Eye, CheckCircle2, Clock, AlertCircle
+  ShieldAlert, Search, Flag, Ban, Eye, CheckCircle2, Clock, AlertCircle, StickyNote, Save
 } from 'lucide-react';
 import toast from '../../../utils/toast';
 
@@ -22,16 +22,19 @@ const REASON_LABELS = {
 
 /**
  * Admin Safety Moderation — developer/admin-visible queue for UGC reports and blocks.
- * Backed by ModerationEvent + ContentReport collections (real persistence, not a fake toast).
+ * Admin can write notes that appear on the reporter's Profile → Report Notes.
  */
 const SafetyModeration = () => {
-  const [activeTab, setActiveTab] = useState('events'); // events | reports | blocks
+  const [activeTab, setActiveTab] = useState('reports'); // events | reports | blocks
   const [events, setEvents] = useState([]);
   const [reports, setReports] = useState([]);
   const [blocks, setBlocks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [reportStatusFilter, setReportStatusFilter] = useState('all');
+  const [noteDrafts, setNoteDrafts] = useState({});
+  const [savingNoteId, setSavingNoteId] = useState(null);
+  const [expandedNoteId, setExpandedNoteId] = useState(null);
 
   const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const token = localStorage.getItem('adminToken');
@@ -58,7 +61,19 @@ const SafetyModeration = () => {
       ]);
 
       if (eventsRes.ok && eventsData.success) setEvents(eventsData.events || []);
-      if (reportsRes.ok && reportsData.success) setReports(reportsData.reports || []);
+      if (reportsRes.ok && reportsData.success) {
+        const list = reportsData.reports || [];
+        setReports(list);
+        setNoteDrafts((prev) => {
+          const next = { ...prev };
+          list.forEach((r) => {
+            if (next[r._id] === undefined) {
+              next[r._id] = r.adminNote || '';
+            }
+          });
+          return next;
+        });
+      }
       if (blocksRes.ok && blocksData.success) setBlocks(blocksData.blocks || []);
     } catch (err) {
       console.error(err);
@@ -110,6 +125,47 @@ const SafetyModeration = () => {
     }
   };
 
+  const saveAdminNote = async (reportId) => {
+    const note = (noteDrafts[reportId] ?? '').trim();
+    setSavingNoteId(reportId);
+    try {
+      const res = await fetch(`${API_BASE}/admin/moderation/reports/${reportId}`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ adminNote: note })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(
+          data.notified
+            ? 'Note saved — Firebase notification sent to user'
+            : 'Note saved — visible on user Report Notes'
+        );
+        setReports((prev) =>
+          prev.map((r) =>
+            r._id === reportId
+              ? {
+                  ...r,
+                  adminNote: data.report?.adminNote ?? note,
+                  adminNoteUpdatedAt: data.report?.adminNoteUpdatedAt || new Date().toISOString()
+                }
+              : r
+          )
+        );
+      } else {
+        toast.error(data.message || 'Failed to save note');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Network error saving note');
+    } finally {
+      setSavingNoteId(null);
+    }
+  };
+
   const q = searchQuery.trim().toLowerCase();
   const filteredEvents = events.filter((e) => {
     if (!q) return true;
@@ -128,6 +184,7 @@ const SafetyModeration = () => {
     return (
       (r.reason || '').toLowerCase().includes(q) ||
       (r.status || '').toLowerCase().includes(q) ||
+      (r.adminNote || '').toLowerCase().includes(q) ||
       reporter.toLowerCase().includes(q) ||
       (r.targetId?.username || '').toLowerCase().includes(q)
     );
@@ -144,7 +201,7 @@ const SafetyModeration = () => {
             Safety Moderation
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Developer/admin queue for Studio content reports and user blocks.
+            Review Studio reports, write notes for the reporter, and track safety events.
             {unreadCount > 0 && (
               <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 text-xs font-bold">
                 {unreadCount} unread
@@ -164,8 +221,8 @@ const SafetyModeration = () => {
       <div className="flex flex-wrap gap-2 items-center justify-between">
         <div className="flex gap-2">
           {[
-            { id: 'events', label: 'Safety Events', icon: AlertCircle },
             { id: 'reports', label: 'Reports', icon: Flag },
+            { id: 'events', label: 'Safety Events', icon: AlertCircle },
             { id: 'blocks', label: 'Blocks', icon: Ban }
           ].map((tab) => (
             <button
@@ -269,7 +326,7 @@ const SafetyModeration = () => {
         </div>
       ) : activeTab === 'reports' ? (
         <div className="space-y-4">
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             {['all', 'pending', 'reviewing', 'resolved', 'dismissed'].map((s) => (
               <button
                 key={s}
@@ -285,53 +342,48 @@ const SafetyModeration = () => {
               </button>
             ))}
           </div>
-          <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-            <table className="w-full text-left text-sm">
-              <thead className="bg-slate-50 text-[10px] uppercase tracking-widest text-slate-400">
-                <tr>
-                  <th className="px-4 py-3">Content</th>
-                  <th className="px-4 py-3">Reporter</th>
-                  <th className="px-4 py-3">Reason</th>
-                  <th className="px-4 py-3">Status</th>
-                  <th className="px-4 py-3">When</th>
-                  <th className="px-4 py-3">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredReports.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-slate-400">
-                      No reports found.
-                    </td>
-                  </tr>
-                ) : (
-                  filteredReports.map((report) => (
-                    <tr key={report._id} className="border-t border-slate-50">
-                      <td className="px-4 py-3">
+
+          <div className="space-y-3">
+            {filteredReports.length === 0 ? (
+              <div className="bg-white rounded-2xl border border-slate-100 px-4 py-12 text-center text-slate-400">
+                No reports found.
+              </div>
+            ) : (
+              filteredReports.map((report) => {
+                const isExpanded = expandedNoteId === report._id;
+                const hasNote = Boolean(report.adminNote);
+                return (
+                  <div
+                    key={report._id}
+                    className="bg-white rounded-2xl border border-slate-100 p-4 space-y-3"
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-start gap-4 justify-between">
+                      <div className="space-y-1 min-w-0 flex-1">
                         <div className="font-semibold text-slate-800">
                           @{report.targetId?.username || 'unknown'}
                         </div>
-                        <div className="text-[10px] text-slate-400 line-clamp-1 max-w-[200px]">
+                        <div className="text-xs text-slate-500 line-clamp-2">
                           {report.targetId?.caption || report.description || '—'}
                         </div>
-                      </td>
-                      <td className="px-4 py-3 text-slate-600">
-                        {report.reporterId?.name || 'User'}
-                        <div className="text-[10px] text-slate-400">{report.reporterId?.phone}</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        {REASON_LABELS[report.reason] || report.reason}
-                      </td>
-                      <td className="px-4 py-3">
+                        <div className="text-xs text-slate-600 pt-1">
+                          <span className="font-bold">Reporter:</span>{' '}
+                          {report.reporterId?.name || 'User'}
+                          {report.reporterId?.phone ? ` · ${report.reporterId.phone}` : ''}
+                        </div>
+                        <div className="text-xs text-slate-600">
+                          <span className="font-bold">Reason:</span>{' '}
+                          {REASON_LABELS[report.reason] || report.reason}
+                        </div>
+                        <div className="text-[10px] text-slate-400">
+                          {report.createdAt ? new Date(report.createdAt).toLocaleString() : '—'}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center shrink-0">
                         <span className="inline-flex items-center gap-1 text-xs font-bold capitalize text-slate-600">
                           <Clock className="w-3 h-3" />
                           {report.status}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 text-xs text-slate-500">
-                        {report.createdAt ? new Date(report.createdAt).toLocaleString() : '—'}
-                      </td>
-                      <td className="px-4 py-3">
                         <select
                           value={report.status}
                           onChange={(e) => updateReportStatus(report._id, e.target.value)}
@@ -342,12 +394,77 @@ const SafetyModeration = () => {
                           <option value="resolved">resolved</option>
                           <option value="dismissed">dismissed</option>
                         </select>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setExpandedNoteId(isExpanded ? null : report._id)
+                          }
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold ${
+                            hasNote || isExpanded
+                              ? 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                              : 'bg-slate-100 text-slate-600'
+                          }`}
+                        >
+                          <StickyNote className="w-3.5 h-3.5" />
+                          {hasNote ? 'Edit Note' : 'Add Note'}
+                        </button>
+                      </div>
+                    </div>
+
+                    {(isExpanded || hasNote) && (
+                      <div className="border-t border-slate-100 pt-3 space-y-2">
+                        <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          Admin note (shown to reporter on Profile → Report Notes)
+                        </label>
+                        {isExpanded ? (
+                          <>
+                            <textarea
+                              value={noteDrafts[report._id] ?? report.adminNote ?? ''}
+                              onChange={(e) =>
+                                setNoteDrafts((prev) => ({
+                                  ...prev,
+                                  [report._id]: e.target.value.slice(0, 2000)
+                                }))
+                              }
+                              rows={3}
+                              placeholder="Write a note for the user who reported this content…"
+                              className="w-full border border-slate-200 rounded-xl px-3 py-2.5 text-sm text-slate-800 outline-none focus:ring-2 focus:ring-indigo-200 resize-none"
+                            />
+                            <div className="flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => setExpandedNoteId(null)}
+                                className="px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-slate-50"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                disabled={savingNoteId === report._id}
+                                onClick={() => saveAdminNote(report._id)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold bg-indigo-600 text-white disabled:opacity-50"
+                              >
+                                <Save className="w-3.5 h-3.5" />
+                                {savingNoteId === report._id ? 'Saving…' : 'Save Note'}
+                              </button>
+                            </div>
+                          </>
+                        ) : (
+                          <div className="bg-slate-50 rounded-xl px-3 py-2.5 text-sm text-slate-700 whitespace-pre-wrap">
+                            {report.adminNote}
+                            {report.adminNoteUpdatedAt && (
+                              <div className="text-[10px] text-slate-400 mt-2">
+                                Updated {new Date(report.adminNoteUpdatedAt).toLocaleString()}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       ) : (
