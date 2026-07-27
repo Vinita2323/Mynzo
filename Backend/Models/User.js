@@ -85,6 +85,20 @@ const userSchema = new mongoose.Schema({
     type: String,
     enum: ['Active', 'Inactive'],
     default: 'Active'
+  },
+  agreements: {
+    termsAcceptedAt: {
+      type: Date,
+      default: null
+    },
+    privacyAcceptedAt: {
+      type: Date,
+      default: null
+    },
+    acceptedFromIp: {
+      type: String,
+      default: null
+    }
   }
 }, { timestamps: true });
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Search, ShoppingCart, Heart, Send, Star, ChevronRight, Home, Truck, Store, RotateCcw, Banknote, ShieldCheck, ArrowRight, ChevronDown, ChevronUp, CheckCircle2, CheckCircle, X, Play, MapPin, Flag } from 'lucide-react';
+import { ArrowLeft, Search, ShoppingCart, Heart, Send, Star, ChevronRight, Home, Truck, Store, RotateCcw, Banknote, ShieldCheck, ArrowRight, ChevronDown, ChevronUp, CheckCircle2, CheckCircle, X, Play, MapPin, Flag, Ban } from 'lucide-react';
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import { useApp } from '../context/AppContext';
 import analytics from '../utils/analytics';
@@ -10,11 +10,13 @@ import { getImageUrl } from '../utils/imageHelper';
 import { formatDiscount } from '../utils/discountHelper';
 import { fetchReelsFeed } from '../utils/moderationApi';
 import ReportVideoModal from '../components/studio/ReportVideoModal';
+import BlockUserDialog from '../components/studio/BlockUserDialog';
 
 export default function ProductDetailsPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { totalCartItems, addToCart, cart, toggleWishlist, isInWishlist, user, setSearchQuery, location: userLocation } = useApp();
+  const currentUserId = user?._id || user?.id;
   
   const [product, setProduct] = useState(null);
   const [selectedSize, setSelectedSize] = useState('M');
@@ -36,6 +38,7 @@ export default function ProductDetailsPage() {
   const [isUploadingReel, setIsUploadingReel] = useState(false);
   const [isEligibleToReview, setIsEligibleToReview] = useState(false);
   const [reportTargetReel, setReportTargetReel] = useState(null);
+  const [blockTargetReel, setBlockTargetReel] = useState(null);
 
   const fetchProductReels = async () => {
     try {
@@ -80,6 +83,17 @@ export default function ProductDetailsPage() {
     fetchProductReels();
     fetchReviewEligibility();
   }, [id, user]);
+
+  const handleBlockedReelUser = ({ blockedUserId }) => {
+    setProductReels((prev) => prev.filter((reel) => {
+      const uploaderId = reel.uploadedBy?.toString?.() || reel.uploadedBy;
+      return uploaderId !== blockedUserId;
+    }));
+    setSelectedReviewMedia((prev) => {
+      const uploaderId = prev?.reel?.uploadedBy?.toString?.() || prev?.reel?.uploadedBy;
+      return uploaderId === blockedUserId ? null : prev;
+    });
+  };
 
   const handleUploadReel = async (e) => {
     e.preventDefault();
@@ -1250,6 +1264,20 @@ export default function ProductDetailsPage() {
                   Report
                 </button>
               )}
+              {selectedReviewMedia.type === 'video' && selectedReviewMedia.reel && selectedReviewMedia.reel.uploadedBy && (selectedReviewMedia.reel.uploadedBy?.toString?.() || selectedReviewMedia.reel.uploadedBy) !== currentUserId && (
+                <button
+                  type="button"
+                  aria-label="Block user"
+                  onClick={() => {
+                    if (!user) { navigate('/login'); return; }
+                    setBlockTargetReel(selectedReviewMedia.reel);
+                  }}
+                  className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors flex items-center gap-1.5 text-white text-xs font-semibold"
+                >
+                  <Ban className="w-4 h-4" />
+                  Block
+                </button>
+              )}
               <button
                 onClick={() => setSelectedReviewMedia(null)}
                 className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors"
@@ -1298,6 +1326,16 @@ export default function ProductDetailsPage() {
         <ReportVideoModal
           videoId={reportTargetReel._id}
           onClose={() => setReportTargetReel(null)}
+        />
+      )}
+
+      {blockTargetReel && (
+        <BlockUserDialog
+          userId={blockTargetReel.uploadedBy?.toString?.() || blockTargetReel.uploadedBy}
+          username={blockTargetReel.username}
+          relatedVideoId={blockTargetReel._id}
+          onClose={() => setBlockTargetReel(null)}
+          onBlocked={handleBlockedReelUser}
         />
       )}
 

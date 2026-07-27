@@ -69,7 +69,7 @@ export default function BlockUserDialog({
           Block {displayName}?
         </h3>
         <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-          You will no longer see content from this user.
+          You will no longer see content from this user, and our safety team will be notified.
         </p>
 
         <div className="flex gap-3 mt-6">

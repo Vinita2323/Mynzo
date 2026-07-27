@@ -14,7 +14,8 @@ const REASON_LABELS = {
   harassment: 'Harassment or bullying',
   hate_speech: 'Hate speech',
   violence: 'Violence or dangerous content',
-  inappropriate_content: 'Sexual or inappropriate content',
+  inappropriate_content: 'Nudity or sexual content',
+  scam_fraud: 'Scam or fraud',
   copyright: 'Copyright or intellectual property',
   other: 'Other',
   user_block: 'User block'

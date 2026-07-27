@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Heart, MessageCircle, Share2, ShoppingBag, Gift, ArrowLeft, CheckCircle2, Play, Edit2, Trash2, X, Copy, Volume2, VolumeX, Flag } from 'lucide-react';
+import { Heart, MessageCircle, Share2, ShoppingBag, Gift, ArrowLeft, CheckCircle2, Play, Edit2, Trash2, X, Copy, Volume2, VolumeX, Flag, Ban } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import OptimizedImage from '../components/ui/OptimizedImage';
 import { getImageUrl } from '../utils/imageHelper';
 import analytics from '../utils/analytics';
 import { fetchReelsFeed } from '../utils/moderationApi';
 import ReportVideoModal from '../components/studio/ReportVideoModal';
+import BlockUserDialog from '../components/studio/BlockUserDialog';
 
 // Optimized Video component with preloading and unmuting control
 const ReelVideo = ({ src, onVisible, isMuted, toggleMute, active, onDoubleTap }) => {
@@ -157,6 +158,7 @@ export default function StudioPage() {
 
   // Report safety action
   const [reportTarget, setReportTarget] = useState(null);
+  const [blockTarget, setBlockTarget] = useState(null);
 
   // Parse share bridge
   const queryParams = new URLSearchParams(routerLocation.search);
@@ -222,6 +224,24 @@ export default function StudioPage() {
       return;
     }
     setReportTarget(post);
+  };
+
+  const openBlock = (post) => {
+    if (!user) {
+      navigate('/login');
+      return;
+    }
+    setBlockTarget(post);
+  };
+
+  const handleBlockedUser = ({ blockedUserId }) => {
+    setPosts((prev) => {
+      const activePost = prev.find((post) => post.id === activeCommentPost);
+      if (activePost?.uploadedBy === blockedUserId) {
+        setActiveCommentPost(null);
+      }
+      return prev.filter((post) => post.uploadedBy !== blockedUserId);
+    });
   };
 
   useEffect(() => {
@@ -614,6 +634,25 @@ export default function StudioPage() {
                   <span className="text-[11px] font-semibold drop-shadow-md">Report</span>
                 </button>
 
+                {post.uploadedBy && post.uploadedBy !== currentUserId && (
+                  <button
+                    type="button"
+                    aria-label="Block user"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openBlock(post);
+                    }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    className="flex flex-col items-center gap-1 cursor-pointer hover:scale-110 transition-transform"
+                  >
+                    <div className="w-10 h-10 bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10">
+                      <Ban className="w-5 h-5 text-white" />
+                    </div>
+                    <span className="text-[11px] font-semibold drop-shadow-md">Block</span>
+                  </button>
+                )}
+
                 {post.product && (
                   <button onClick={(e) => { e.stopPropagation(); handleAddToCart(post.product); }} className="flex flex-col items-center gap-1 cursor-pointer hover:scale-110 transition-transform">
                     <div className="w-10 h-10 bg-black/20 backdrop-blur-sm rounded-full flex items-center justify-center border border-white/10">
@@ -818,6 +857,16 @@ export default function StudioPage() {
         <ReportVideoModal
           videoId={reportTarget.id}
           onClose={() => setReportTarget(null)}
+        />
+      )}
+
+      {blockTarget && (
+        <BlockUserDialog
+          userId={blockTarget.uploadedBy}
+          username={blockTarget.username}
+          relatedVideoId={blockTarget.id}
+          onClose={() => setBlockTarget(null)}
+          onBlocked={handleBlockedUser}
         />
       )}
     </div>

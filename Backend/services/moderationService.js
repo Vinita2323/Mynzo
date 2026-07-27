@@ -11,7 +11,8 @@ const REASON_LABELS = {
   harassment: 'Harassment or bullying',
   hate_speech: 'Hate speech',
   violence: 'Violence or dangerous content',
-  inappropriate_content: 'Sexual or inappropriate content',
+  inappropriate_content: 'Nudity or sexual content',
+  scam_fraud: 'Scam or fraud',
   copyright: 'Copyright or intellectual property',
   other: 'Other'
 };
@@ -147,6 +148,42 @@ async function createContentReport({ reporterId, targetType, targetId, reason, d
   };
 }
 
+async function resolveBlockTarget({ blockedUserId, relatedVideoId = null }) {
+  const targetUser = await User.findById(blockedUserId).select('_id name').lean();
+  if (targetUser) {
+    return {
+      id: targetUser._id,
+      displayName: targetUser.name || null,
+      accountType: 'User'
+    };
+  }
+
+  // Studio reels can be uploaded by Admin accounts (userModel: 'Admin')
+  const Admin = require('../Models/Admin');
+  const targetAdmin = await Admin.findById(blockedUserId).select('_id username name email').lean();
+  if (targetAdmin) {
+    return {
+      id: targetAdmin._id,
+      displayName: targetAdmin.name || targetAdmin.username || targetAdmin.email || null,
+      accountType: 'Admin'
+    };
+  }
+
+  // Fallback: related reel proves this ID is a real content creator in feed
+  if (relatedVideoId && mongoose.Types.ObjectId.isValid(relatedVideoId)) {
+    const reel = await Reel.findById(relatedVideoId).select('uploadedBy username userModel').lean();
+    if (reel && reel.uploadedBy && reel.uploadedBy.toString() === blockedUserId.toString()) {
+      return {
+        id: reel.uploadedBy,
+        displayName: reel.username || null,
+        accountType: reel.userModel || 'User'
+      };
+    }
+  }
+
+  return null;
+}
+
 async function blockUser({ blockerId, blockedUserId, relatedVideoId = null }) {
   if (!blockedUserId || !mongoose.Types.ObjectId.isValid(blockedUserId)) {
     const err = new Error('Invalid user ID');
@@ -160,8 +197,8 @@ async function blockUser({ blockerId, blockedUserId, relatedVideoId = null }) {
     throw err;
   }
 
-  const targetUser = await User.findById(blockedUserId).select('_id name');
-  if (!targetUser) {
+  const target = await resolveBlockTarget({ blockedUserId, relatedVideoId });
+  if (!target) {
     const err = new Error('User not found');
     err.status = 404;
     throw err;
@@ -195,7 +232,8 @@ async function blockUser({ blockerId, blockedUserId, relatedVideoId = null }) {
         : null,
       reason: 'user_block',
       metadata: {
-        blockedUserName: targetUser.name || null
+        blockedUserName: target.displayName,
+        blockedAccountType: target.accountType
       }
     });
   }

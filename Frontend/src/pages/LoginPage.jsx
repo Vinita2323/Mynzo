@@ -57,7 +57,11 @@ export default function LoginPage() {
       const res = await fetch(`${API_URL}/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phoneNumber })
+        body: JSON.stringify({
+          phone: phoneNumber,
+          acceptedTerms: acceptedTerms,
+          acceptedPrivacy: acceptedTerms
+        })
       });
 
       const data = await res.json();
@@ -124,7 +128,13 @@ export default function LoginPage() {
       const res = await fetch(`${API_URL}/verify-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phoneNumber, otp: fullOtp, referralCode: refCode })
+        body: JSON.stringify({
+          phone: phoneNumber,
+          otp: fullOtp,
+          referralCode: refCode,
+          acceptedTerms: acceptedTerms,
+          acceptedPrivacy: acceptedTerms
+        })
       });
 
       const data = await res.json();
@@ -300,8 +310,17 @@ export default function LoginPage() {
             {/* Form Header */}
             <div className="space-y-1">
               <h2 className="text-2xl font-extrabold text-[#02006c]">Sign In / Register</h2>
-              <p className="text-[10px] text-slate-500 font-bold">Sign in to your Registered Account</p>
+              <p className="text-[10px] text-slate-500 font-bold">Review and accept our Terms of Use before you continue</p>
               <div className="w-6 h-0.75 bg-[#ee4923] rounded-full mt-1.5"></div>
+            </div>
+
+            <div className="rounded-2xl border border-orange-100 bg-orange-50/70 px-4 py-3 text-left">
+              <p className="text-[10px] font-extrabold uppercase tracking-wider text-[#ee4923]">
+                Terms of Use Required
+              </p>
+              <p className="mt-1 text-[11px] font-medium leading-relaxed text-slate-600">
+                You must accept the Terms of Use and Privacy Policy before creating an account or logging in.
+              </p>
             </div>
 
             <form onSubmit={handleSendOtp} className="space-y-4 pt-2">
@@ -339,7 +358,7 @@ export default function LoginPage() {
                   By continuing, you agree to our{' '}
                   <Link to="/privacy" className="text-[#FF8E4D] hover:underline" onClick={(e) => e.stopPropagation()}>Privacy Policy</Link>
                   {' '}and{' '}
-                  <Link to="/terms" className="text-[#FF8E4D] hover:underline" onClick={(e) => e.stopPropagation()}>Terms & Conditions</Link>.
+                  <Link to="/terms" className="text-[#FF8E4D] hover:underline" onClick={(e) => e.stopPropagation()}>Terms of Use</Link>.
                 </span>
               </label>
 
@@ -416,7 +435,7 @@ export default function LoginPage() {
                 By continuing, you agree to our{' '}
                 <Link to="/privacy" className="text-[#FF8E4D] hover:underline">Privacy Policy</Link>
                 {' '}and{' '}
-                <Link to="/terms" className="text-[#FF8E4D] hover:underline">Terms & Conditions</Link>.
+                <Link to="/terms" className="text-[#FF8E4D] hover:underline">Terms of Use</Link>.
               </div>
 
               <div className="mt-1">

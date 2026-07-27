@@ -30,6 +30,7 @@ describe('moderationService — pure helpers', () => {
     assert.ok(REPORT_REASONS.includes('hate_speech'));
     assert.ok(REPORT_REASONS.includes('violence'));
     assert.ok(REPORT_REASONS.includes('inappropriate_content'));
+    assert.ok(REPORT_REASONS.includes('scam_fraud'));
     assert.ok(REPORT_REASONS.includes('copyright'));
     assert.ok(REPORT_REASONS.includes('other'));
   });
@@ -313,5 +314,45 @@ describe('moderationService — DB flows', async () => {
     });
 
     assert.equal(result.report.reportedUserId.toString(), userC._id.toString());
+  });
+
+  it('allows blocking Admin reel creators (uploadedBy is not always a User)', async (t) => {
+    if (!mongoAvailable) return t.skip('MongoDB memory server unavailable');
+
+    const Admin = require('../Models/Admin');
+    const admin = await Admin.create({
+      name: 'Studio Admin',
+      email: `admin-${Date.now()}@test.com`,
+      password: 'password123'
+    });
+    const adminReel = await Reel.create({
+      productId: new mongoose.Types.ObjectId(),
+      uploadedBy: admin._id,
+      userModel: 'Admin',
+      userType: 'admin',
+      username: 'StudioAdmin',
+      video: '/uploads/videos/admin-test.mp4',
+      status: 'approved',
+      section: 'forYou'
+    });
+
+    const result = await blockUser({
+      blockerId: userA._id,
+      blockedUserId: admin._id,
+      relatedVideoId: adminReel._id
+    });
+
+    assert.equal(result.isBlocked, true);
+    assert.equal(result.alreadyBlocked, false);
+
+    const blockedIds = await getBlockedUserIds(userA._id);
+    assert.ok(blockedIds.some((id) => id.toString() === admin._id.toString()));
+
+    const event = await ModerationEvent.findOne({
+      eventType: 'USER_BLOCKED_FOR_SAFETY',
+      reportedUserId: admin._id
+    });
+    assert.ok(event);
+    assert.equal(event.metadata?.blockedAccountType, 'Admin');
   });
 });

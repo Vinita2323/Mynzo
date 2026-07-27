@@ -13,7 +13,8 @@ export const REPORT_REASON_OPTIONS = [
   { value: 'harassment', label: 'Harassment or bullying' },
   { value: 'hate_speech', label: 'Hate speech' },
   { value: 'violence', label: 'Violence or dangerous content' },
-  { value: 'inappropriate_content', label: 'Sexual or inappropriate content' },
+  { value: 'inappropriate_content', label: 'Nudity or sexual content' },
+  { value: 'scam_fraud', label: 'Scam or fraud' },
   { value: 'copyright', label: 'Copyright or intellectual property' },
   { value: 'other', label: 'Other' }
 ];

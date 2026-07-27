@@ -6,6 +6,7 @@ const REPORT_REASONS = [
   'hate_speech',
   'violence',
   'inappropriate_content',
+  'scam_fraud',
   'copyright',
   'other'
 ];

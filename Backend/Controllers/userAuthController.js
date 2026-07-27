@@ -11,6 +11,24 @@ const generateToken = (id, phone, tokenVersion = 0) => {
   );
 };
 
+const requireLegalAcceptance = ({ acceptedTerms, acceptedPrivacy }) => {
+  if (!acceptedTerms || !acceptedPrivacy) {
+    const error = new Error('Please accept the Terms of Use and Privacy Policy to continue');
+    error.status = 400;
+    throw error;
+  }
+};
+
+const captureAgreementAcceptance = (user, req) => {
+  const acceptedAt = new Date();
+  user.agreements = {
+    ...(user.agreements || {}),
+    termsAcceptedAt: user.agreements?.termsAcceptedAt || acceptedAt,
+    privacyAcceptedAt: user.agreements?.privacyAcceptedAt || acceptedAt,
+    acceptedFromIp: req.ip || req.headers['x-forwarded-for'] || null
+  };
+};
+
 // Helper: Get OTP (can use static OTP for test phones in any env, or all phones in staging/dev)
 const getOtp = (phone) => {
   const isStaging = process.env.ENV === 'staging' || process.env.ENV === 'development';
@@ -31,7 +49,9 @@ const getOtp = (phone) => {
 // @access  Public
 const sendOtp = async (req, res) => {
   try {
-    const { phone } = req.body;
+    const { phone, acceptedTerms, acceptedPrivacy } = req.body;
+
+    requireLegalAcceptance({ acceptedTerms, acceptedPrivacy });
 
     const phoneRegex = /^[0-9]{10}$/;
     if (!phone || !phoneRegex.test(phone)) {
@@ -50,6 +70,8 @@ const sendOtp = async (req, res) => {
     if (!user) {
       user = new User({ phone });
     }
+
+    captureAgreementAcceptance(user, req);
 
     const otp = getOtp(phone);
     const otpExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
@@ -124,7 +146,9 @@ const sendOtp = async (req, res) => {
 // @access  Public
 const verifyOtp = async (req, res) => {
   try {
-    const { phone, otp, referralCode } = req.body;
+    const { phone, otp, referralCode, acceptedTerms, acceptedPrivacy } = req.body;
+
+    requireLegalAcceptance({ acceptedTerms, acceptedPrivacy });
 
     if (!phone || !otp) {
       return res.status(400).json({ success: false, message: 'Phone and OTP required' });
@@ -161,6 +185,7 @@ const verifyOtp = async (req, res) => {
     user.otp = null;
     user.otpExpiry = null;
     user.lastLogin = new Date();
+    captureAgreementAcceptance(user, req);
 
     if (isNewUser && referralCode) {
       try {
