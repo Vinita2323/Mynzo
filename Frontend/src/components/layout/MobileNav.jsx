@@ -1,5 +1,5 @@
 import React from 'react';
-import { Home, LayoutGrid, Camera, Gamepad2, ShoppingCart, User } from 'lucide-react';
+import { Home, LayoutGrid, Gamepad2, ShoppingCart, User } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { motion } from 'framer-motion';
@@ -26,7 +26,7 @@ export default function MobileNav() {
     { id: 'home', label: 'Home', icon: Home, path: '/' },
     { id: 'categories', label: 'Categories', icon: LayoutGrid, path: '/categories' },
     { id: 'games', label: 'Fun', icon: Gamepad2, path: '/games' },
-    { id: 'studio', label: 'Studio', icon: Camera, path: '/studio' },
+    // { id: 'studio', label: 'Studio', icon: Camera, path: '/studio' },
     { id: 'cart', label: 'Cart', icon: ShoppingCart, path: '/cart', badge: true },
     { id: 'profile', label: 'Profile', icon: User, path: '/profile' }
   ];
