@@ -717,6 +717,7 @@ export default function ReviewOrderPage() {
               >
                 <span className="text-xs font-black">Cash on Delivery</span>
               </button>
+              {/* Temporarily hidden — uncomment to re-enable Razorpay
               <button 
                 type="button"
                 onClick={() => setPaymentMethod('ONLINE')}
@@ -728,6 +729,7 @@ export default function ReviewOrderPage() {
               >
                 <span className="text-xs font-black">Pay Online (Razorpay)</span>
               </button>
+              */}
             </div>
           </div>
         </div>
