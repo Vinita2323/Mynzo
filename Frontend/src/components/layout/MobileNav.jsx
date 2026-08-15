@@ -26,7 +26,7 @@ export default function MobileNav() {
     { id: 'home', label: 'Home', icon: Home, path: '/' },
     { id: 'categories', label: 'Categories', icon: LayoutGrid, path: '/categories' },
     { id: 'games', label: 'Fun', icon: Gamepad2, path: '/games' },
-    // { id: 'studio', label: 'Studio', icon: Camera, path: '/studio' },
+    { id: 'studio', label: 'Studio', icon: Camera, path: '/studio' },
     { id: 'cart', label: 'Cart', icon: ShoppingCart, path: '/cart', badge: true },
     { id: 'profile', label: 'Profile', icon: User, path: '/profile' }
   ];
